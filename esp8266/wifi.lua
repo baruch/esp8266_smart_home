@@ -1,3 +1,5 @@
+local callback=(...)
+
 function run_setup()
     wifi.setmode(wifi.SOFTAP)
     cfg={}
@@ -46,9 +48,10 @@ function try_connecting(wifi_ssid, wifi_password, wifi_ip, wifi_nm, wifi_gw)
           tmr.stop(1)
           tmr.stop(0)
           print("Connected as: " .. wifi.sta.getip())
-          collectgarbage()
           tmr.unregister(0)
           tmr.unregister(1)
+          collectgarbage()
+          callback()
         end
     end)
 
@@ -77,7 +80,6 @@ if wifi_ssid ~= nil and wifi_password ~= nil then
     print("wifi_nm : " .. wifi_nm)
     print("wifi_gw : " .. wifi_gw)
     print("wifi_dns : " .. wifi_dns)
-    print("wifi_repo : " .. wifi_repo)
     print("wifi_desc : " .. wifi_desc)
     try_connecting(wifi_ssid, wifi_password, wifi_ip, wifi_nm, wifi_gw)
 else

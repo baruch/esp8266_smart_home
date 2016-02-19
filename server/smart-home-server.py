@@ -31,16 +31,9 @@ except ImportError:
     import fcntl
     import struct
 
-    def get_ip_address(ifname):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        return socket.inet_ntoa(fcntl.ioctl(
-            s.fileno(),
-            0x8915,  # SIOCGIFADDR
-            struct.pack('256s', ifname[:15])
-        )[20:24])
-
     def get_server_ip():
-        return get_ip_address('eth0')
+        import socket
+        return socket.gethostbyname(socket.gethostname())
 
 class NodeList:
     def __init__(self):
@@ -80,8 +73,17 @@ class FileList:
                     l.insert(0, i)
         return l
 
+def print_error():
+    print("USAGE: %s file_repository_folder" % sys.argv[0])
+    exit(1)
+
 def update_file_list(file_list):
-    dirname = sys.argv[1]
+    try:
+        dirname = sys.argv[1]
+    except:
+	    print_error()
+    if not os.path.isdir(dirname): print_error()
+
     for f in os.listdir(dirname):
         if f.endswith('.lua') or f.endswith('.html'):
             filename = os.path.join(dirname, f)

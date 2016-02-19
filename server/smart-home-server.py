@@ -80,8 +80,17 @@ class FileList:
                     l.insert(0, i)
         return l
 
+def print_error():
+    print("USAGE: %s file_repository_folder" % sys.argv[0])
+    exit(1)
+
 def update_file_list(file_list):
-    dirname = sys.argv[1]
+    try:
+        dirname = sys.argv[1]
+    except:
+	    print_error()
+    if not os.path.isdir(dirname): print_error()
+
     for f in os.listdir(dirname):
         if f.endswith('.lua') or f.endswith('.html'):
             filename = os.path.join(dirname, f)

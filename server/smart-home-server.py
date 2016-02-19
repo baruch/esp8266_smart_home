@@ -93,8 +93,6 @@ def main():
     file_list = FileList()
     update_file_list(file_list)
 
-    node_list.update_node('127.0.0.1', 'b', 'b', 'b')
-
     server_ip = get_server_ip()
     print 'Server IP is', server_ip
     discovery.start(server_ip, node_list)

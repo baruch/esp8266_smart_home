@@ -17,6 +17,18 @@ end)
 
 print('connecting to udp')
 conn:connect(24320, '255.255.255.255')
-print('send packet')
-conn:send("S\001a\001a\001a")
+
+function string_encode(s)
+    if s == nil then
+        s = ''
+    end
+    l = string.len(s)
+    e = string.char(l) .. s
+    return e
+end
+
+local buf = 'S' .. string_encode(node.chipid()) .. string_encode(_G.wifi_type) .. string_encode(_G.wifi_desc)
+print('send packet: ' .. buf)
+conn:send(buf)
+buf = nil
 collectgarbage()

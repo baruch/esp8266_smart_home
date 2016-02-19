@@ -3,7 +3,6 @@
 import discovery
 import ota
 import time
-import netifaces
 import threading
 import time
 import fletcher
@@ -15,16 +14,33 @@ def choose_ip_addr(iface_addrs):
         if iface_addr[1] == 'eth0': return iface_addr[0]
     return iface_addrs[0][1]
 
-def get_server_ip():
-    PROTO = netifaces.AF_INET
-    ifaces = netifaces.interfaces()
-    if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
-    if_inet_addrs = [(tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]]
-    iface_addrs = [(s['addr'], tup[1]) for tup in if_inet_addrs for s in tup[0] if 'addr' in s]
-    print 'interface ips', iface_addrs
-    ip = choose_ip_addr(iface_addrs)
-    print 'ip', ip
-    return ip
+try:
+    import netifaces1
+    def get_server_ip():
+        PROTO = netifaces.AF_INET
+        ifaces = netifaces.interfaces()
+        if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
+        if_inet_addrs = [(tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]]
+        iface_addrs = [(s['addr'], tup[1]) for tup in if_inet_addrs for s in tup[0] if 'addr' in s]
+        print 'interface ips', iface_addrs
+        ip = choose_ip_addr(iface_addrs)
+        print 'ip', ip
+        return ip
+except ImportError:
+    import socket
+    import fcntl
+    import struct
+
+    def get_ip_address(ifname):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15])
+        )[20:24])
+
+    def get_server_ip():
+        return get_ip_address('eth0')
 
 class NodeList:
     def __init__(self):
@@ -77,9 +93,9 @@ def main():
     file_list = FileList()
     update_file_list(file_list)
 
-    node_list.update_node('127.0.0.1', 'b', 'b', 'b')
-
-    discovery.start(get_server_ip(), node_list)
+    server_ip = get_server_ip()
+    print 'Server IP is', server_ip
+    discovery.start(server_ip, node_list)
     ota.start(node_list, file_list)
     while 1:
         time.sleep(1)

@@ -9,7 +9,6 @@
 --  This is mostly for when we are configured but failed to connect, this will retry the connection to the AP once in a while
 --  but still allow us to get reconfigured if the entire network collapsed.
 function run_timeout()
-	tmr.deregister(0)
 	tmr.alarm(0, 15 * 60 * 1000, 0, function()
 		node.restart()
 	end)
@@ -124,7 +123,6 @@ function parse_wifi_credentials(vars)
     local _, _, wifi_nm = string.find(vars, "wifi_nm\=(%d+%.%d+%.%d+%.%d+)")
     local _, _, wifi_gw = string.find(vars, "wifi_gw\=(%d+%.%d+%.%d+%.%d+)")
     local _, _, wifi_dns = string.find(vars, "wifi_dns\=(%d+%.%d+%.%d+%.%d+)")
-    local _, _, wifi_repo = string.find(vars, "wifi_repo\=(%d+%.%d+%.%d+%.%d+)")
     local _, _, wifi_desc = string.find(vars, "wifi_desc\=([^&]+)")
 
     if wifi_ssid == nil or wifi_ssid == "" or wifi_password == nil then
@@ -148,13 +146,16 @@ function parse_wifi_credentials(vars)
         wifi_gw = ""
 		wifi_dns = ""
     -- Request all network details again if one or more of them are not valid
-    elseif not valid_ip(wifi_ip, false) or not valid_ip(wifi_nm, true) or not valid_ip(wifi_gw, false) or not valid_ip(wifi_dns, false) then return false
+    elseif not valid_ip(wifi_ip, false) or not valid_ip(wifi_nm, true) or not valid_ip(wifi_gw, false) or not valid_ip(wifi_dns, false) then
+        return false
     end
 	
 	-- Clear the description
-    if wifi_desc == nil or wifi_desc == "" then wifi_desc = ""  
-	-- Replace pluses with spaces and hexa with symbols
-	else wifi_desc = urldecode(wifi_desc)
+    if wifi_desc == nil or wifi_desc == "" then
+        wifi_desc = ""
+	else
+        -- Replace pluses with spaces and hexa with symbols
+        wifi_desc = urldecode(wifi_desc)
 	end
     
     print("New WiFi credentials received")
@@ -165,7 +166,6 @@ function parse_wifi_credentials(vars)
     print("wifi_nm : " .. wifi_nm)
     print("wifi_gw : " .. wifi_gw)
     print("wifi_dns : " .. wifi_dns)
-    print("wifi_repo : " .. wifi_repo)
     print("wifi_desc : " .. wifi_desc)
 
     file.remove("netconfig.lc")
@@ -176,7 +176,6 @@ function parse_wifi_credentials(vars)
     file.writeline("wifi_nm='"..wifi_nm.."'")
     file.writeline("wifi_gw='"..wifi_gw.."'")
     file.writeline("wifi_dns='"..wifi_dns.."'")
-    file.writeline("wifi_repo='"..wifi_repo.."'")
     file.writeline("wifi_desc='"..wifi_desc.."'")
     file.flush()
     file.close()

@@ -1,8 +1,14 @@
 #!/usr/bin/python
 
 import discovery
+import ota
 import time
 import netifaces
+import threading
+import time
+import fletcher
+import sys
+import os
 
 def choose_ip_addr(iface_addrs):
     for iface_addr in iface_addrs:
@@ -20,8 +26,61 @@ def get_server_ip():
     print 'ip', ip
     return ip
 
+class NodeList:
+    def __init__(self):
+        self._list = {}
+        self.lock = threading.Lock()
+
+    def get_node_by_ip(self, ip):
+        with self.lock:
+            val = self._list.get(ip, None)
+        return val
+
+    def update_node(self, node_ip, node_id, node_type, node_desc):
+        with self.lock:
+            print 'Updating node ip=%s id=%s type=%s desc=%s' % (node_ip, node_id, node_type, node_desc)
+            self._list[node_ip] = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time()}
+
+class FileList:
+    def __init__(self):
+        self._files = {}
+        self.lock = threading.Lock()
+
+    def update_file(self, filename, content):
+        with self.lock:
+            self._files[filename] = (fletcher.fletcher16(content), content)
+
+    def get_files_for_node(self, node):
+        # never mind the node, we have one list for now
+        l = []
+        with self.lock:
+            for fname in self._files.keys():
+                checksum, content = self._files[fname]
+                i = (fname, checksum, content)
+                if fname == 'init.lua':
+                    # init.lua is better updated at the end
+                    l.append(i)
+                else:
+                    l.insert(0, i)
+        return l
+
+def update_file_list(file_list):
+    dirname = sys.argv[1]
+    for f in os.listdir(dirname):
+        if f.endswith('.lua') or f.endswith('.html'):
+            filename = os.path.join(dirname, f)
+            print 'Adding file %s' % filename
+            file_list.update_file(os.path.basename(filename), file(filename).read())
+
 def main():
-    discovery.start(get_server_ip())
+    node_list = NodeList()
+    file_list = FileList()
+    update_file_list(file_list)
+
+    node_list.update_node('127.0.0.1', 'b', 'b', 'b')
+
+    discovery.start(get_server_ip(), node_list)
+    ota.start(node_list, file_list)
     while 1:
         time.sleep(1)
 

@@ -4,13 +4,6 @@ import socket
 
 HOST = '0.0.0.0'
 PORT = 24320
-server_ip = ''
-
-def set_server_ip(_server_ip):
-    global server_ip
-    parts = _server_ip.split('.')
-    parts_int = tuple(map(lambda x: int(x), parts))
-    server_ip = '\004%c%c%c%c' % parts_int
 
 def parse_message_part(data):
     if len(data) < 1: return (None, '')
@@ -29,7 +22,7 @@ def parse_message(data):
     if node_id is None or node_type is None: return (None, None, None)
     return (node_id, node_type, node_desc)
 
-class DiscoveryUDPServer(SocketServer.BaseRequestHandler):
+class DiscoveryUDPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         data = self.request[0]
         socket = self.request[1]
@@ -38,14 +31,28 @@ class DiscoveryUDPServer(SocketServer.BaseRequestHandler):
         node_id, node_type, node_desc = parse_message(data)
         if node_id is None: return
 
+        node_ip = self.client_address[0]
+        self.server.node_list.update_node(node_ip, node_id, node_type, node_desc)
+
         # send response
-        response = 'R' + server_ip
+        response = 'R' + self.server.server_ip
         
         socket.sendto(response, self.client_address)
 
-def start(server_ip):
-    set_server_ip(server_ip)
-    server = SocketServer.UDPServer((HOST, PORT), DiscoveryUDPServer)
+class DiscoveryServer(SocketServer.UDPServer):
+    def set_server_ip(self, _server_ip):
+        parts = _server_ip.split('.')
+        parts_int = tuple(map(lambda x: int(x), parts))
+        self.server_ip = '\004%c%c%c%c' % parts_int
+
+    def set_node_list(self, node_list):
+        self.node_list = node_list
+
+
+def start(server_ip, node_list):
+    server = DiscoveryServer((HOST, PORT), DiscoveryUDPHandler)
+    server.set_server_ip(server_ip)
+    server.set_node_list(node_list)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()

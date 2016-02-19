@@ -9,7 +9,6 @@
 --  This is mostly for when we are configured but failed to connect, this will retry the connection to the AP once in a while
 --  but still allow us to get reconfigured if the entire network collapsed.
 function run_timeout()
-	tmr.deregister(0)
 	tmr.alarm(0, 15 * 60 * 1000, 0, function()
 		node.restart()
 	end)
@@ -147,13 +146,16 @@ function parse_wifi_credentials(vars)
         wifi_gw = ""
 		wifi_dns = ""
     -- Request all network details again if one or more of them are not valid
-    elseif not valid_ip(wifi_ip, false) or not valid_ip(wifi_nm, true) or not valid_ip(wifi_gw, false) or not valid_ip(wifi_dns, false) then return false
+    elseif not valid_ip(wifi_ip, false) or not valid_ip(wifi_nm, true) or not valid_ip(wifi_gw, false) or not valid_ip(wifi_dns, false) then
+        return false
     end
 	
 	-- Clear the description
-    if wifi_desc == nil or wifi_desc == "" then wifi_desc = ""  
-	-- Replace pluses with spaces and hexa with symbols
-	else wifi_desc = urldecode(wifi_desc)
+    if wifi_desc == nil or wifi_desc == "" then
+        wifi_desc = ""
+	else
+        -- Replace pluses with spaces and hexa with symbols
+        wifi_desc = urldecode(wifi_desc)
 	end
     
     print("New WiFi credentials received")

@@ -81,6 +81,7 @@ if wifi_ssid ~= nil and wifi_password ~= nil then
     print("wifi_gw : " .. wifi_gw)
     print("wifi_dns : " .. wifi_dns)
     print("wifi_desc : " .. wifi_desc)
+    _G.wifi_desc = wifi_desc
     try_connecting(wifi_ssid, wifi_password, wifi_ip, wifi_nm, wifi_gw)
 else
     run_setup()

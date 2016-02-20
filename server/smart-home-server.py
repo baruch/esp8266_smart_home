@@ -28,9 +28,7 @@ try:
         return ip
 except ImportError:
     import socket
-
     def get_server_ip():
-        import socket
         return socket.gethostbyname(socket.gethostname())
 
 class NodeList:

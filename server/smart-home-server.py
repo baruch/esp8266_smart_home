@@ -28,8 +28,6 @@ try:
         return ip
 except ImportError:
     import socket
-    import fcntl
-    import struct
 
     def get_server_ip():
         import socket

@@ -160,28 +160,23 @@ function parse_wifi_credentials(vars)
     
     print("New WiFi credentials received")
     print("-----------------------------")
-    print("wifi_ssid     : " .. wifi_ssid)
-    print("wifi_password : " .. wifi_password)
-    print("wifi_ip : " .. wifi_ip)
-    print("wifi_nm : " .. wifi_nm)
-    print("wifi_gw : " .. wifi_gw)
-    print("wifi_dns : " .. wifi_dns)
-    print("wifi_desc : " .. wifi_desc)
+    print("wifi_ssid     : ", wifi_ssid)
+    print("wifi_password : ", wifi_password)
+    print("wifi_ip : ", wifi_ip)
+    print("wifi_nm : ", wifi_nm)
+    print("wifi_gw : ", wifi_gw)
+    print("wifi_dns : ", wifi_dns)
+    print("wifi_desc : ", wifi_desc)
 
-    file.remove("netconfig.lc")
-    file.open("netconfig.lua", "w+")
-    file.writeline("wifi_ssid='"..wifi_ssid.."'")
-    file.writeline("wifi_password='"..wifi_password.."'")
-    file.writeline("wifi_ip='"..wifi_ip.."'")
-    file.writeline("wifi_nm='"..wifi_nm.."'")
-    file.writeline("wifi_gw='"..wifi_gw.."'")
-    file.writeline("wifi_dns='"..wifi_dns.."'")
-    file.writeline("wifi_desc='"..wifi_desc.."'")
-    file.flush()
-    file.close()
-    node.compile("netconfig.lua")
-    file.remove("netconfig.lua")
-    collectgarbage()
+    dofile("serialize.lc")
+    serialize_file("netconfig.lua", {
+        wifi_ssid = wifi_ssid,
+        wifi_password = wifi_password,
+        wifi_ip = wifi_ip,
+        wifi_nm = wifi_nm,
+        wifi_gw = wifi_gw,
+        wifi_dns = wifi_dns,
+        wifi_desc = wifi_desc,
+    })
     return true
 end
-

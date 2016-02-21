@@ -28,7 +28,6 @@ function string_encode(s)
 end
 
 local buf = 'S' .. string_encode(node.chipid()) .. string_encode(_G.wifi_type) .. string_encode(_G.wifi_desc)
-print('send packet: ' .. buf)
 conn:send(buf)
 buf = nil
 collectgarbage()

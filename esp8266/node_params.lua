@@ -1,1 +1,1 @@
-_G.wifi_type = 'sensor'
+_G.node_type = 'sensor'

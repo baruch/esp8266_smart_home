@@ -19,7 +19,7 @@ function wifi_connected()
 end
 
 _G.server_ip = nil
-_G.wifi_type = ''
 _G.wifi_desc = ''
 dofile_callback('node_params.lc', nil)
+print("Node type", _G.node_type)
 dofile_callback('wifi.lc', wifi_connected)

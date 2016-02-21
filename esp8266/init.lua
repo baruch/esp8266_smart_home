@@ -1,10 +1,12 @@
 function dofile_callback(name, callback)
+    print('Loading file', name)
     local func = loadfile(name)
     if func ~= nil then
         func(callback)
     else
         print('loadfile for '..name..' failed')
     end
+    func = nil
     collectgarbage()
 end
 

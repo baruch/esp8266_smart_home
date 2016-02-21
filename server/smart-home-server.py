@@ -15,7 +15,7 @@ def choose_ip_addr(iface_addrs):
     return iface_addrs[0][1]
 
 try:
-    import netifaces1
+    import netifaces
     def get_server_ip():
         PROTO = netifaces.AF_INET
         ifaces = netifaces.interfaces()

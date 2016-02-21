@@ -45,14 +45,19 @@ srv:listen(80, function(conn)
 
     -- Check if wifi-credentials have been supplied
     if vars~=nil and parse_wifi_credentials(vars) then
-        tmr.alarm(0,1000,0,function() -- wait to complete file flushing
-                    node.restart()
-        end)
+        print('Rebooting shortly')
+        -- wait to complete file flushing
+        tmr.alarm(2, 1000, 0,
+            function() 
+                node.restart()
+            end
+        )
     end
 
     if url == "favicon.ico" then
         conn:send("HTTP/1.1 404 file not found")
         responseBytes = -1
+        collectgarbage()
         return
     end    
 
@@ -95,12 +100,15 @@ function valid_ip(instr, is_mask)
    if is_mask then
        min, max = 0, 255
    end
-   if instr == nil or instr == "" then return false end
+   if instr == nil or instr == "" then
+       return 0
+   end
    _, _, ip1s, ip2s, ip3s, ip4s = string.find(instr, "(%d+)%.(%d+)%.(%d+)%.(%d+)")
    if ip1s/1 >= min and ip1s/1 <= max and ip2s/1 >= min and ip2s/1 <= max and 
-      ip3s/1 >= min and ip3s/1 <= max and ip4s/1 >= min and ip4s/1 <= max then return true
+      ip3s/1 >= min and ip3s/1 <= max and ip4s/1 >= min and ip4s/1 <= max then
+      return 1
    end
-   return false
+   return 0
 end
 
 function urldecode(instr)
@@ -112,52 +120,48 @@ function urldecode(instr)
   return instr
 end
 
+function extract_arg(vars, name)
+    local _, _, value = string.find(vars, name .. "\=([^&]+)")
+    if value == nil then
+        return ""
+    end
+
+    return urldecode(value)
+end
+
 function parse_wifi_credentials(vars)
     if vars == nil or vars == "" then
         return false
     end
 
-    local _, _, wifi_ssid = string.find(vars, "wifi_ssid\=([^&]+)")
-    local _, _, wifi_password = string.find(vars, "wifi_password\=([^&]+)")
-    local _, _, wifi_ip = string.find(vars, "wifi_ip\=(%d+%.%d+%.%d+%.%d+)")
-    local _, _, wifi_nm = string.find(vars, "wifi_nm\=(%d+%.%d+%.%d+%.%d+)")
-    local _, _, wifi_gw = string.find(vars, "wifi_gw\=(%d+%.%d+%.%d+%.%d+)")
-    local _, _, wifi_dns = string.find(vars, "wifi_dns\=(%d+%.%d+%.%d+%.%d+)")
-    local _, _, wifi_desc = string.find(vars, "wifi_desc\=([^&]+)")
+    local wifi_ssid = extract_arg(vars, "wifi_ssid")
+    local wifi_password = extract_arg(vars, "wifi_password")
+    local wifi_ip = extract_arg(vars, "wifi_ip")
+    local wifi_nm = extract_arg(vars, "wifi_nm")
+    local wifi_gw = extract_arg(vars, "wifi_gw")
+    local wifi_dns = extract_arg(vars, "wifi_dns")
+    local wifi_desc = extract_arg(vars, "wifi_desc")
 
-    if wifi_ssid == nil or wifi_ssid == "" or wifi_password == nil then
+    if wifi_ssid == "" or wifi_password == "" then
         return false
     end
 
-    pwd_len = string.len(wifi_password)
-    if pwd_len ~= 0 and (pwd_len < 8 or pwd_len > 64) then
+    local pwd_len = string.len(wifi_password)
+    if pwd_len < 8 or pwd_len > 64 then
         print("Password length should be between 8 and 64 characters")
         return false
     end
 
-    -- Go DHCP if no valid network details provided
-    print(valid_ip(wifi_ip, false))
-    print(valid_ip(wifi_nm, true))
-    print(valid_ip(wifi_gw, false))
-    print(valid_ip(wifi_dns, false))
-    if not valid_ip(wifi_ip, false) and not valid_ip(wifi_nm, true) and not valid_ip(wifi_gw, false) then
-        wifi_ip = ""
-        wifi_nm = ""
-        wifi_gw = ""
-		wifi_dns = ""
-    -- Request all network details again if one or more of them are not valid
-    elseif not valid_ip(wifi_ip, false) or not valid_ip(wifi_nm, true) or not valid_ip(wifi_gw, false) or not valid_ip(wifi_dns, false) then
+    local valid_ips = valid_ip(wifi_ip, false) + valid_ip(wifi_nm, true) + valid_ip(wifi_gw, false)
+
+    if valid_ips == 0 then
+        -- Go DHCP if no valid network details provided
+    elseif valid_ips ~= 3 or valid_ip(wifi_dns, false) == 0 then
+        -- Request all network details again if one or more of them are not valid
         return false
     end
 	
-	-- Clear the description
-    if wifi_desc == nil or wifi_desc == "" then
-        wifi_desc = ""
-	else
-        -- Replace pluses with spaces and hexa with symbols
-        wifi_desc = urldecode(wifi_desc)
-	end
-    
+   
     print("New WiFi credentials received")
     print("-----------------------------")
     print("wifi_ssid     : ", wifi_ssid)

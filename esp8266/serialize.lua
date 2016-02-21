@@ -7,8 +7,9 @@ function serialize(o)
     elseif type(o) == "table" then
         file.write("{")
         for k,v in pairs(o) do
-            file.write(k)
-            file.write("=")
+            file.write("[")
+            file.write(string.format("%q", k))
+            file.write("]=")
             serialize(v)
             file.write(",")
         end

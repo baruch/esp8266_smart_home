@@ -13,12 +13,7 @@ function run_setup()
 end
 
 function read_wifi_credentials()
-    local nc = loadfile("netconfig.lc")
-    if nc == nil then
-        return {}
-    else
-        return nc()
-    end
+    return deserialize_file("netconfig.lc")
 end
 
 function try_connecting(conf)

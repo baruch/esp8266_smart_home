@@ -5,7 +5,7 @@ dofile('serialize.lc')
 print('ota create connection')
 local conn = net.createConnection(net.TCP, 0)
 
-function fletcher(filename)
+local function fletcher(filename)
     if file.open(filename, "r") == nil then
         return nil, nil
     end
@@ -32,7 +32,7 @@ function fletcher(filename)
     return sum1, sum2
 end
 
-function download_file_data(filename)
+local function download_file_data(filename)
     conn:on('receive', function(conn, data)
         print('Received data')
         coroutine.resume(upgradeThread, data)
@@ -66,7 +66,7 @@ function download_file_data(filename)
     end
 end
 
-function download_file(filename, fl1, fl2)
+local function download_file(filename, fl1, fl2)
     print('Upgrading file', filename)
     print('removing file')
     file.remove('download.tmp')
@@ -95,7 +95,7 @@ function download_file(filename, fl1, fl2)
     return true
 end
 
-function handle_line(line, filelist, todolist)
+local function handle_line(line, filelist, todolist)
     local filename = nil
     local fl1 = nil
     local fl2 = nil
@@ -126,7 +126,7 @@ function handle_line(line, filelist, todolist)
     end
 end
 
-function list_files(filelist)
+local function list_files(filelist)
     conn:send('list\n')
     local todolist = {}
 

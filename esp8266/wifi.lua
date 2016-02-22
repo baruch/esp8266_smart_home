@@ -1,6 +1,6 @@
 local callback=...
 
-function run_setup()
+local function run_setup()
     wifi.setmode(wifi.SOFTAP)
     local cfg={}
     -- Set your own AP prefix. SHM = Smart Home Module.
@@ -12,11 +12,11 @@ function run_setup()
     dofile ("server.lc")
 end
 
-function read_wifi_credentials()
+local function read_wifi_credentials()
     return deserialize_file("netconfig.lc")
 end
 
-function try_connecting(conf)
+local function try_connecting(conf)
     print('Config loaded, trying to connect')
     wifi.setmode(wifi.STATION)
     wifi.sta.config(conf.wifi_ssid, conf.wifi_password)

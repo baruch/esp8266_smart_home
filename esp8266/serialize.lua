@@ -8,7 +8,11 @@ function serialize(o)
         file.write("{")
         for k,v in pairs(o) do
             file.write("[")
-            file.write(string.format("%q", k))
+            if type(k) == "number" then
+                file.write(string.format("%d", k))
+            else
+                file.write(string.format("%q", k))
+            end
             file.write("]=")
             serialize(v)
             file.write(",")

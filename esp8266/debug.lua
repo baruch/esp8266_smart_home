@@ -30,3 +30,10 @@ end
 function file_list()
     display_table(file.list())
 end
+
+function file_show(filename)
+    file.open(filename, 'r')
+    local t = file.read(2048)
+    file.close()
+    print (t)
+end

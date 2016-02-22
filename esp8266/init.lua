@@ -24,9 +24,9 @@ function wifi_connected()
     dofile_callback('discovery.lc', function (server_ip)
         _G.server_ip = server_ip
         print('server discovery completed, server: ', server_ip)
---        dofile_callback('ota_upgrade.lc', function (reboot_needed)
---            print('firmware upgrade finished, reboot needed:', reboot_needed)
---        end)
+        dofile_callback('ota_upgrade.lc', function (reboot_needed)
+            print('firmware upgrade finished, reboot needed:', reboot_needed)
+        end)
     end)
 end
 

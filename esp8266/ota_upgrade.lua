@@ -187,9 +187,11 @@ upgradeThread = coroutine.create(function (_, server_ip)
 
     local filename
     local fl
+    local reboot_needed = false
     for filename, fl in pairs(todolist) do
         if download_file(filename, fl[1], fl[2]) then
             filelist[filename] = fl
+            reboot_needed = true
         end
         collectgarbage()
     end
@@ -200,7 +202,7 @@ upgradeThread = coroutine.create(function (_, server_ip)
     conn = nil
     upgradeThread = nil
     collectgarbage()
-    --callback()
+    callback(reboot_needed)
 end)
 
 conn:on('connection', function(conn)

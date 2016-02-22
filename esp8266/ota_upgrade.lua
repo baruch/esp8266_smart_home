@@ -1,4 +1,4 @@
---local callback=(...)
+local callback=...
 
 dofile('serialize.lc')
 
@@ -202,7 +202,10 @@ upgradeThread = coroutine.create(function (_, server_ip)
     conn = nil
     upgradeThread = nil
     collectgarbage()
-    callback(reboot_needed)
+    if callback ~= nil then
+        callback(reboot_needed)
+    end
+    print('OTA done')
 end)
 
 conn:on('connection', function(conn)

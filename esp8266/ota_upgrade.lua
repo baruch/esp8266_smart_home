@@ -172,7 +172,7 @@ local function list_files(filelist)
     return todolist
 end
 
-upgradeThread = coroutine.create(function (conn, server_ip)
+upgradeThread = coroutine.create(function (_, server_ip)
     print('connecting to ', server_ip)
     conn:connect(24320, server_ip)
     coroutine.yield()

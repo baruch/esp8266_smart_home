@@ -99,7 +99,7 @@ function handle_line(line, filelist, todolist)
     local filename = nil
     local fl1 = nil
     local fl2 = nil
-    _, _, filename, fl1, fl2 = string.find(line,  "(%w+.%w+),(%d+),(%d+)\n")
+    _, _, filename, fl1, fl2 = string.find(line,  "([^,]+),(%d+),(%d+)\n")
     if filename == nil or fl1 == nil or fl2 == nil then
         print("Parsing of line failed")
     else

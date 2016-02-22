@@ -13,6 +13,7 @@ class OTAHandler(SocketServer.StreamRequestHandler):
             print 'Unknown node'
             return
 
+        self.server.file_list.update_list()
         files = self.server.file_list.get_files_for_node(node)
         if files is None:
             print 'No files for node'

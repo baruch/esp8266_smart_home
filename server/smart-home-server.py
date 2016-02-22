@@ -49,9 +49,19 @@ class NodeList:
             self._list[node_ip] = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time()}
 
 class FileList:
-    def __init__(self):
+    def __init__(self, dirname):
         self._files = {}
+        self._dirname = dirname
         self.lock = threading.Lock()
+
+    def update_list(self):
+        for f in os.listdir(self._dirname):
+            if f.endswith('.lua') or f.endswith('.html'):
+                filename = os.path.join(self._dirname, f)
+                print 'Adding file %s' % filename
+                self.update_file(os.path.basename(filename), file(filename).read())
+
+
 
     def update_file(self, filename, content):
         with self.lock:
@@ -75,7 +85,7 @@ def usage():
     print("USAGE: %s file_repository_folder" % sys.argv[0])
     exit(1)
 
-def update_file_list(file_list):
+def main():
     if len(sys.argv) != 2:
         usage()
 
@@ -84,16 +94,8 @@ def update_file_list(file_list):
         print 'ERROR: Path "%s" doesn\'t exist or is not a directory\n' % dirname
         usage()
 
-    for f in os.listdir(dirname):
-        if f.endswith('.lua') or f.endswith('.html'):
-            filename = os.path.join(dirname, f)
-            print 'Adding file %s' % filename
-            file_list.update_file(os.path.basename(filename), file(filename).read())
-
-def main():
     node_list = NodeList()
-    file_list = FileList()
-    update_file_list(file_list)
+    file_list = FileList(dirname)
 
     server_ip = get_server_ip()
     print 'Server IP is', server_ip

@@ -39,6 +39,7 @@ class NodeList:
         self.lock = threading.Lock()
 
     def get_node_by_ip(self, ip):
+        if ip == '127.0.0.1': return {'node_id': 'local', 'node_type': 'test', 'node_desc': 'test'}
         with self.lock:
             val = self._list.get(ip, None)
         return val

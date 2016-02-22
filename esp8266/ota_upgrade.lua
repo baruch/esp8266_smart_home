@@ -32,8 +32,66 @@ function fletcher(filename)
     return sum1, sum2
 end
 
+function download_file_data(filename)
+    conn:on('receive', function(conn, data)
+        print('Received data')
+        coroutine.resume(upgradeThread, data)
+    end)
+
+    print('send request')
+    conn:send("file "..filename.."\n")
+    print('wait for data')
+    local data = coroutine.yield()
+    print('data received')
+    local newline = string.find(data, '\n')
+    print(newline)
+    local line = string.sub(data, 1, newline-1)
+    print(line)
+    data = string.sub(data, newline+1)
+    local total_len = tonumber(line)
+    print(total_len)
+    print("Receiving data "..total_len.." bytes")
+
+    local rcvd_len = 0
+    while rcvd_len < total_len do
+        local data_len = string.len(data)
+        if data_len == 0 then
+            data = coroutine.yield()
+        else
+            file.write(data)
+            rcvd_len = rcvd_len + data_len
+            data = ""
+        end
+        collectgarbage()
+    end
+end
+
 function download_file(filename, fl1, fl2)
     print('Upgrading file', filename)
+    print('removing file')
+    file.remove('download.tmp')
+    print('create file')
+    file.open('download.tmp', 'w')
+
+    print('downloading')
+    download_file_data(filename)
+
+    print('download done')
+    file.close('download.tmp')
+    local sum1 = nil
+    local sum2 = nil
+    sum1, sum2 = fletcher('download.tmp')
+    if sum1 ~= fl1 or sum2 ~= fl2 then
+        print('Failed to download file', sum1, sum2, fl1, fl2)
+        file.remove('download.tmp')
+        return false
+    else
+        file.rename('download.tmp', filename)
+        if string.find(filename, '.lua') ~= nil and filename ~= "init.lua" then
+            node.compile(filename)
+            file.remove(filename)
+        end
+    end
     return true
 end
 
@@ -129,6 +187,7 @@ upgradeThread = coroutine.create(function (conn, server_ip)
         if download_file(filename, fl[1], fl[2]) then
             filelist[filename] = fl
         end
+        collectgarbage()
     end
 
     serialize_file("file_list.lua", filelist)

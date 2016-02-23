@@ -31,6 +31,12 @@ function check_upgrade()
     end)
 end
 
+function do_sensor()
+    if mq_online then
+        mq:publish(mqtt_prefix.."/vdd", adc.readvdd33(), 0, 1)
+    end
+end
+
 function wifi_connected()
     dofile_callback('discovery.lc', function (server_ip)
         _G.server_ip = server_ip
@@ -42,11 +48,19 @@ function wifi_connected()
         mq = mqtt.Client("SHM"..node.chipid(), 120, "", "")
         -- If we die, report we are offline
         mq:lwt(mqtt_prefix.."/status", "offline", 0, 1)
+        mq_online = false
         mq:on('connect', function(client)
+            print('mqtt connected')
+            mq_online = true
             -- Report we are online after connection
             mq:publish(mqtt_prefix.."/status", "online", 0, 1)
             -- Get notifications of upgrades
             mq:subscribe("/shm/upgrade_now", 0)
+            do_sensor()
+        end)
+        mq:on('offline', function(client)
+            print('mqtt offline')
+            mq_online = false
         end)
         mq:on('message', function(conn, topic, data)
             if topic == "/shm/upgrade_now" then
@@ -55,6 +69,7 @@ function wifi_connected()
             end
         end)
         mq:connect(_G.server_ip, 1883, 0, 1)
+        tmr.alarm(1, 30*1000, tmr.ALARM_AUTO, do_sensor)
     end)
 end
 

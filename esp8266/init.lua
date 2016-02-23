@@ -26,6 +26,11 @@ function wifi_connected()
         print('server discovery completed, server: ', server_ip)
         dofile_callback('ota_upgrade.lc', function (reboot_needed)
             print('firmware upgrade finished, reboot needed:', reboot_needed)
+            if reboot_needed == true then
+                -- In the future it might be worth to coordinate the restart with other actions but for now this is good enough
+                print('Rebooting')
+                node.restart()
+            end
         end)
     end)
 end

@@ -20,18 +20,41 @@ function dofile_callback(name, callback)
     collectgarbage()
 end
 
+function check_upgrade()
+    dofile_callback('ota_upgrade.lc', function (reboot_needed)
+        print('firmware upgrade finished, reboot needed:', reboot_needed)
+        if reboot_needed == true then
+            -- In the future it might be worth to coordinate the restart with other actions but for now this is good enough
+            print('Rebooting')
+            node.restart()
+        end
+    end)
+end
+
 function wifi_connected()
     dofile_callback('discovery.lc', function (server_ip)
         _G.server_ip = server_ip
         print('server discovery completed, server: ', server_ip)
-        dofile_callback('ota_upgrade.lc', function (reboot_needed)
-            print('firmware upgrade finished, reboot needed:', reboot_needed)
-            if reboot_needed == true then
-                -- In the future it might be worth to coordinate the restart with other actions but for now this is good enough
-                print('Rebooting')
-                node.restart()
+
+        check_upgrade()
+
+        mqtt_prefix = "/shm/"..node.chipid()
+        mq = mqtt.Client("SHM"..node.chipid(), 120, "", "")
+        -- If we die, report we are offline
+        mq:lwt(mqtt_prefix.."/status", "offline", 0, 1)
+        mq:on('connect', function(client)
+            -- Report we are online after connection
+            mq:publish(mqtt_prefix.."/status", "online", 0, 1)
+            -- Get notifications of upgrades
+            mq:subscribe("/shm/upgrade_now", 0)
+        end)
+        mq:on('message', function(conn, topic, data)
+            if topic == "/shm/upgrade_now" then
+                print("Check upgrade")
+                check_upgrade()
             end
         end)
+        mq:connect(_G.server_ip, 1883, 0, 1)
     end)
 end
 

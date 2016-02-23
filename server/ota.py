@@ -5,6 +5,12 @@ import fletcher
 HOST = '0.0.0.0'
 PORT = 24320
 
+def get_file_data(files, fname):
+    for f in files:
+        if f[0] == fname:
+            return f[2]
+    return ''
+
 class OTAHandler(SocketServer.StreamRequestHandler):
 
     def handle(self):
@@ -13,6 +19,7 @@ class OTAHandler(SocketServer.StreamRequestHandler):
             print 'Unknown node'
             return
 
+        self.server.file_list.update_list()
         files = self.server.file_list.get_files_for_node(node)
         if files is None:
             print 'No files for node'
@@ -36,12 +43,9 @@ class OTAHandler(SocketServer.StreamRequestHandler):
             elif parts[0] == 'file':
                 if len(parts) < 2: return
                 fname = parts[1]
-                for f in files:
-                    if f[0] == fname:
-                        content = f[2]
-                        header = '%d\n' % len(content)
-                        self.wfile.write(header + content)
-                        break
+                content = get_file_data(files, fname)
+                header = '%d\n' % len(content)
+                self.wfile.write(header + content)
             else:
                 return
 

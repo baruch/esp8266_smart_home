@@ -87,12 +87,18 @@ local function download_file(filename, fl1, fl2)
         return false
     else
         print('renaming')
-        file.rename('download.tmp', filename)
         if string.find(filename, '.lua') ~= nil and filename ~= "init.lua" then
             print('Compiling')
-            node.compile(filename)
-            print('Removing source file')
+            file.remove("_tmp.lua")
+            file.rename("download.tmp", "_tmp.lua")
+
+            node.compile("_tmp.lua")
+            file.remove("_tmp.lua")
             file.remove(filename)
+            file.rename('_tmp.lua', filename) -- TODO: need the filename with .lc instead of .lua
+        else
+            file.remove(filename)
+            file.rename('download.tmp', filename)
         end
     end
     print('Done download')

@@ -64,6 +64,18 @@ print('config read')
 if conf.wifi_ssid ~= nil and conf.wifi_password ~= nil then
     print("Retrieved stored WiFi credentials")
     print("---------------------------------")
+<<<<<<< HEAD
+    print("wifi_ssid     : " .. wifi_ssid)
+    print("wifi_password : " .. wifi_password)
+    print("wifi_ip : " .. wifi_ip)
+    print("wifi_nm : " .. wifi_nm)
+    print("wifi_gw : " .. wifi_gw)
+    print("wifi_dns : " .. (wifi_dns or ""))
+    print("wifi_repo : " .. (wifi_repo or ""))
+    print("wifi_desc : " .. (wifi_desc or ""))
+    _G.wifi_desc = (wifi_desc or "")
+    try_connecting(wifi_ssid, wifi_password, wifi_ip, wifi_nm, wifi_gw)
+=======
     print("wifi_ssid     : ", conf.wifi_ssid)
     print("wifi_password : ", conf.wifi_password)
     print("wifi_ip : ", conf.wifi_ip)
@@ -78,6 +90,7 @@ if conf.wifi_ssid ~= nil and conf.wifi_password ~= nil then
     try_connecting(conf)
     conf = nil
     collectgarbage()
+>>>>>>> refs/remotes/baruch/master
 else
     run_setup()
 end

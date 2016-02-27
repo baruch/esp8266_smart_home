@@ -24,15 +24,18 @@ function serialize(o)
 end
 
 function serialize_file(filename, data)
-    file.open(filename, "w")
+    file.open(filename, "w+")
     file.write("return ")
     serialize(data)
+    file.flush()
     file.close()
 
+    -- REVIEW: is this for delay? Why size limit?
     file.open(filename, "r")
     print(file.read(1024))
     file.close()
 
+    -- Compiled files harder to read (weak theft protection).
     node.compile(filename)
     file.remove(filename)
 end

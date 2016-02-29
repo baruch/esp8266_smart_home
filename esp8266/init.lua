@@ -77,4 +77,5 @@ _G.server_ip = nil
 _G.wifi_desc = ''
 deserialize_file('node_params.lc')
 print("Node type", _G.node_type)
+
 dofile_callback('wifi.lc', wifi_connected)

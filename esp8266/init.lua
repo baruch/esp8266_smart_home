@@ -44,8 +44,7 @@ end
 _G.server_ip = nil
 _G.wifi_desc = ''
 dofile('bootreason.lc')
-local _, extreason = node.bootreason()
-if extreason ~= 0 and extreason ~= 5 and extreason ~= 4 then
+if former_run_failed() then
     print('Not running rest of code due to error in previous run')
 else
     deserialize_file('node_params.lc')

@@ -39,3 +39,11 @@ if extreason == 3 then
     print('DEPC:', depc)
     print('')
 end
+
+function former_run_failed()
+    local _, extreason = node.bootreason()
+    if extreason == 0 or extreason == 5 or extreason == 4 or extreason == 6 then
+        return false
+    end
+    return true
+end

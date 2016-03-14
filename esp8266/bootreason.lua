@@ -17,18 +17,8 @@ local extreason_str = {
     [6] = 'external reset',
 }
 
-local name
-
-if extreason == nil then
-    name = reason_str[reason]
-else
-    name = extreason_str[extreason]
-end
-
-if name == nil then
-    name = 'Unknown'
-end
-print('Boot Reason: '..name)
+print('Boot Reason:', reason_str[reason])
+print('Extended reason:', extreason_str[extreason])
 
 if extreason == 3 then
     print('Cause:', cause)
@@ -42,7 +32,7 @@ end
 
 function former_run_failed()
     local _, extreason = node.bootreason()
-    if extreason == 0 or extreason == 5 or extreason == 4 or extreason == 6 then
+    if extreason == nil or extreason == 0 or extreason == 5 or extreason == 4 or extreason == 6 then
         return false
     end
     return true

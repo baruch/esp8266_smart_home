@@ -63,7 +63,7 @@ local function try_connecting(conf)
         if wifi.sta.status() ~= 5 then
             tmr.stop(0)
             tmr.unregister(0)
-            print("Failed to connect to \"" .. wifi_ssid .. "\".")
+            print("Failed to connect to", wifi_ssid, ".")
             if uclass == nil or uclass == "sensor" then 
                 print("Sleep 5 min + retry...")
                 print("Press the button 5 seconds on the next boot to enter WiFi configuration captive mode.")

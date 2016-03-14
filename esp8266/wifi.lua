@@ -93,7 +93,7 @@ print('config read')
 -- TODO: Add your functionality here to do BEFORE connection established.
 --
 
-if conf.wifi_ssid ~= nil and conf.wifi_password ~= nil then
+if conf.wifi_ssid ~= "" and conf.wifi_password ~= "" then
     print("Retrieved stored WiFi credentials")
     print("---------------------------------")
     print("wifi_ssid     : ", conf.wifi_ssid)
@@ -106,7 +106,7 @@ if conf.wifi_ssid ~= nil and conf.wifi_password ~= nil then
     _G.wifi_desc = conf.wifi_desc
 
     -- set DNS to second slot if configured.
-    if conf.wifi_dns ~= nil and conf.wifi_dns ~= '' then
+    if conf.wifi_dns ~= '' then
         net.dns.setdnsserver(wifi_dns, 1)
     end
 

@@ -6,6 +6,7 @@ INIT_DELAY = 5*1000*1000
 gpio.mode(LBGI, gpio.INPUT, gpio.PULLUP)  -- Set IO to Input pullup to off the LED.
 if gpio.read(LBGI) == 0 then -- button pressed
 	t1 = tmr.now()
+	print('Button pressed')
 	tmr.alarm(5, 100, 1, function()
 		if gpio.read(LBGI) == 1 and (tmr.now() - t1 < INIT_DELAY) then -- Abort wait
 		    print("Button released.")

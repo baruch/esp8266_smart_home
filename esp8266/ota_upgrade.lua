@@ -4,6 +4,7 @@ dofile('serialize.lc')
 
 print('ota create connection')
 local conn = net.createConnection(net.TCP, 0)
+print('after conn heap', node.heap())
 
 local function fletcher(filename)
     if file.open(filename, "r") == nil then
@@ -49,8 +50,7 @@ local function download_file_data(filename)
     print(line)
     data = string.sub(data, newline+1)
     local total_len = tonumber(line)
-    print(total_len)
-    print("Receiving data "..total_len.." bytes")
+    print("Receiving data", total_len, "bytes")
 
     local rcvd_len = 0
     while rcvd_len < total_len do
@@ -64,6 +64,21 @@ local function download_file_data(filename)
         end
         collectgarbage()
     end
+end
+
+local function lc_filename(filename)
+	local s = string.find(filename, '.lua')
+	if s == nil then
+		-- not a lua file
+		return nil
+	end
+
+	if filename == 'init.lua' then
+		-- We do not compile init.lua
+		return nil
+	end
+
+	return string.gsub(filename, '.lua', '.lc', 1)
 end
 
 local function download_file(filename, fl1, fl2)
@@ -87,15 +102,29 @@ local function download_file(filename, fl1, fl2)
         return false
     else
         print('renaming')
-        if string.find(filename, '.lua') ~= nil and filename ~= "init.lua" then
+		local lcname = lc_filename(filename)
+        if lcname ~= nil  then
             print('Compiling')
+
             file.remove("_tmp.lua")
+			file.remove("_tmp.lc")
             file.rename("download.tmp", "_tmp.lua")
 
-            node.compile("_tmp.lua")
-            file.remove("_tmp.lua")
-            file.remove(filename)
-            file.rename('_tmp.lua', filename) -- TODO: need the filename with .lc instead of .lua
+			print('pre compile collect', node.heap())
+			collectgarbage()
+			print('pre compile', node.heap())
+            local status, exception = pcall(function () node.compile("_tmp.lua") end)
+			print('compile result', status, exception)
+			local compiled_name = '_tmp.lc'
+			if status == false then
+				file.remove(compiled_name)
+				compiled_name = '_tmp.lua'
+			else
+				file.remove("_tmp.lua")
+			end
+			print('replacing', lcname, 'with', compiled_name)
+            file.remove(lcname)
+            file.rename(compiled_name, lcname)
         else
             file.remove(filename)
             file.rename('download.tmp', filename)
@@ -178,11 +207,7 @@ local function list_files(filelist)
     return todolist
 end
 
-upgradeThread = coroutine.create(function (_, server_ip)
-    print('connecting to ', server_ip)
-    conn:connect(24320, server_ip)
-    coroutine.yield()
-
+local function do_upgrade(conn)
     local filelist = deserialize_file("file_list.lc")
     if display_table ~= nil then
         print('Installed files')
@@ -203,6 +228,15 @@ upgradeThread = coroutine.create(function (_, server_ip)
     end
 
     serialize_file("file_list.lua", filelist)
+	return reboot_needed
+end
+
+upgradeThread = coroutine.create(function (_, server_ip)
+    print('connecting to ', server_ip)
+    conn:connect(24320, server_ip)
+    coroutine.yield()
+
+	local reboot_needed = do_upgrade(conn)
 
     conn:close()
     conn = nil
@@ -213,6 +247,7 @@ upgradeThread = coroutine.create(function (_, server_ip)
     end
     print('OTA done')
 end)
+print('after upgrade heap', node.heap())
 
 conn:on('connection', function(conn)
     print('connected to ota server')

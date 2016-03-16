@@ -1,5 +1,9 @@
+dofile('i2c_common.lc')
+
 htu21d = {
 	address = 64,
+        temp_reg = 0xF3,
+        humid_reg = 0xF5,
 
 	init = function (self, sda, scl)
 		self.bus = 0
@@ -7,18 +11,11 @@ htu21d = {
 	end,
 
         sendcmd = function (self, cmd)
-                i2c.start(self.bus)
-                i2c.address(self.bus, self.address, i2c.TRANSMITTER)
-                i2c.write(self.bus, cmd)
-                i2c.stop(self.bus)
+                return i2c_send(self.address, cmd)
         end,
 
         readreply = function (self, len)
-                i2c.start(self.bus)
-                i2c.address(self.bus, self.address, i2c.RECEIVER)
-                local c = i2c.read(self.bus, len)
-                i2c.stop(self.bus)
-                return c
+                return i2c_recv(self.address, len)
         end,
 
         crc8 = function (data)
@@ -41,6 +38,9 @@ htu21d = {
         end,
 
         dataToFloat = function (self, data)
+                if #data ~= 3 then
+                        return 0
+                end
 		local msb = string.byte(data, 1)
                 local lsb = string.byte(data, 2)
                 local cksum = string.byte(data, 3)
@@ -50,18 +50,23 @@ htu21d = {
         end,
 
 	readTempRaw = function (self)
-                self:sendcmd(0xF3)
-		tmr.delay(50000)
-		return self:readreply(3)
+                if self:sendcmd(self.temp_reg) ~= true then
+                        return "", false
+                end
+                tmr.delay(50000) -- 50 msec
+                return self:readreply(3)
 	end,
 
 	temp = function (self, data)
-                local data
                 if data == nil then
-                        data = self:readTempRaw()
+                        data, ack = self:readTempRaw()
+                        if ack ~= true then
+                                return -1000
+                        end
                 end
                 if self:crc8(data) ~= 0 then
-                        return -1000
+
+                        return -1001
                 end
                 local temp = self:dataToFloat(data)
                 local real = -46.85+(172.72*temp)
@@ -69,18 +74,20 @@ htu21d = {
 	end,
 
         readHumidRaw = function(self)
-                self:sendcmd(0xF5)
-                tmr.delay(50000)
+                self:sendcmd(self.humid_reg)
+                tmr.delay(50000) -- 50 msec
                 return self:readreply(3)
         end,
 
         humidity = function(self)
-                local data
                 if data == nil then
                         data = self:readHumidRaw()
+                        if ack ~= true then
+                                return -1000
+                        end
                 end
                 if self:crc8(data) ~= 0 then
-                        return -1000
+                        return -1001
                 end
                 local humid = self:dataToFloat(data)
                 local real = 125 * humid - 6

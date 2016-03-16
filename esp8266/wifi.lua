@@ -16,6 +16,7 @@ local function non_nil(val)
     if val == nil then
         return ""
     end
+    return val
 end
 
 local function read_wifi_credentials()

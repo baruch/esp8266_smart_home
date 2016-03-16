@@ -82,17 +82,11 @@ end
 ------  MAIN  -----------
 -------------------------
 print('start')
--- REVIEW: how to merge unit type and node params. Brainstorm together.
-if file.open("ut.lc", "r") then dofile("ut.lc")
-else print "Unit type is not set." end
 
-dofile("button_setup.lc")  -- uses timer #5
 wifi.sta.disconnect()
 print('disconnected')
 local conf = read_wifi_credentials()
 print('config read')
--- TODO: Add your functionality here to do BEFORE connection established.
---
 
 if conf.wifi_ssid ~= "" and conf.wifi_password ~= "" then
     print("Retrieved stored WiFi credentials")

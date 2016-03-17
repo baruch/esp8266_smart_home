@@ -227,7 +227,9 @@ local function do_upgrade(conn)
         collectgarbage()
     end
 
-    serialize_file("file_list.lua", filelist)
+	if reboot_needed == true then
+		serialize_file("file_list.lua", filelist)
+	end
 	return reboot_needed
 end
 

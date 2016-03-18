@@ -36,6 +36,6 @@ function serialize_file(filename, data)
     file.close()
 
     -- Compiled files harder to read (weak theft protection).
-    node.compile(filename)
+    print('compile', pcall(node.compile, filename))
     file.remove(filename)
 end

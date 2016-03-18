@@ -28,6 +28,11 @@ function dofile_callback(name, callback)
 end
 
 function check_upgrade()
+    if upgradeThread ~= nil then
+        print('Upgrade already in progress')
+        return
+    end
+
     dofile_callback('ota_upgrade.lc', function (reboot_needed)
         print('firmware upgrade finished, reboot needed:', reboot_needed)
         if reboot_needed == true then

@@ -105,11 +105,11 @@ local function download_file(filename, fl1, fl2)
             file.rename("download.tmp", "_tmp.lua")
 
 			collectgarbage()
-			print('pre compile', node.heap())
-            local status, exception = pcall(function () node.compile("_tmp.lua") end)
+            local status, exception = pcall(node.compile, "_tmp.lua")
 			print('compile result', status, exception)
 			local compiled_name = '_tmp.lc'
 			if status == false then
+				-- compilation failed
 				file.remove(compiled_name)
 				compiled_name = '_tmp.lua'
 			else

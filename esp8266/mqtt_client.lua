@@ -2,8 +2,10 @@ mqtt_prefix = "/shm/"..node.chipid()
 
 mq = mqtt.Client("SHM"..node.chipid(), 120, "", "")
 
+local topic_status = "/shm/upgrade_now"
+
 -- If we die, report we are offline
-mq:lwt(topic_status(), "offline", 0, 1)
+mq:lwt(topic_status, "offline", 0, 1)
 
 -- Take note if our mqtt client is connected or not
 mq_connected = false
@@ -12,10 +14,9 @@ mq:on('connect', function(client)
         print('mqtt connected')
         mq_connected = true
         -- Report we are online after connection
-        mq:publish(topic_status(), "online", 0, 1)
+        mq:publish(topic_status, "online", 0, 1)
         -- Get notifications of upgrades
         mq:subscribe("/shm/upgrade_now", 0)
-        do_sensor()
 end)
 
 mq:on('offline', function(client)
@@ -24,7 +25,7 @@ mq:on('offline', function(client)
 end)
 
 mq:on('message', function(conn, topic, data)
-        if topic == "/shm/upgrade_now" then
+        if topic == topic_status then
                 print("Check upgrade")
                 check_upgrade()
         end

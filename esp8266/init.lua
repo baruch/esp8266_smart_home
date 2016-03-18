@@ -49,7 +49,7 @@ function wifi_connected()
         print('server discovery completed, server: ', server_ip)
 
         check_upgrade()
-        --dofile_callback('mqtt_client.lc', nil)
+        dofile_callback('mqtt_client.lc', nil)
     end)
 end
 

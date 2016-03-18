@@ -4,7 +4,11 @@ function deserialize_file(name)
         print(name .. ": Config file is missing, using defaults")
         return {}
     else
-        return nc()
+        local success, result = pcall(nc)
+        if success ~= true then
+            print('failed to load', exception)
+        end
+        return result
     end
 end
 
@@ -12,7 +16,10 @@ function dofile_callback(name, callback)
     print('Loading file', name)
     local func = loadfile(name)
     if func ~= nil then
-        func(callback)
+        local success, result = pcall(func, callback)
+        if success ~= true then
+            print('Failed to run', exception)
+        end
     else
         print('loadfile for '..name..' failed')
     end

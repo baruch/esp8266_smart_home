@@ -4,7 +4,6 @@ dofile('serialize.lc')
 
 print('ota create connection')
 local conn = net.createConnection(net.TCP, 0)
-print('after conn heap', node.heap())
 
 local function fletcher(filename)
     if file.open(filename, "r") == nil then
@@ -35,19 +34,16 @@ end
 
 local function download_file_data(filename)
     conn:on('receive', function(conn, data)
-        print('Received data')
+        print('Received data, len=', #data)
         coroutine.resume(upgradeThread, data)
     end)
 
     print('send request')
     conn:send("file "..filename.."\n")
-    print('wait for data')
     local data = coroutine.yield()
     print('data received')
     local newline = string.find(data, '\n')
-    print(newline)
     local line = string.sub(data, 1, newline-1)
-    print(line)
     data = string.sub(data, newline+1)
     local total_len = tonumber(line)
     print("Receiving data", total_len, "bytes")
@@ -83,15 +79,13 @@ end
 
 local function download_file(filename, fl1, fl2)
     print('Upgrading file', filename)
-    print('removing file')
     file.remove('download.tmp')
-    print('create file')
     file.open('download.tmp', 'w')
 
     print('downloading')
     download_file_data(filename)
-
     print('download done')
+
     file.close('download.tmp')
     local sum1 = nil
     local sum2 = nil
@@ -110,7 +104,6 @@ local function download_file(filename, fl1, fl2)
 			file.remove("_tmp.lc")
             file.rename("download.tmp", "_tmp.lua")
 
-			print('pre compile collect', node.heap())
 			collectgarbage()
 			print('pre compile', node.heap())
             local status, exception = pcall(function () node.compile("_tmp.lua") end)
@@ -240,6 +233,7 @@ upgradeThread = coroutine.create(function (_, server_ip)
 
 	local reboot_needed = do_upgrade(conn)
 
+	print('Upgrade closing down')
     conn:close()
     conn = nil
     upgradeThread = nil
@@ -249,7 +243,6 @@ upgradeThread = coroutine.create(function (_, server_ip)
     end
     print('OTA done')
 end)
-print('after upgrade heap', node.heap())
 
 conn:on('connection', function(conn)
     print('connected to ota server')

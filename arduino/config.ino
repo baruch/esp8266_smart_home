@@ -48,8 +48,9 @@ bool Config::readFile() {
   
   File configFile = SPIFFS.open(_filename, "r");
   ch = configFile.read();
-  if (ch == 'C') {
-    Serial.println("Config Error: Invalid header");
+  if (ch != 'C') {
+    Serial.print("Config Error: Invalid header, got ");
+    Serial.println(ch, HEX);
     res = false;
   }
 

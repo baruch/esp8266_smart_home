@@ -2,7 +2,6 @@
 #include <ESP8266WiFi.h>
 #include <Esp.h>
 #include "WiFiManager/WiFiManager.h"
-#include <ArduinoJson.h>
 #include "config.h"
 #include <GDBStub.h>
 

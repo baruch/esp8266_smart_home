@@ -23,6 +23,8 @@ bool shouldSaveConfig;
 
 WiFiClient mqtt_client;
 PubSubClient mqtt(mqtt_client);
+char mqtt_will_topic[32];
+char mqtt_desc_topic[32];
 
 void print_str(const char *name, const char *val)
 {
@@ -245,6 +247,8 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 }
 
 void mqtt_setup() {
+  snprintf(mqtt_will_topic, sizeof(mqtt_will_topic), "shm/%s/online", node_name);
+  snprintf(mqtt_desc_topic, sizeof(mqtt_desc_topic), "shm/%s/desc", node_name);
   mqtt.setServer(mqtt_server, mqtt_port);
   mqtt.setCallback(mqtt_callback);
 }
@@ -258,9 +262,11 @@ bool mqtt_connected() {
   if (now - lastReconnectAttempt > 5000) {
     lastReconnectAttempt = now;
     Serial.println("Attempting MQTT connection...");
-    if (mqtt.connect(node_name)) {
+    if (mqtt.connect(node_name, mqtt_will_topic, 0, 1, "offline")) {
       Serial.println("MQTT connected");
       // Once connected, publish an announcement...
+      mqtt.publish(mqtt_will_topic, "online", 1);
+      mqtt.publish(mqtt_desc_topic, node_desc, 1);
       mqtt.publish("outTopic", "hello world");
       // ... and resubscribe
       mqtt.subscribe("inTopic");

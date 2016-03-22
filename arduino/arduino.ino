@@ -125,9 +125,16 @@ void setup() {
   Serial.println(ESP.getResetInfo());
   Serial.println(ESP.getResetReason());
 
+  uint32_t t1 = ESP.getCycleCount();
   spiffs_mount();
   config_load();
   net_config();
+  uint32_t t2 = ESP.getCycleCount();
+
+  Serial.print("setup time ");
+  Serial.print(t2-t1);
+  Serial.print(" in micros ");
+  Serial.println(clockCyclesToMicroseconds(t2-t1));
 
   // Load node params
   // Load wifi config

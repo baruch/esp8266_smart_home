@@ -249,25 +249,26 @@ void mqtt_setup() {
   mqtt.setCallback(mqtt_callback);
 }
 
-void mqtt_reconnect() {
-  // Loop until we're reconnected
-  while (!mqtt.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
+bool mqtt_connected() {
+  if (mqtt.connected())
+    return true;
+
+  long now = millis();
+  static long lastReconnectAttempt = 0;
+  if (now - lastReconnectAttempt > 5000) {
+    lastReconnectAttempt = now;
+    Serial.println("Attempting MQTT connection...");
     if (mqtt.connect(node_name)) {
-      Serial.println("connected");
+      Serial.println("MQTT connected");
       // Once connected, publish an announcement...
       mqtt.publish("outTopic", "hello world");
       // ... and resubscribe
       mqtt.subscribe("inTopic");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(mqtt.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
+      return true;
     }
   }
+
+  return false;
 }
 
 void build_name() {
@@ -339,22 +340,20 @@ void read_serial_commands() {
 void loop() {
   read_serial_commands();
 
-  if (!mqtt.connected()) {
-    mqtt_reconnect();
+  if (mqtt_connected()) {
+    mqtt.loop();
+  
+    static long lastMsg = 0;
+    static long value = 0;
+    long now = millis();
+    if (now - lastMsg > 2000) {
+      char msg[20];
+      lastMsg = now;
+      ++value;
+      snprintf (msg, 75, "hello world #%ld", value);
+      Serial.print("Publish message: ");
+      Serial.println(msg);
+      mqtt.publish("outTopic", msg);
+    }
   }
-  mqtt.loop();
-
-  static long lastMsg = 0;
-  static long value = 0;
-  long now = millis();
-  if (now - lastMsg > 2000) {
-    char msg[20];
-    lastMsg = now;
-    ++value;
-    snprintf (msg, 75, "hello world #%ld", value);
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    mqtt.publish("outTopic", msg);
-  }
-
 }

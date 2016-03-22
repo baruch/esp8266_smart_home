@@ -3,6 +3,7 @@
 #include <Esp.h>
 #include "WiFiManager/WiFiManager.h"
 #include "config.h"
+#include <PubSubClient.h>
 #include <GDBStub.h>
 
 #define CONFIG_FILE "/config.ini"
@@ -19,6 +20,9 @@ char static_nm[16] = "";
 char static_gw[16] = "";
 char dns[40] = "";
 bool shouldSaveConfig;
+
+WiFiClient mqtt_client;
+PubSubClient mqtt(mqtt_client);
 
 void print_str(const char *name, const char *val)
 {
@@ -230,6 +234,42 @@ void discover_server() {
   udp.stop();
 }
 
+void mqtt_callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+}
+
+void mqtt_setup() {
+  mqtt.setServer(mqtt_server, mqtt_port);
+  mqtt.setCallback(mqtt_callback);
+}
+
+void mqtt_reconnect() {
+  // Loop until we're reconnected
+  while (!mqtt.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (mqtt.connect(node_name)) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      mqtt.publish("outTopic", "hello world");
+      // ... and resubscribe
+      mqtt.subscribe("inTopic");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(mqtt.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
 void build_name() {
   uint32_t id;
   int i;
@@ -293,9 +333,28 @@ void read_serial_commands() {
       delay(100);
       ESP.restart();
     }
-  }  
+  }
 }
 
 void loop() {
   read_serial_commands();
+
+  if (!mqtt.connected()) {
+    mqtt_reconnect();
+  }
+  mqtt.loop();
+
+  static long lastMsg = 0;
+  static long value = 0;
+  long now = millis();
+  if (now - lastMsg > 2000) {
+    char msg[20];
+    lastMsg = now;
+    ++value;
+    snprintf (msg, 75, "hello world #%ld", value);
+    Serial.print("Publish message: ");
+    Serial.println(msg);
+    mqtt.publish("outTopic", msg);
+  }
+
 }

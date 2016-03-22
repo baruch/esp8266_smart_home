@@ -35,23 +35,27 @@ class DiscoveryUDPHandler(SocketServer.BaseRequestHandler):
         self.server.node_list.update_node(node_ip, node_id, node_type, node_desc)
 
         # send response
-        response = 'R' + self.server.server_ip
+        response = 'R' + self.server.server_ip + self.server.mqtt_port
         
         socket.sendto(response, self.client_address)
 
 class DiscoveryServer(SocketServer.UDPServer):
-    def set_server_ip(self, _server_ip):
+    def set_server_ip(self, _server_ip, _port):
         parts = _server_ip.split('.')
         parts_int = tuple(map(lambda x: int(x), parts))
         self.server_ip = '\004%c%c%c%c' % parts_int
+        port_net = socket.htons(_port)
+        port_high = port_net >> 8
+        port_low = port_net & 0xFF
+        self.mqtt_port = '\002%c%c' % (port_high, port_low)
 
     def set_node_list(self, node_list):
         self.node_list = node_list
 
 
-def start(server_ip, node_list):
+def start(server_ip, port, node_list):
     server = DiscoveryServer((HOST, PORT), DiscoveryUDPHandler)
-    server.set_server_ip(server_ip)
+    server.set_server_ip(server_ip, port)
     server.set_node_list(node_list)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True

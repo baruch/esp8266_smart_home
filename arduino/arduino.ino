@@ -1,4 +1,6 @@
 #include <FS.h> //this needs to be first, or it all crashes and burns...
+#include <ESP8266WiFi.h>
+#include <Esp.h>
 #include "WiFiManager/WiFiManager.h"
 #include <ArduinoJson.h>
 #include "config.h"
@@ -6,8 +8,12 @@
 
 #define CONFIG_FILE "/config.ini"
 
+const int DISCOVER_PORT = 24320;
+
+char node_type[32];
+char node_desc[32];
 char mqtt_server[40];
-char mqtt_port[6] = "9090";
+int mqtt_port;
 char static_ip[16] = "";
 char static_nm[16] = "";
 char static_gw[16] = "";
@@ -20,6 +26,15 @@ void print_str(const char *name, const char *val)
   Serial.print(": \"");
   Serial.print(val);
   Serial.println('"');
+}
+
+char nibbleToChar(uint32_t val)
+{
+  val &=0xF;
+  if (val < 10)
+    return '0' + val;
+  else
+    return 'A' + val - 10;
 }
 
 void spiffs_mount() {
@@ -43,11 +58,13 @@ void config_load() {
   strcpy(static_gw, cfg.getValueStr("gw"));
   strcpy(static_nm, cfg.getValueStr("nm"));
   strcpy(static_nm, cfg.getValueStr("dns"));
+  strcpy(node_desc, cfg.getValueStr("desc"));
 
   print_str("IP", static_ip);
   print_str("GW", static_gw);
   print_str("NM", static_nm);
   print_str("DNS", static_nm);
+  print_str("Node Desc", node_desc);
 }
 
 void configModeCallback (WiFiManager *myWiFiManager) {
@@ -64,6 +81,7 @@ void saveConfigCallback () {
 void net_config() {
   WiFiManager wifiManager;
 
+  WiFiManagerParameter node_desc_param("desc", "Description", node_desc, 32);
   WiFiManagerParameter custom_ip("ip", "Static IP", static_ip, 40);
   WiFiManagerParameter custom_gw("gw", "Static Gateway", static_gw, 5);
   WiFiManagerParameter custom_nm("nm", "Static Netmask", static_nm, 5);
@@ -76,9 +94,9 @@ void net_config() {
     _nm.fromString(static_nm);
     
     wifiManager.setSTAStaticIPConfig(_ip, _gw, _nm);
-    
   }
 
+  wifiManager.addParameter(&node_desc_param);
   wifiManager.addParameter(&custom_ip);
   wifiManager.addParameter(&custom_nm);
   wifiManager.addParameter(&custom_gw);
@@ -104,6 +122,7 @@ void net_config() {
   if (shouldSaveConfig) {
     Serial.println("saving config");
     Config cfg(CONFIG_FILE);
+    cfg.setValueStr("desc", node_desc_param.getValue());
     cfg.setValueStr("ip", custom_ip.getValue());
     cfg.setValueStr("gw", custom_gw.getValue());
     cfg.setValueStr("nm", custom_nm.getValue());
@@ -116,7 +135,112 @@ void net_config() {
  }
 }
 
+void discover_server() {
+  WiFiUDP udp;
+  int res;
+  const IPAddress INADDR_BCAST(255,255,255,255);
+  char buf[64];
+
+  udp.begin(DISCOVER_PORT);
+  res = udp.beginPacket(INADDR_BCAST, DISCOVER_PORT);
+  if (res != 1) {
+    Serial.println("Failed to prepare udp packet for send");
+    return;
+  }
+
+  uint32_t id;
+  int pktlen;
+  int i;
+
+  buf[0] = 'S';
+  buf[1] = 16;
+  pktlen = 2;
+
+  id = ESP.getChipId();
+  for (i = 0; i < 8; i++, id>>=4) {
+    buf[pktlen++] = nibbleToChar(id);
+  }
+  id = ESP.getFlashChipId();
+  for (i = 0; i < 8; i++, id>>=4) {
+    buf[pktlen++] = nibbleToChar(id);
+  }
+  
+  buf[pktlen++] = strlen(node_type);
+  strcpy(buf+pktlen, node_type);
+  pktlen += strlen(node_type);
+  
+  buf[pktlen++] = strlen(node_desc);
+  strcpy(buf+pktlen, node_desc);
+  pktlen += strlen(node_desc);
+  
+  udp.write(buf, pktlen);
+    
+  res = udp.endPacket();
+  if (res != 1) {
+    Serial.println("Failed to send udp discover packet");
+    return;
+  }
+
+  for (i = 0; i < 5; i ++) {
+    Serial.println("Packet sent");
+    int wait;
+    for (wait = 0, res = -1; res == -1 && wait < 250; wait++) {
+      delay(1);
+      res = udp.parsePacket();
+    }
+
+    if (res == -1) {
+      Serial.println("Packet reply timed out, retrying");
+      continue;
+    }
+      
+    Serial.print("Pkt reply took ");
+    Serial.print(wait);
+    Serial.println(" msec");
+  
+    char reply[32];
+    res = udp.read(reply, sizeof(reply));
+    if (res < 9) {
+      Serial.println("Not enough data in the reply");
+      continue;
+    }
+    Serial.print("Packet:");
+    for (i = 0; i < res; i++) {
+      Serial.print(' ');
+      Serial.print(reply[i], HEX);
+    }
+    Serial.print('\n');
+
+    if (reply[0] != 'R') {
+      Serial.println("Invalid reply header");
+      continue;
+    }
+
+    if (reply[1] != 4) {
+      Serial.println("Invalid ip length");
+      continue;
+    }
+
+    sprintf(mqtt_server, "%d.%d.%d.%d", reply[2], reply[3], reply[4], reply[5]);
+    print_str("MQTT IP", mqtt_server);
+
+    if (reply[6] != 2) {
+      Serial.println("Invalid port length");
+      continue;
+    }
+
+    mqtt_port = reply[7] | (reply[8] << 8);
+    Serial.print("MQTT Port: ");
+    Serial.println(mqtt_port);
+  }
+
+  udp.stop();
+}
+
 void setup() {
+  node_type[0] = 0;
+  node_desc[0] = 0;
+
   Serial.begin(115200);
 #ifdef DEBUG
   delay(10000); // Wait for port to open, debug only
@@ -129,6 +253,8 @@ void setup() {
   spiffs_mount();
   config_load();
   net_config();
+  discover_server();
+  mqtt_setup();
   uint32_t t2 = ESP.getCycleCount();
 
   Serial.print("setup time ");
@@ -142,7 +268,7 @@ void setup() {
   Serial.println("Setup done");
 }
 
-void loop() {
+void read_serial_commands() {
   if (Serial.available()) {
     char ch = Serial.read();
     if (ch == 'f') {
@@ -153,5 +279,9 @@ void loop() {
       delay(100);
       ESP.restart();
     }
-  }
+  }  
+}
+
+void loop() {
+  read_serial_commands();
 }

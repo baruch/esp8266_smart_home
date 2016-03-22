@@ -100,7 +100,7 @@ def main():
 
     server_ip = get_server_ip()
     print 'Server IP is', server_ip
-    discovery.start(server_ip, node_list)
+    discovery.start(server_ip, 1883, node_list)
     ota.start(node_list, file_list)
     while 1:
         time.sleep(1)

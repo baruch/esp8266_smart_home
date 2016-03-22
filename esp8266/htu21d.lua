@@ -1,4 +1,4 @@
-dofile('i2c_common.lc')
+dofile('i2c_common.lua')
 
 htu21d = {
 	address = 64,

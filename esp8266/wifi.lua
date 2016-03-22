@@ -8,8 +8,8 @@ local function run_setup()
     wifi.ap.config(cfg)
 
     print("Opening WiFi credentials portal")
-    dofile ("dns-liar.lc")
-    dofile ("server.lc")
+    dofile ("dns-liar.lua")
+    dofile ("server.lua")
 end
 
 local function non_nil(val)
@@ -20,7 +20,7 @@ local function non_nil(val)
 end
 
 local function read_wifi_credentials()
-    local c = deserialize_file("netconfig.lc")
+    local c = deserialize_file("netconfig.lua")
     c.wifi_desc = non_nil(c.wifi_desc)
     c.wifi_ip = non_nil(c.wifi_ip)
     c.wifi_ssid = non_nil(c.wifi_ssid)

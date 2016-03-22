@@ -35,7 +35,5 @@ function serialize_file(filename, data)
     print(file.read(1024))
     file.close()
 
-    -- Compiled files harder to read (weak theft protection).
-    print('compile', pcall(node.compile, filename))
-    file.remove(filename)
+	collectgarbage()
 end

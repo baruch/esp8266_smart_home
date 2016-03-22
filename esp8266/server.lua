@@ -194,7 +194,7 @@ function parse_wifi_credentials(vars)
     print("wifi_repo : " .. wifi_repo)
     print("wifi_desc : ", wifi_desc)
 
-    dofile("serialize.lc")
+    dofile("serialize.lua")
     serialize_file("netconfig.lua", {
         wifi_ssid = wifi_ssid,
         wifi_password = wifi_password,

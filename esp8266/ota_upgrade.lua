@@ -1,6 +1,6 @@
 local callback=...
 
-dofile('serialize.lc')
+dofile('serialize.lua')
 
 print('ota create connection')
 local conn = net.createConnection(net.TCP, 0)
@@ -62,21 +62,6 @@ local function download_file_data(filename)
     end
 end
 
-local function lc_filename(filename)
-	local s = string.find(filename, '.lua')
-	if s == nil then
-		-- not a lua file
-		return nil
-	end
-
-	if filename == 'init.lua' then
-		-- We do not compile init.lua
-		return nil
-	end
-
-	return string.gsub(filename, '.lua', '.lc', 1)
-end
-
 local function download_file(filename, fl1, fl2)
     print('Upgrading file', filename)
     file.remove('download.tmp')
@@ -96,32 +81,8 @@ local function download_file(filename, fl1, fl2)
         return false
     else
         print('renaming')
-		local lcname = lc_filename(filename)
-        if lcname ~= nil  then
-            print('Compiling')
-
-            file.remove("_tmp.lua")
-			file.remove("_tmp.lc")
-            file.rename("download.tmp", "_tmp.lua")
-
-			collectgarbage()
-            local status, exception = pcall(node.compile, "_tmp.lua")
-			print('compile result', status, exception)
-			local compiled_name = '_tmp.lc'
-			if status == false then
-				-- compilation failed
-				file.remove(compiled_name)
-				compiled_name = '_tmp.lua'
-			else
-				file.remove("_tmp.lua")
-			end
-			print('replacing', lcname, 'with', compiled_name)
-            file.remove(lcname)
-            file.rename(compiled_name, lcname)
-        else
-            file.remove(filename)
-            file.rename('download.tmp', filename)
-        end
+		file.remove(filename)
+		file.rename('download.tmp', filename)
     end
     print('Done download')
     return true
@@ -201,7 +162,7 @@ local function list_files(filelist)
 end
 
 local function do_upgrade(conn)
-    local filelist = deserialize_file("file_list.lc")
+    local filelist = deserialize_file("file_list.lua")
     if display_table ~= nil then
         print('Installed files')
         display_table(filelist)
@@ -222,6 +183,8 @@ local function do_upgrade(conn)
 
 	if reboot_needed == true then
 		serialize_file("file_list.lua", filelist)
+	else
+		print('Not updating file list')
 	end
 	return reboot_needed
 end

@@ -1,4 +1,4 @@
-dofile('serialize.lc')
+dofile('serialize.lua')
 
 function net_config(ssid, pw)
     serialize_file("netconfig.lua", {

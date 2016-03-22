@@ -16,7 +16,7 @@ if gpio.read(LBGI) == 0 then -- button pressed
 			tmr.stop(5)
 			tmr.unregister(5)
 			print("Removing old settings and running setup.")
-			file.remove("netconfig.lc")
+			file.remove("netconfig.lua")
 			node.restart()
 		end
 	end)

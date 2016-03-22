@@ -33,7 +33,7 @@ function check_upgrade()
         return
     end
 
-    dofile_callback('ota_upgrade.lc', function (reboot_needed)
+    dofile_callback('ota_upgrade.lua', function (reboot_needed)
         print('firmware upgrade finished, reboot needed:', reboot_needed)
         if reboot_needed == true then
             -- In the future it might be worth to coordinate the restart with other actions but for now this is good enough
@@ -44,23 +44,23 @@ function check_upgrade()
 end
 
 function wifi_connected()
-    dofile_callback('discovery.lc', function (server_ip)
+    dofile_callback('discovery.lua', function (server_ip)
         _G.server_ip = server_ip
         print('server discovery completed, server: ', server_ip)
 
         check_upgrade()
-        dofile_callback('mqtt_client.lc', nil)
+        dofile_callback('mqtt_client.lua', nil)
     end)
 end
 
 _G.server_ip = nil
 _G.wifi_desc = ''
-dofile('bootreason.lc')
+dofile('bootreason.lua')
 if former_run_failed() then
     print('Not running rest of code due to error in previous run')
 else
-    deserialize_file('node_params.lc')
+    deserialize_file('node_params.lua')
     print("Node type", _G.node_type)
-    dofile_callback('wifi.lc', wifi_connected)
-    dofile_callback("button_setup.lc", nil)  -- uses timer #5
+    dofile_callback('wifi.lua', wifi_connected)
+    dofile_callback("button_setup.lua", nil)  -- uses timer #5
 end

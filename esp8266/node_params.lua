@@ -1,1 +1,1 @@
-_G.node_type = 'sensor'
+_G.node_type = 'sensor_vdd'

@@ -30,7 +30,7 @@ void print_str(const char *name, const char *val)
 
 char nibbleToChar(uint32_t val)
 {
-  val &=0xF;
+  val &= 0xF;
   if (val < 10)
     return '0' + val;
   else
@@ -86,13 +86,13 @@ void net_config() {
   WiFiManagerParameter custom_gw("gw", "Static Gateway", static_gw, 5);
   WiFiManagerParameter custom_nm("nm", "Static Netmask", static_nm, 5);
   WiFiManagerParameter custom_dns("dns", "Domain Name Server", dns, 40);
-  
+
   if (strlen(static_ip) > 0) {
     IPAddress _ip, _gw, _nm;
     _ip.fromString(static_ip);
     _gw.fromString(static_gw);
     _nm.fromString(static_nm);
-    
+
     wifiManager.setSTAStaticIPConfig(_ip, _gw, _nm);
   }
 
@@ -128,11 +128,11 @@ void net_config() {
     cfg.setValueStr("nm", custom_nm.getValue());
     cfg.setValueStr("dns", custom_dns.getValue());
     cfg.writeFile();
-    
+
     delay(100);
     ESP.restart();
     delay(1000);
- }
+  }
 }
 
 int discover_set_str(char *buf, int start, const char *src)
@@ -145,7 +145,7 @@ int discover_set_str(char *buf, int start, const char *src)
 void discover_server() {
   WiFiUDP udp;
   int res;
-  const IPAddress INADDR_BCAST(255,255,255,255);
+  const IPAddress INADDR_BCAST(255, 255, 255, 255);
   char buf[64];
 
   udp.begin(DISCOVER_PORT);
@@ -186,11 +186,11 @@ void discover_server() {
       Serial.println("Packet reply timed out, retrying");
       continue;
     }
-      
+
     Serial.print("Pkt reply took ");
     Serial.print(wait);
     Serial.println(" msec");
-  
+
     char reply[32];
     res = udp.read(reply, sizeof(reply));
     if (res < 9) {
@@ -272,9 +272,9 @@ void setup() {
   uint32_t t2 = ESP.getCycleCount();
 
   Serial.print("setup time ");
-  Serial.print(t2-t1);
+  Serial.print(t2 - t1);
   Serial.print(" in micros ");
-  Serial.println(clockCyclesToMicroseconds(t2-t1));
+  Serial.println(clockCyclesToMicroseconds(t2 - t1));
 
   // Load node params
   // Load wifi config

@@ -9,6 +9,7 @@
 
 const int DISCOVER_PORT = 24320;
 
+char node_name[20];
 char node_type[32];
 char node_desc[32];
 char mqtt_server[40];
@@ -134,6 +135,13 @@ void net_config() {
  }
 }
 
+int discover_set_str(char *buf, int start, const char *src)
+{
+  const int len = strlen(src);
+  buf[start++] = len;
+  memcpy(buf + start, src, len);
+  return start + len;
+}
 void discover_server() {
   WiFiUDP udp;
   int res;
@@ -152,28 +160,14 @@ void discover_server() {
   int i;
 
   buf[0] = 'S';
-  buf[1] = 16;
-  pktlen = 2;
+  pktlen = 1;
 
-  id = ESP.getChipId();
-  for (i = 0; i < 8; i++, id>>=4) {
-    buf[pktlen++] = nibbleToChar(id);
-  }
-  id = ESP.getFlashChipId();
-  for (i = 0; i < 8; i++, id>>=4) {
-    buf[pktlen++] = nibbleToChar(id);
-  }
-  
-  buf[pktlen++] = strlen(node_type);
-  strcpy(buf+pktlen, node_type);
-  pktlen += strlen(node_type);
-  
-  buf[pktlen++] = strlen(node_desc);
-  strcpy(buf+pktlen, node_desc);
-  pktlen += strlen(node_desc);
-  
+  pktlen = discover_set_str(buf, pktlen, node_name);
+  pktlen = discover_set_str(buf, pktlen, node_type);
+  pktlen = discover_set_str(buf, pktlen, node_desc);
+
   udp.write(buf, pktlen);
-    
+
   res = udp.endPacket();
   if (res != 1) {
     Serial.println("Failed to send udp discover packet");
@@ -236,9 +230,30 @@ void discover_server() {
   udp.stop();
 }
 
+void build_name() {
+  uint32_t id;
+  int i;
+  int len = 0;
+
+  node_name[len++] = 'S';
+  node_name[len++] = 'H';
+  node_name[len++] = 'M';
+
+  id = ESP.getChipId();
+  for (i = 0; i < 8; i++, id >>= 4) {
+    node_name[len++] = nibbleToChar(id);
+  }
+  id = ESP.getFlashChipId();
+  for (i = 0; i < 8; i++, id >>= 4) {
+    node_name[len++] = nibbleToChar(id);
+  }
+  node_name[len] = 0;
+}
+
 void setup() {
   node_type[0] = 0;
   node_desc[0] = 0;
+  build_name();
 
   Serial.begin(115200);
 #ifdef DEBUG

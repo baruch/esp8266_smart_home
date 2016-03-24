@@ -5,9 +5,9 @@ import ota
 import time
 import threading
 import time
-import fletcher
 import sys
 import os
+import md5
 
 def choose_ip_addr(iface_addrs):
     for iface_addr in iface_addrs:
@@ -49,38 +49,39 @@ class NodeList:
             print 'Updating node ip=%s id=%s type=%s desc=%s' % (node_ip, node_id, node_type, node_desc)
             self._list[node_ip] = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time()}
 
-class FileList:
-    def __init__(self, dirname):
-        self._files = {}
-        self._dirname = dirname
+class OTAFile:
+    def __init__(self, otaname):
+        self._otaname = otaname
+        self._content, self._md5, self._version = self._load_file()
         self.lock = threading.Lock()
 
-    def update_list(self):
-        for f in os.listdir(self._dirname):
-            if f.endswith('.lua') or f.endswith('.html'):
-                filename = os.path.join(self._dirname, f)
-                print 'Adding file %s' % filename
-                self.update_file(os.path.basename(filename), file(filename).read())
+    def _load_file(self):
+        content = file(self._otaname, 'r').read()
+        content_md5 = md5.new(content).hexdigest()
 
+        # Find the version in the image
+        idx = content.find('SHMVER-')
+        version = content[idx:]
+        idx = version.find('\000')
+        version = version[:idx]
 
+        print('Loaded image, md5=%s version=%s len=%d' % (content_md5, version, len(content)))
+        return content, content_md5, version
 
-    def update_file(self, filename, content):
+    def update_file(self):
         with self.lock:
-            self._files[filename] = (fletcher.fletcher16(content), content)
+            content, content_md5, version = self._load_file()
+            if content_md5 != self._md5:
+                print('File updated, new md5 is %s' % content_md5)
+                self._md5 = content_md5
+                self._content = content
+                self._version = version
 
-    def get_files_for_node(self, node):
-        # never mind the node, we have one list for now
-        l = []
-        with self.lock:
-            for fname in self._files.keys():
-                checksum, content = self._files[fname]
-                i = (fname, checksum, content)
-                if fname == 'init.lua':
-                    # init.lua is better updated at the end
-                    l.append(i)
-                else:
-                    l.insert(0, i)
-        return l
+    def check_update(self, version):
+        self.update_file()
+        if version != self._version:
+            return self._md5, self._content
+        return None, None
 
 def usage():
     print("USAGE: %s file_repository_folder" % sys.argv[0])
@@ -90,18 +91,18 @@ def main():
     if len(sys.argv) != 2:
         usage()
 
-    dirname = sys.argv[1]
-    if not os.path.isdir(dirname):
-        print 'ERROR: Path "%s" doesn\'t exist or is not a directory\n' % dirname
+    otaname = sys.argv[1]
+    if not os.path.isfile(otaname):
+        print 'ERROR: Path "%s" doesn\'t exist or is not a file\n' % otaname
         usage()
 
     node_list = NodeList()
-    file_list = FileList(dirname)
+    otafile = OTAFile(otaname)
 
     server_ip = get_server_ip()
     print 'Server IP is', server_ip
     discovery.start(server_ip, 1883, node_list)
-    ota.start(node_list, file_list)
+    ota.start(node_list, otafile)
     while 1:
         time.sleep(1)
 

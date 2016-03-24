@@ -4,9 +4,13 @@
 #include "WiFiManager/WiFiManager.h"
 #include "config.h"
 #include <PubSubClient.h>
+#include <ESP8266httpUpdate.h>
 #include <GDBStub.h>
 
 #define CONFIG_FILE "/config.ini"
+#define UPGRADE_PORT 24320
+#define UPGRADE_PATH "/node_v1.bin"
+#define VERSION "SHMVER-0.0.1"
 
 const int DISCOVER_PORT = 24320;
 
@@ -298,6 +302,28 @@ void build_name() {
   node_name[len] = 0;
 }
 
+void check_upgrade() {
+  Serial.println("Checking for upgrade");
+  t_httpUpdate_return ret = ESPhttpUpdate.update(mqtt_server, UPGRADE_PORT, UPGRADE_PATH, VERSION);
+
+  switch (ret) {
+    case HTTP_UPDATE_FAILED:
+      Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+      break;
+
+    case HTTP_UPDATE_NO_UPDATES:
+      Serial.println("HTTP_UPDATE_NO_UPDATES");
+      break;
+
+    case HTTP_UPDATE_OK:
+      Serial.println("HTTP_UPDATE_OK");
+      break;
+
+    default:
+      Serial.printf("Unknown code %d\n");
+  }
+}
+
 void setup() {
   node_type[0] = 0;
   node_desc[0] = 0;
@@ -308,6 +334,7 @@ void setup() {
   delay(10000); // Wait for port to open, debug only
 #endif
 
+  Serial.println(VERSION);
   Serial.println(ESP.getResetInfo());
   Serial.println(ESP.getResetReason());
 
@@ -316,6 +343,7 @@ void setup() {
   config_load();
   net_config();
   discover_server();
+  check_upgrade();
   mqtt_setup();
   uint32_t t2 = ESP.getCycleCount();
 

@@ -1,64 +1,42 @@
-import SocketServer
 import threading
-import fletcher
+import BaseHTTPServer
 
 HOST = '0.0.0.0'
 PORT = 24320
 
-def get_file_data(files, fname):
-    for f in files:
-        if f[0] == fname:
-            return f[2]
-    return ''
+class OTAHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
-class OTAHandler(SocketServer.StreamRequestHandler):
-
-    def handle(self):
+    def do_GET(self):
         node = self.server.node_list.get_node_by_ip(self.client_address[0])
         if node is None:
-            print 'Unknown node'
+            self.send_error(403, 'Unknown Node')
             return
 
-        self.server.file_list.update_list()
-        files = self.server.file_list.get_files_for_node(node)
-        if files is None:
-            print 'No files for node'
+        print self.headers
+        _version = self.headers.get('x-ESP8266-version')
+        _md5, content = self.server.otafile.check_update(_version)
+        if content is None:
+            self.send_error(304, 'Not Modified')
             return
 
-        while 1:
-            req = self.rfile.readline()
-            req = req.strip()
-            print req
-            if req == '': break
-            parts = req.split()
-            if len(parts) == 0: return
-            print parts
+        self.send_response(200)
+        self.send_header('Content-Length', len(content))
+        self.send_header('x-MD5', _md5)
+        self.end_headers()
+        self.wfile.write(content)
+        return
 
-            reply = ''
-            if parts[0] == 'list':
-                for f in files:
-                    reply += '%s,%d,%d\n' % (f[0], f[1][0], f[1][1])
-                print 'reply', reply
-                self.wfile.write(reply + '\n')
-            elif parts[0] == 'file':
-                if len(parts) < 2: return
-                fname = parts[1]
-                content = get_file_data(files, fname)
-                header = '%d\n' % len(content)
-                self.wfile.write(header + content)
-            else:
-                return
 
-class OTAServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class OTAServer(BaseHTTPServer.HTTPServer):
     allow_reuse_address = True
     
-    def setup(self, node_list, file_list):
+    def setup(self, node_list, otafile):
         self.node_list = node_list
-        self.file_list = file_list
+        self.otafile = otafile
 
-def start(node_list, file_list):
-    server = OTAServer((HOST, PORT), OTAHandler)
-    server.setup(node_list, file_list)
+def start(node_list, otafile):
+    server = OTAServer(('', PORT), OTAHandler)
+    server.setup(node_list, otafile)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()

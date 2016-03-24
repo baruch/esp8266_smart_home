@@ -200,7 +200,7 @@ void discover_server() {
     char reply[32];
     res = udp.read(reply, sizeof(reply));
     if (res < 9) {
-      Serial.println("Not enough data in the reply");
+      Serial.printf("Not enough data in the reply (len=%d)\n", res);
       continue;
     }
     Serial.print("Packet:");
@@ -234,6 +234,7 @@ void discover_server() {
   }
 
   udp.stop();
+  Serial.println("Discovery done");
 }
 
 void mqtt_callback(char* topic, byte* payload, unsigned int length) {

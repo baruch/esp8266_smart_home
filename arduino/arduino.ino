@@ -349,11 +349,11 @@ void loop() {
 
   if (mqtt_connected()) {
     mqtt.loop();
-  
+
     static long lastMsg = 0;
     static long value = 0;
     long now = millis();
-    if (now - lastMsg > 2000) {
+    if (now - lastMsg > 15000) {
       char msg[20];
       lastMsg = now;
       ++value;

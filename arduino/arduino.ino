@@ -325,7 +325,17 @@ void build_name() {
   node_name[len] = 0;
 }
 
+#if defined(HTTP_UPDATE_START_CALLBACK)
+void upgrade_starting(void) {
+  Serial.println("Upgrade starting");
+  mqtt.publish(mqtt_tmp_topic("online"), "upgrading", 1);
+}
+#endif
+
 void check_upgrade() {
+#if defined(HTTP_UPDATE_START_CALLBACK)
+  ESPhttpUpdate.onStart(upgrade_starting);
+#endif
   Serial.println("Checking for upgrade");
   t_httpUpdate_return ret = ESPhttpUpdate.update(mqtt_server, UPGRADE_PORT, UPGRADE_PATH, VERSION);
 

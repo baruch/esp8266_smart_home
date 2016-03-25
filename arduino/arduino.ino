@@ -10,7 +10,7 @@
 #define CONFIG_FILE "/config.ini"
 #define UPGRADE_PORT 24320
 #define UPGRADE_PATH "/node_v1.bin"
-#define VERSION "SHMVER-0.0.1"
+#define VERSION "SHMVER-0.0.2"
 
 const int DISCOVER_PORT = 24320;
 

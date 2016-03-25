@@ -325,6 +325,7 @@ void check_upgrade() {
 }
 
 void setup() {
+  uint32_t t1 = ESP.getCycleCount();
   node_type[0] = 0;
   node_desc[0] = 0;
   build_name();
@@ -334,11 +335,11 @@ void setup() {
   delay(10000); // Wait for port to open, debug only
 #endif
 
+  Serial.println('*');
   Serial.println(VERSION);
   Serial.println(ESP.getResetInfo());
   Serial.println(ESP.getResetReason());
 
-  uint32_t t1 = ESP.getCycleCount();
   spiffs_mount();
   config_load();
   net_config();
@@ -347,15 +348,12 @@ void setup() {
   mqtt_setup();
   uint32_t t2 = ESP.getCycleCount();
 
-  Serial.print("setup time ");
-  Serial.print(t2 - t1);
-  Serial.print(" in micros ");
-  Serial.println(clockCyclesToMicroseconds(t2 - t1));
-
   // Load node params
   // Load wifi config
   // Button reset check
-  Serial.println("Setup done");
+  Serial.print("Setup done in ");
+  Serial.print(clockCyclesToMicroseconds(t2 - t1));
+  Serial.println(" micros");
 }
 
 void read_serial_commands() {

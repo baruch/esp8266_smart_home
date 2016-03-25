@@ -27,8 +27,9 @@ bool shouldSaveConfig;
 
 WiFiClient mqtt_client;
 PubSubClient mqtt(mqtt_client);
-char mqtt_will_topic[32];
-char mqtt_desc_topic[32];
+char mqtt_upgrade_topic[32];
+
+void check_upgrade();
 
 void print_str(const char *name, const char *val)
 {
@@ -152,6 +153,7 @@ int discover_set_str(char *buf, int start, const char *src)
   memcpy(buf + start, src, len);
   return start + len;
 }
+
 void discover_server() {
   WiFiUDP udp;
   int res;
@@ -241,19 +243,38 @@ void discover_server() {
   Serial.println("Discovery done");
 }
 
-void mqtt_callback(char* topic, byte* payload, unsigned int length) {
+void mqtt_callback(char* topic, byte* payload, unsigned int len) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < len; i++) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
+
+  if (strcmp(topic, mqtt_upgrade_topic) == 0) {
+    if (strncmp((const char*)payload, VERSION, len) != 0) {
+      check_upgrade();
+    }
+  }
+}
+
+void mqtt_topic(char *buf, int buf_len, const char *name)
+{
+  snprintf(buf, buf_len, "shm/%s/%s", node_name, name);
+}
+
+/* This is useful for a one-off publish, it uses only one ram location for any number of one-off publishes */
+const char * mqtt_tmp_topic(const char *name)
+{
+  static char buf[32];
+
+  mqtt_topic(buf, sizeof(buf), name);
+  return buf;
 }
 
 void mqtt_setup() {
-  snprintf(mqtt_will_topic, sizeof(mqtt_will_topic), "shm/%s/online", node_name);
-  snprintf(mqtt_desc_topic, sizeof(mqtt_desc_topic), "shm/%s/desc", node_name);
+  mqtt_topic(mqtt_upgrade_topic, sizeof(mqtt_upgrade_topic), "upgrade");
   mqtt.setServer(mqtt_server, mqtt_port);
   mqtt.setCallback(mqtt_callback);
 }
@@ -267,14 +288,16 @@ bool mqtt_connected() {
   if (now - lastReconnectAttempt > 5000) {
     lastReconnectAttempt = now;
     Serial.println("Attempting MQTT connection...");
-    if (mqtt.connect(node_name, mqtt_will_topic, 0, 1, "offline")) {
+    const char *will_topic = mqtt_tmp_topic("online");
+    if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {
       Serial.println("MQTT connected");
       // Once connected, publish an announcement...
-      mqtt.publish(mqtt_will_topic, "online", 1);
-      mqtt.publish(mqtt_desc_topic, node_desc, 1);
+      mqtt.publish(will_topic, "online", 1);
+      mqtt.publish(mqtt_tmp_topic("desc"), node_desc, 1);
+      mqtt.publish(mqtt_tmp_topic("version"), VERSION, 1);
       mqtt.publish("outTopic", "hello world");
       // ... and resubscribe
-      mqtt.subscribe("inTopic");
+      mqtt.subscribe(mqtt_upgrade_topic);
       return true;
     }
   }

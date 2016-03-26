@@ -295,7 +295,6 @@ bool mqtt_connected() {
       mqtt.publish(will_topic, "online", 1);
       mqtt.publish(mqtt_tmp_topic("desc"), node_desc, 1);
       mqtt.publish(mqtt_tmp_topic("version"), VERSION, 1);
-      mqtt.publish("outTopic", "hello world");
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);
       return true;
@@ -410,16 +409,10 @@ void loop() {
     mqtt.loop();
 
     static long lastMsg = 0;
-    static long value = 0;
     long now = millis();
     if (now - lastMsg > 15000) {
       char msg[20];
       lastMsg = now;
-      ++value;
-      snprintf (msg, 75, "hello world #%ld", value);
-      Serial.print("Publish message: ");
-      Serial.println(msg);
-      mqtt.publish("outTopic", msg);
     }
   }
 }

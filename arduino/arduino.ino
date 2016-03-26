@@ -5,12 +5,13 @@
 #include "config.h"
 #include <PubSubClient.h>
 #include <ESP8266httpUpdate.h>
+#include "SparkFunHTU21D.h"
 #include <GDBStub.h>
 
 #define CONFIG_FILE "/config.ini"
 #define UPGRADE_PORT 24320
 #define UPGRADE_PATH "/node_v1.bin"
-#define VERSION "SHMVER-0.0.2"
+#define VERSION "SHMVER-0.0.3"
 
 const int DISCOVER_PORT = 24320;
 
@@ -28,6 +29,8 @@ bool shouldSaveConfig;
 WiFiClient mqtt_client;
 PubSubClient mqtt(mqtt_client);
 char mqtt_upgrade_topic[32];
+
+HTU21D htu21d;
 
 void check_upgrade();
 
@@ -380,6 +383,8 @@ void setup() {
   mqtt_setup();
   uint32_t t2 = ESP.getCycleCount();
 
+  htu21d.begin();
+
   // Load node params
   // Load wifi config
   // Button reset check
@@ -414,11 +419,31 @@ void loop() {
   if (mqtt_connected()) {
     mqtt.loop();
 
-    static long lastMsg = 0;
+    static long lastMsg = -60000; // Ensure the first time we are around we do the first report
     long now = millis();
-    if (now - lastMsg > 15000) {
+    if (now - lastMsg > 60000) {
       char msg[20];
       lastMsg = now;
+
+      {
+        float humd = htu21d.readHumidity();
+        float temp = htu21d.readTemperature();
+
+        dtostrf(humd, 0, 1, msg);
+        mqtt.publish(mqtt_tmp_topic("humidity"), msg);
+
+        dtostrf(temp, 0, 1, msg);
+        mqtt.publish(mqtt_tmp_topic("temperature"), msg);
+
+        Serial.print("Time:");
+        Serial.print(millis());
+        Serial.print(" Temperature:");
+        Serial.print(temp, 1);
+        Serial.print("C");
+        Serial.print(" Humidity:");
+        Serial.print(humd, 1);
+        Serial.println("%");
+      }
     }
   }
 }

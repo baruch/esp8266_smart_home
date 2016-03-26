@@ -398,6 +398,12 @@ void read_serial_commands() {
       Serial.println("Clearing done");
       delay(100);
       ESP.restart();
+    } else if (ch == 'r') {
+      Serial.println("Reset");
+      delay(100);
+      ESP.restart();
+    } else if (ch == 'u') {
+      check_upgrade();
     }
   }
 }

@@ -1,7 +1,7 @@
 #include <FS.h> //this needs to be first, or it all crashes and burns...
 #include <ESP8266WiFi.h>
 #include <Esp.h>
-#include "WiFiManager/WiFiManager.h"
+#include "libraries/WiFiManager/WiFiManager.h"
 #include "config.h"
 #include "libraries/PubSubClient/PubSubClient.h"
 #include <ESP8266httpUpdate.h>

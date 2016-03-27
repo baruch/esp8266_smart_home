@@ -3,9 +3,9 @@
 #include <Esp.h>
 #include "WiFiManager/WiFiManager.h"
 #include "config.h"
-#include <PubSubClient.h>
+#include "libraries/PubSubClient/PubSubClient.h"
 #include <ESP8266httpUpdate.h>
-#include "SparkFunHTU21D.h"
+#include "libraries/HTU21D/SparkFunHTU21D.h"
 #include <GDBStub.h>
 
 #define CONFIG_FILE "/config.ini"

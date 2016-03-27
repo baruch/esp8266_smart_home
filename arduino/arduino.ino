@@ -71,13 +71,13 @@ void config_load() {
   strcpy(static_ip, cfg.getValueStr("ip"));
   strcpy(static_gw, cfg.getValueStr("gw"));
   strcpy(static_nm, cfg.getValueStr("nm"));
-  strcpy(static_nm, cfg.getValueStr("dns"));
+  strcpy(dns, cfg.getValueStr("dns"));
   strcpy(node_desc, cfg.getValueStr("desc"));
 
   print_str("IP", static_ip);
   print_str("GW", static_gw);
   print_str("NM", static_nm);
-  print_str("DNS", static_nm);
+  print_str("DNS", dns);
   print_str("Node Desc", node_desc);
 }
 
@@ -410,6 +410,8 @@ void read_serial_commands() {
       ESP.restart();
     } else if (ch == 'u') {
       check_upgrade();
+    } else if (ch == 'p') {
+      // TODO: Print config.ini
     }
   }
 }

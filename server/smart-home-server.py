@@ -8,6 +8,7 @@ import time
 import sys
 import os
 import md5
+import paho.mqtt.client as mqtt
 
 def choose_ip_addr(iface_addrs):
     for iface_addr in iface_addrs:
@@ -33,6 +34,26 @@ except ImportError:
         import socket
         return socket.gethostbyname(socket.gethostname())
 
+def mqtt_connected(client, userdata, flags, rc):
+    print('MQTT connected')
+
+def mqtt_message(client, userdata, msg):
+    print('MQTT message received')
+
+def mqtt_published(client, userdata, msg):
+    print('MQTT message published')
+
+client = mqtt.Client()
+client.on_connect = mqtt_connected
+client.on_message = mqtt_message
+client.on_publish = mqtt_published
+
+def mqtt_topic(node_id, name):
+    return "shm/%s/%s" % (node_id, name)
+
+def mqtt_publish(node_id, name, value):
+    print client.publish(mqtt_topic(node_id, name), value, 1, True)
+
 class NodeList:
     def __init__(self):
         self._list = {}
@@ -44,10 +65,13 @@ class NodeList:
             val = self._list.get(ip, None)
         return val
 
-    def update_node(self, node_ip, node_id, node_type, node_desc):
+    def update_node(self, node_ip, node_id, node_type, node_desc, version):
         with self.lock:
-            print 'Updating node ip=%s id=%s type=%s desc=%s' % (node_ip, node_id, node_type, node_desc)
-            self._list[node_ip] = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time()}
+            print 'Updating node ip=%s id=%s type=%s desc=%s version=%s' % (node_ip, node_id, node_type, node_desc, version)
+            self._list[node_ip] = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'version': version, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time()}
+        mqtt_publish(node_id, "status", "discovery")
+        mqtt_publish(node_id, "version", version)
+        mqtt_publish(node_id, "desc", node_desc)
 
 class OTAFile:
     def __init__(self, otaname):
@@ -96,6 +120,7 @@ def main():
         print 'ERROR: Path "%s" doesn\'t exist or is not a file\n' % otaname
         usage()
 
+    print client.connect('127.0.0.1', 1883, 60)
     node_list = NodeList()
     otafile = OTAFile(otaname)
 
@@ -104,7 +129,7 @@ def main():
     discovery.start(server_ip, 1883, node_list)
     ota.start(node_list, otafile)
     while 1:
-        time.sleep(1)
+        client.loop()
 
 if __name__ == '__main__':
     main()

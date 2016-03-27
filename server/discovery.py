@@ -13,14 +13,16 @@ def parse_message_part(data):
 
 def parse_message(data):
     print 'message', data
-    if data[0] != 'S': return (None, None, None)
+    if data[0] != 'S': return (None, None, None, None)
+    data = data[1:] # Remove the leading S
 
-    node_id, data = parse_message_part(data[1:])
+    node_id, data = parse_message_part(data)
     node_type, data = parse_message_part(data)
     node_desc, data = parse_message_part(data)
+    version, data = parse_message_part(data)
 
-    if node_id is None or node_type is None: return (None, None, None)
-    return (node_id, node_type, node_desc)
+    if node_id is None or node_type is None: return (None, None, None, None)
+    return (node_id, node_type, node_desc, version)
 
 class DiscoveryUDPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
@@ -28,11 +30,11 @@ class DiscoveryUDPHandler(SocketServer.BaseRequestHandler):
         socket = self.request[1]
 
         # parse data
-        node_id, node_type, node_desc = parse_message(data)
+        node_id, node_type, node_desc, version = parse_message(data)
         if node_id is None: return
 
         node_ip = self.client_address[0]
-        self.server.node_list.update_node(node_ip, node_id, node_type, node_desc)
+        self.server.node_list.update_node(node_ip, node_id, node_type, node_desc, version)
 
         # send response
         response = 'R' + self.server.server_ip + self.server.mqtt_port

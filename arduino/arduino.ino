@@ -11,7 +11,7 @@
 #define CONFIG_FILE "/config.ini"
 #define UPGRADE_PORT 24320
 #define UPGRADE_PATH "/node_v1.bin"
-#define VERSION "SHMVER-0.0.3"
+#define VERSION "SHMVER-0.0.4"
 
 const int DISCOVER_PORT = 24320;
 
@@ -28,7 +28,7 @@ bool shouldSaveConfig;
 
 WiFiClient mqtt_client;
 PubSubClient mqtt(mqtt_client);
-char mqtt_upgrade_topic[32];
+char mqtt_upgrade_topic[40];
 
 HTU21D htu21d;
 
@@ -180,6 +180,7 @@ void discover_server() {
   pktlen = discover_set_str(buf, pktlen, node_name);
   pktlen = discover_set_str(buf, pktlen, node_type);
   pktlen = discover_set_str(buf, pktlen, node_desc);
+  pktlen = discover_set_str(buf, pktlen, VERSION);
 
   udp.write(buf, pktlen);
 
@@ -258,6 +259,8 @@ void mqtt_callback(char* topic, byte* payload, unsigned int len) {
   if (strcmp(topic, mqtt_upgrade_topic) == 0) {
     if (strncmp((const char*)payload, VERSION, len) != 0) {
       check_upgrade();
+    } else {
+      Serial.println("Asking to upgrade to our version, not doing anything");
     }
   }
 }
@@ -270,7 +273,7 @@ void mqtt_topic(char *buf, int buf_len, const char *name)
 /* This is useful for a one-off publish, it uses only one ram location for any number of one-off publishes */
 const char * mqtt_tmp_topic(const char *name)
 {
-  static char buf[32];
+  static char buf[40];
 
   mqtt_topic(buf, sizeof(buf), name);
   return buf;
@@ -296,8 +299,6 @@ bool mqtt_connected() {
       Serial.println("MQTT connected");
       // Once connected, publish an announcement...
       mqtt.publish(will_topic, "online", 1);
-      mqtt.publish(mqtt_tmp_topic("desc"), node_desc, 1);
-      mqtt.publish(mqtt_tmp_topic("version"), VERSION, 1);
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);
       return true;

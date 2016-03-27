@@ -13,6 +13,7 @@ class OTAHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             return
 
         print self.headers
+
         _version = self.headers.get('x-ESP8266-version')
         _md5, content = self.server.otafile.check_update(_version)
         if content is None:

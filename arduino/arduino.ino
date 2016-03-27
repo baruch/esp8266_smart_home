@@ -96,9 +96,6 @@ void net_config() {
   WiFiManager wifiManager;
 
   WiFiManagerParameter node_desc_param("desc", "Description", node_desc, 32);
-  WiFiManagerParameter custom_ip("ip", "Static IP", static_ip, 40);
-  WiFiManagerParameter custom_gw("gw", "Static Gateway", static_gw, 5);
-  WiFiManagerParameter custom_nm("nm", "Static Netmask", static_nm, 5);
   WiFiManagerParameter custom_dns("dns", "Domain Name Server", dns, 40);
 
   if (strlen(static_ip) > 0) {
@@ -110,10 +107,8 @@ void net_config() {
     wifiManager.setSTAStaticIPConfig(_ip, _gw, _nm);
   }
 
+  wifiManager.setForceStaticQuestion(true);
   wifiManager.addParameter(&node_desc_param);
-  wifiManager.addParameter(&custom_ip);
-  wifiManager.addParameter(&custom_nm);
-  wifiManager.addParameter(&custom_gw);
   wifiManager.addParameter(&custom_dns);
 
   //wifiManager.setTimeout(600);
@@ -134,14 +129,21 @@ void net_config() {
 
   //save the custom parameters to FS
   if (shouldSaveConfig) {
+    IPAddress _ip, _gw, _sn;
+    wifiManager.getSTAStaticIPConfig(_ip, _gw, _sn);
+    _ip.toString().toCharArray(static_ip, sizeof(static_ip), 0);
+    _gw.toString().toCharArray(static_gw, sizeof(static_gw), 0);
+    _sn.toString().toCharArray(static_nm, sizeof(static_nm), 0);
+        
     Serial.println("saving config");
     Config cfg(CONFIG_FILE);
-    cfg.setValueStr("desc", node_desc_param.getValue());
-    cfg.setValueStr("ip", custom_ip.getValue());
-    cfg.setValueStr("gw", custom_gw.getValue());
-    cfg.setValueStr("nm", custom_nm.getValue());
+    cfg.setValueStr("ip", static_ip);
+    cfg.setValueStr("gw", static_gw);
+    cfg.setValueStr("nm", static_nm);
     cfg.setValueStr("dns", custom_dns.getValue());
+    cfg.setValueStr("desc", node_desc_param.getValue());
     cfg.writeFile();
+    Serial.println("save done");
 
     delay(100);
     ESP.restart();

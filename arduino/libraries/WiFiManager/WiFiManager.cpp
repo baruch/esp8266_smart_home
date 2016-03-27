@@ -173,6 +173,7 @@ boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPasswo
 
 
     if (connect) {
+      configureOptionalStaticIP();
       connect = false;
       delay(2000);
       DEBUG_WM(F("Connecting to new AP"));
@@ -210,16 +211,19 @@ boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPasswo
   return  WiFi.status() == WL_CONNECTED;
 }
 
-
-int WiFiManager::connectWifi(String ssid, String pass) {
-  DEBUG_WM(F("Connecting as wifi client..."));
-
+void WiFiManager::configureOptionalStaticIP(void) {
   // check if we've got static_ip settings, if we do, use those.
-  if (_sta_static_ip) {
+  if (_sta_static_ip && _sta_static_gw && _sta_static_sn) {
     DEBUG_WM(F("Custom STA IP/GW/Subnet"));
     WiFi.config(_sta_static_ip, _sta_static_gw, _sta_static_sn);
     DEBUG_WM(WiFi.localIP());
   }
+}
+
+int WiFiManager::connectWifi(String ssid, String pass) {
+  DEBUG_WM(F("Connecting as wifi client..."));
+
+  configureOptionalStaticIP();
   //fix for auto connect racing issue
   if (WiFi.status() == WL_CONNECTED) {
     DEBUG_WM("Already connected. Bailing out.");
@@ -488,7 +492,7 @@ void WiFiManager::handleWifi(boolean scan) {
     page += "<br/>";
   }
 
-  if (_sta_static_ip) {
+  if (_sta_static_ip || _forceStaticQuestion) {
 
     String item = FPSTR(HTTP_FORM_PARAM);
     item.replace("{i}", "ip");
@@ -554,7 +558,7 @@ void WiFiManager::handleWifiSave() {
   }
 
   if (server->arg("ip") != "") {
-    DEBUG_WM(F("static ip"));
+    DEBUG_WM(F("static ip (dynamic if empty)"));
     DEBUG_WM(server->arg("ip"));
     //_sta_static_ip.fromString(server->arg("ip"));
     String ip = server->arg("ip");

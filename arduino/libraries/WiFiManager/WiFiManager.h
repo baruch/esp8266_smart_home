@@ -96,6 +96,12 @@ class WiFiManager
     void          setMinimumSignalQuality(int quality = 8);
     //sets a custom ip /gateway /subnet configuration
     void          setAPStaticIPConfig(IPAddress ip, IPAddress gw, IPAddress sn);
+	//gets the custom ip/gateway/subnet configuration
+	void          getSTAStaticIPConfig(IPAddress &ip, IPAddress &gw, IPAddress &sn) {
+		ip = _sta_static_ip;
+		gw = _sta_static_gw;
+		sn = _sta_static_sn;
+	}
     //sets config for a static IP
     void          setSTAStaticIPConfig(IPAddress ip, IPAddress gw, IPAddress sn);
     //called when AP mode and config portal is started
@@ -112,6 +118,8 @@ class WiFiManager
     void          setCustomHeadElement(const char* element);
     //if this is true, remove duplicated Access Points - defaut true
     void          setRemoveDuplicateAPs(boolean removeDuplicates);
+	//if this is true, forces a question of static ip, if static ip is empty it uses dhcp
+	void          setForceStaticQuestion(boolean force) { _forceStaticQuestion = force; }
 
   private:
     std::unique_ptr<DNSServer>        dnsServer;
@@ -145,6 +153,7 @@ class WiFiManager
     boolean       _removeDuplicateAPs     = true;
     boolean       _shouldBreakAfterConfig = false;
     boolean       _tryWPS                 = false;
+	boolean       _forceStaticQuestion    = false;
 
     const char*   _customHeadElement      = "";
 
@@ -191,6 +200,7 @@ class WiFiManager
       DEBUG_WM("NO fromString METHOD ON IPAddress, you need ESP8266 core 2.1.0 or newer for Custom IP configuration to work.");
       return false;
     }
+	void configureOptionalStaticIP(void);
 };
 
 #endif

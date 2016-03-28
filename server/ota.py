@@ -14,12 +14,10 @@ def node_v1_download():
         return HTTPResponse(status='403 Unknown Node')
     
     _version = request.get_header('x-ESP8266-version')
-    log(_version)
     if _version is None:
         return HTTPResponse(status='403 Unknown version')
 
     _md5, content = otafile.check_update(_version)
-    log(_md5)
     if content is None:
         return HTTPResponse(status='304 Not Modified')
 

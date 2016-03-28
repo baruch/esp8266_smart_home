@@ -70,6 +70,16 @@ class NodeList:
             val = self._list.get(ip, None)
         return val
 
+    def get_node_list(self):
+        l = []
+        for ip in self._list.keys():
+            d = self._list[ip].copy()
+            d['ip'] = ip
+            print(d)
+            l.append(d)
+        print(l)
+        return l
+
     def update_node(self, node_ip, node_id, node_type, node_desc, version):
         with self.lock:
             print 'Updating node ip=%s id=%s type=%s desc=%s version=%s' % (node_ip, node_id, node_type, node_desc, version)

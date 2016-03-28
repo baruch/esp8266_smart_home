@@ -26,7 +26,7 @@ def node_v1_download():
 
 @get('/')
 def index():
-    return 'Hello World!'
+    return template('index.tpl', nodes=node_list.get_node_list())
 
 def start(_node_list, _otafile):
     global node_list, otafile

@@ -12,6 +12,13 @@ public:
   char read(void);
   virtual size_t write(uint8_t ch);
   virtual size_t write(const uint8_t *buffer, size_t size);
+  void flush(void);
+  
+private:
+  void add_to_buf(const uint8_t *buffer, size_t size);
+
+  char buf[1024];
+  int buf_len;
 };
 
 extern DebugSerial iDebugSerial;

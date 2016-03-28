@@ -6,20 +6,24 @@
 #include "HardwareSerial.h"
 
 static WebSocketsServer webSocket = WebSocketsServer(81);
+static int connected;
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) {
 
   switch (type) {
     case WStype_DISCONNECTED:
       Serial.printf("[%u] Disconnected!\n", num);
+      connected--;
       break;
     case WStype_CONNECTED:
       {
+        connected++;
         IPAddress ip = webSocket.remoteIP(num);
         Serial.printf("[%u] Connected from %s url: %s\n", num, ip.toString().c_str(), payload);
 
         // send message to client
         webSocket.sendTXT(num, "Connected to " + String(node_name) + " at " + WiFi.localIP().toString() + "\n");
+        iDebugSerial.flush();
       }
       break;
     case WStype_TEXT:
@@ -44,6 +48,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
 
 DebugSerial::DebugSerial()
 {
+  buf_len = 0;
+  connected = 0;
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
 }
@@ -63,16 +69,48 @@ char DebugSerial::read(void)
   return Serial.read();
 }
 
+void DebugSerial::flush(void)
+{
+  Serial.flush();
+  if (connected && buf_len > 0) {
+    webSocket.broadcastTXT(buf, buf_len);
+    buf_len = 0;
+  }
+}
+
+void DebugSerial::add_to_buf(const uint8_t *buffer, size_t size)
+{
+  if (buf_len + size > sizeof(buf)) {
+    if (connected) {
+      webSocket.broadcastTXT(buf, buf_len);
+      buf_len = 0;
+
+#define OVERFLOW_MSG "\n\nBUFFER OVERFLOWED\n\n"
+      webSocket.broadcastTXT(OVERFLOW_MSG, strlen(OVERFLOW_MSG));
+    } else {
+      return;
+    }
+  }
+
+  memcpy(buf+buf_len, buffer, size);
+  buf_len += size;
+  if (connected && buf[buf_len-1] == '\n') {
+    webSocket.broadcastTXT(buf, buf_len);
+    buf_len = 0;
+  }
+}
+
 size_t DebugSerial::write(uint8_t ch)
 {
-  webSocket.broadcastTXT(&ch, 1);
   Serial.write(ch);
+
+  add_to_buf(&ch, 1);
   return 1;
 }
 
 size_t DebugSerial::write(const uint8_t *buffer, size_t size)
 {
-  webSocket.broadcastTXT(buffer, size);
+  add_to_buf(buffer, size);
   Serial.write(buffer, size);
   return size;
 }

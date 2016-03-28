@@ -1,4 +1,5 @@
 #include "config.h"
+#include "DebugSerial.h"
 
 Config::Config(const char *filename)
 {

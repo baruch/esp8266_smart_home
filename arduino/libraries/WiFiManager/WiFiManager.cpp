@@ -11,6 +11,7 @@
  **************************************************************/
 
 #include "WiFiManager.h"
+#include "../../DebugSerial.h"
 
 WiFiManagerParameter::WiFiManagerParameter(const char *custom) {
   _id = NULL;

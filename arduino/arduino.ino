@@ -1,4 +1,5 @@
 #include <FS.h> //this needs to be first, or it all crashes and burns...
+#include "DebugSerial.h"
 #include <ESP8266WiFi.h>
 #include <Esp.h>
 #include "libraries/WiFiManager/WiFiManager.h"

@@ -146,12 +146,13 @@ bool Config::writeFile() {
   }
   configFile.flush();
   configFile.close();
+  return true;
 }
 
 int Config::find_key(const char *key) {
   int i;
   for (i = 0; i < NUM_CONFIG_ENTRIES; i++) {
-    if (types[i] != CONFIG_TYPE_UNKNOWN && keys[i] && strcmp(keys[i], key)) {
+    if (types[i] != CONFIG_TYPE_UNKNOWN && keys[i] && strcmp(keys[i], key) == 0) {
       return i;
     }
   }
@@ -194,7 +195,7 @@ int Config::allocate_entry(const char *key, ConfigType ctype) {
   if (i == -1) {
     for (i = 0; i < NUM_CONFIG_ENTRIES; i++) {
       if (types[i] == CONFIG_TYPE_UNKNOWN)
-      break;
+        break;
     }
     // No free entry found
     if (i == NUM_CONFIG_ENTRIES) {
@@ -212,6 +213,7 @@ int Config::allocate_entry(const char *key, ConfigType ctype) {
   } else if (types[i] == CONFIG_TYPE_INT) {
     values[i] = NULL;
   }
+  return i;
 }
 
 void Config::setValueInt(const char *key, int value) {

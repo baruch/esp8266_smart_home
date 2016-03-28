@@ -189,7 +189,6 @@ void discover_server() {
     return;
   }
 
-  uint32_t id;
   int pktlen;
   int i;
 
@@ -266,7 +265,7 @@ void discover_server() {
   Serial.println("Discovery done");
 }
 
-void mqtt_callback(char* topic, byte* payload, unsigned int len) {
+void mqtt_callback(char* topic, byte* payload, int len) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -375,7 +374,8 @@ void check_upgrade() {
       break;
 
     default:
-      Serial.printf("Unknown code %d\n");
+      Serial.printf("Unknown code %d\n", ret);
+      break;
   }
 }
 

@@ -54,6 +54,11 @@ def mqtt_topic(node_id, name):
 def mqtt_publish(node_id, name, value):
     print client.publish(mqtt_topic(node_id, name), value, 1, True)
 
+def mqtt_run():
+    server_thread = threading.Thread(target=client.loop_forever)
+    server_thread.daemon = True
+    server_thread.start()
+
 class NodeList:
     def __init__(self):
         self._list = {}
@@ -126,10 +131,11 @@ def main():
 
     server_ip = get_server_ip()
     print 'Server IP is', server_ip
+    mqtt_run()
     discovery.start(server_ip, 1883, node_list)
     ota.start(node_list, otafile)
     while 1:
-        client.loop()
+        time.sleep(1)
 
 if __name__ == '__main__':
     main()

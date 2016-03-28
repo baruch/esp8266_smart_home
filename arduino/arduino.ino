@@ -33,6 +33,32 @@ void print_str(const char *name, const char *val)
   Serial.println('"');
 }
 
+void print_hexdump_line(const char *buf, size_t buf_len)
+{
+  size_t i;
+
+  for (i = 0; i < buf_len && i < 16; i++) {
+    Serial.print(buf[i], HEX);
+    Serial.print(' ');
+  }
+  Serial.print("   ");
+  for (i = 0; i < buf_len && i < 16; i++) {
+    char ch = buf[i];
+    if (!isprint(ch))
+      ch = '.';
+    Serial.print(ch);
+  }
+  Serial.print('\n');
+}
+
+void print_hexdump(const char *buf, size_t buf_len)
+{
+  size_t i;
+
+  for (i = 0; i < buf_len; i += 16)
+    print_hexdump_line(buf+i, buf_len - i);
+}
+
 char nibbleToChar(uint32_t val)
 {
   val &= 0xF;
@@ -404,8 +430,17 @@ void read_serial_commands() {
     } else if (ch == 'u') {
       check_upgrade();
     } else if (ch == 'p') {
-      // TODO: Print config.ini
+      char buf[1024];
+      File f = SPIFFS.open(CONFIG_FILE, "r");
+      Serial.print("File size is ");
+      Serial.println(f.size());
+      size_t len = f.read((uint8_t*)buf, sizeof(buf));
+      f.close();
+      Serial.println("FILE START");
+      print_hexdump(buf, len);
+      Serial.println("FILE END");
     }
+
   }
 }
 

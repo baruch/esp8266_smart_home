@@ -14,9 +14,10 @@
 #define DISCOVER_PORT 24320
 #define UPGRADE_PATH "/node_v1.bin"
 #define VERSION "SHMVER-0.0.4"
+#define DISCOVERY_CYCLES (60*60*1000) // an hour in msecs
 
 bool shouldSaveConfig;
-static unsigned lastDiscovery;
+static unsigned last_discovery;
 
 WiFiClient mqtt_client;
 PubSubClient mqtt(mqtt_client);
@@ -264,12 +265,12 @@ void discover_server() {
 
   udp.stop();
   Serial.println("Discovery done");
-  lastDiscovery = millis();
+  last_discovery = millis();
 }
 
 void conditional_discover(void)
 {
-  if (millis() - lastDiscovery > 60*60*1000)
+  if (millis() - last_discovery > DISCOVERY_CYCLES)
     discover_server();
 }
 
@@ -391,6 +392,7 @@ void setup() {
   uint32_t t1 = ESP.getCycleCount();
   node_type[0] = 0;
   node_desc[0] = 0;
+  last_discovery = -DISCOVERY_CYCLES;
   build_name();
 
   Serial.begin(115200);

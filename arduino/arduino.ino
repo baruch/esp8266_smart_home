@@ -96,11 +96,15 @@ void read_serial_commands() {
       File f = SPIFFS.open(CONFIG_FILE, "r");
       Serial.print("File size is ");
       Serial.println(f.size());
-      size_t len = f.read((uint8_t*)buf, sizeof(buf));
-      f.close();
-      Serial.println("FILE START");
-      print_hexdump(buf, len);
-      Serial.println("FILE END");
+      if (f.size()) {
+        size_t len = f.read((uint8_t*)buf, sizeof(buf));
+        f.close();
+        Serial.println("FILE START");
+        print_hexdump(buf, len);
+        Serial.println("FILE END");
+      } else {
+        Serial.println("Empty or non-existent file");
+      }
     }
 
   }

@@ -19,6 +19,7 @@ Node: {{node_id}}<br/>
     <input type="hidden" id="host" value="{{node_ip}}"/>
 	<br />
 
+    <input type="text" id="inputBuffer" size="40"> <input type="button" value="Send" onclick="send(inputBuffer.value)">
     <br>
     <textarea id="output" style="width:100%;height:500px;"></textarea>
     <br>

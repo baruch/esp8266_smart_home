@@ -21,6 +21,19 @@ void spiffs_mount() {
   }
 }
 
+void node_type_load(void) {
+  node_type = 0;
+  File f = SPIFFS.open(NODE_TYPE_FILENAME, "r");
+  size_t size = f.size();
+  if (size > sizeof(node_type)) {
+    Serial.println("Trimming node type file");
+    size = sizeof(node_type);
+  }
+  if (size > 0)
+    f.read((uint8_t*)&node_type, size);
+  f.close();
+}
+
 void build_name() {
   uint32_t id;
   int i;
@@ -43,7 +56,7 @@ void build_name() {
 
 void setup() {
   uint32_t t1 = ESP.getCycleCount();
-  node_type[0] = 0;
+  node_type = 0;
   node_desc[0] = 0;
   build_name();
 
@@ -58,6 +71,7 @@ void setup() {
   Serial.println(ESP.getResetReason());
 
   spiffs_mount();
+  node_type_load();
   config_load();
   net_config();
   discover_server();
@@ -75,10 +89,27 @@ void setup() {
   Serial.println(" micros");
 }
 
+void read_configure_type(void)
+{
+  Serial.println("Configure node type");
+  node_type = Serial.parseInt();
+  Serial.print("Node type set to ");
+  Serial.println(node_type);
+
+  File f = SPIFFS.open(NODE_TYPE_FILENAME, "w");
+  f.write((uint8_t*)&node_type, sizeof(node_type));
+  f.close();
+}
+
 void read_serial_commands() {
   if (Serial.available()) {
     char ch = Serial.read();
-    if (ch == 'f') {
+    if (ch == 't') {
+      read_configure_type();
+    } else if (ch == 'T') {
+      Serial.print("Node type config: ");
+      Serial.println(node_type);
+    } else if (ch == 'f') {
       Serial.println("Clearing Config");
       WiFi.disconnect(true);
       SPIFFS.remove(CONFIG_FILE);

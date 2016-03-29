@@ -105,12 +105,25 @@ void net_config() {
   }
 }
 
+int discover_set_buf(char *buf, int start, const uint8_t *src, int src_len)
+{
+  buf[start++] = src_len;
+  memcpy(buf + start, src, src_len);
+  return start + src_len;
+}
+
 int discover_set_str(char *buf, int start, const char *src)
 {
   const int len = strlen(src);
-  buf[start++] = len;
-  memcpy(buf + start, src, len);
-  return start + len;
+  return discover_set_buf(buf, start, (const uint8_t *)src, len);
+}
+
+int discover_set_int(char *buf, int start, int val)
+{
+  char out[16];
+
+  itoa(val, out, 10);
+  return discover_set_str(buf, start, out);
 }
 
 void discover_server() {
@@ -134,7 +147,7 @@ void discover_server() {
   pktlen = 1;
 
   pktlen = discover_set_str(buf, pktlen, node_name);
-  pktlen = discover_set_str(buf, pktlen, node_type);
+  pktlen = discover_set_int(buf, pktlen, node_type);
   pktlen = discover_set_str(buf, pktlen, node_desc);
   pktlen = discover_set_str(buf, pktlen, VERSION);
 

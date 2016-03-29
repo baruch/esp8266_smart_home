@@ -66,14 +66,14 @@ void DebugSerial::begin(int speed)
   Serial.begin(speed);
 }
 
-bool DebugSerial::available(void)
+int DebugSerial::available(void)
 {
   if (recv_buf_end != recv_buf_start)
-    return true;
+    return 1;
   return Serial.available();
 }
 
-char DebugSerial::read(void)
+int DebugSerial::read(void)
 {
   if (recv_buf_end != recv_buf_start) {
     char ch = recv_buf[recv_buf_start];
@@ -82,6 +82,14 @@ char DebugSerial::read(void)
     return ch;
   }
   return Serial.read();
+}
+
+int DebugSerial::peek(void)
+{
+  if (recv_buf_end != recv_buf_start)
+    return recv_buf[recv_buf_start];
+  else
+    return Serial.peek();
 }
 
 void DebugSerial::flush(void)

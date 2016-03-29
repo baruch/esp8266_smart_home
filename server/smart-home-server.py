@@ -61,38 +61,52 @@ def mqtt_run():
 
 class NodeList:
     def __init__(self):
-        self._list = {}
+        self._index_by_ip = {}
+        self._index_by_node = {}
         self.lock = threading.Lock()
 
     def get_node_by_ip(self, ip):
         if ip == '127.0.0.1': return {'node_id': 'local', 'node_type': 'test', 'node_desc': 'test'}
         with self.lock:
-            val = self._list.get(ip, None)
-        return val
+            node = self._index_by_ip.get(ip, None)
+            if node is None:
+                return None
+            else:
+                return self._index_by_node.get(node, None)
+
+    def get_node_by_id(self, node_id):
+        with self.lock:
+            return self._index_by_node.get(node_id, None)
 
     def get_node_list(self):
-        l = []
-        for ip in self._list.keys():
-            d = self._list[ip].copy()
-            d['ip'] = ip
-            print(d)
-            l.append(d)
-        print(l)
-        return l
+        return map(lambda x: self._index_by_node[x].copy(), self._index_by_node)
 
     def update_node(self, node_ip, node_id, node_type, node_desc, version):
         with self.lock:
             print 'Updating node ip=%s id=%s type=%s desc=%s version=%s' % (node_ip, node_id, node_type, node_desc, version)
-            self._list[node_ip] = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'version': version, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time()}
+            node = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'version': version, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time(), 'ip': node_ip}
+            self._index_by_node[node_id] = node
+            self._index_by_ip[node_ip] = node_id
         mqtt_publish(node_id, "status", "discovery")
         mqtt_publish(node_id, "version", version)
         mqtt_publish(node_id, "desc", node_desc)
+
+    def upgrade(self, node_id, ota_file):
+        node = self.get_node_by_id(node_id)
+        if node is None:
+            return None
+        mqtt_publish(node_id, "upgrade", ota_file.get_version())
+        return True
 
 class OTAFile:
     def __init__(self, otaname):
         self._otaname = otaname
         self._content, self._md5, self._version = self._load_file()
         self.lock = threading.Lock()
+
+    def get_version(self):
+        self.update_file()
+        return self._version
 
     def _load_file(self):
         content = file(self._otaname, 'r').read()

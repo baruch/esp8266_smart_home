@@ -28,6 +28,17 @@ def node_v1_download():
 def static(path):
     return static_file(path, root='./static/')
 
+@get('/console/<node_id>')
+def console(node_id):
+    node = node_list.get_node_by_id(node_id)
+    return template('console.tpl', node_id=node_id, node=node)
+
+@get('/upgrade/<node_id>')
+def upgrade(node_id):
+    node = node_list.get_node_by_id(node_id)
+    ret = node_list.upgrade(node_id, otafile)
+    return template('upgrade.tpl', node_id=node_id, node=node, success=ret)
+
 @get('/')
 def index():
     return template('index.tpl', nodes=node_list.get_node_list())

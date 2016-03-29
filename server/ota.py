@@ -1,5 +1,5 @@
 import threading
-from bottle import route, run, template, HTTPResponse, request, get, response
+from bottle import route, run, template, HTTPResponse, request, get, response, static_file
 
 HOST = '0.0.0.0'
 PORT = 24320
@@ -23,6 +23,10 @@ def node_v1_download():
 
     response.set_header('x-MD5', _md5)
     return content
+
+@get('/static/<path:path>')
+def static(path):
+    return static_file(path, root='./static/')
 
 @get('/')
 def index():

@@ -16,6 +16,7 @@
 #define VERSION "SHMVER-0.0.4"
 
 bool shouldSaveConfig;
+static unsigned lastDiscovery;
 
 WiFiClient mqtt_client;
 PubSubClient mqtt(mqtt_client);
@@ -263,6 +264,13 @@ void discover_server() {
 
   udp.stop();
   Serial.println("Discovery done");
+  lastDiscovery = millis();
+}
+
+void conditional_discover(void)
+{
+  if (millis() - lastDiscovery > 60*60*1000)
+    discover_server();
 }
 
 void mqtt_callback(char* topic, byte* payload, int len) {
@@ -446,6 +454,7 @@ void read_serial_commands() {
 
 void loop() {
   read_serial_commands();
+  conditional_discover();
 
   if (mqtt_connected()) {
     mqtt.loop();

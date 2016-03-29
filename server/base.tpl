@@ -9,7 +9,8 @@
 <body>
 <div class="container">
 <header>
-<h1>{{title}}</h1>
+<a class="logo" href="/">Smart Home Console</a>
+<span class="float-right">{{title}}</span>
 </header>
 {{!base}}
 </div>

@@ -15,4 +15,9 @@ void check_upgrade(void);
 void node_setup(void);
 void node_loop(void);
 
+class Node {
+public:
+  virtual void setup(void) {};
+  virtual void loop(void) {};
+};
 #endif

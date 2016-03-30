@@ -31,7 +31,10 @@ def static(path):
 @get('/console/<node_id>')
 def console(node_id):
     node = node_list.get_node_by_id(node_id)
-    return template('console.tpl', node_id=node_id, node=node)
+    node_ip = '-'
+    if node:
+        node_ip = node['ip']
+    return template('console.tpl', node_id=node_id, node=node, node_ip=node_ip)
 
 @get('/upgrade/<node_id>')
 def upgrade(node_id):

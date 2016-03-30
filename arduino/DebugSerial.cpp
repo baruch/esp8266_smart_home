@@ -7,6 +7,9 @@
 
 static WebSocketsServer webSocket = WebSocketsServer(81);
 static int connected;
+static char recv_buf[64];
+static int recv_buf_start;
+static int recv_buf_end;
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) {
 
@@ -28,12 +31,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
       break;
     case WStype_TEXT:
       Serial.printf("[%u] get Text: %s\n", num, payload);
-
-      // send message to client
-      // webSocket.sendTXT(num, "message here");
-
-      // send data to all connected clients
-      // webSocket.broadcastTXT("message here");
+      {
+        size_t i;
+        for (i = 0; i < lenght; i++) {
+          recv_buf[recv_buf_end] = payload[i];
+          if (++recv_buf_end == sizeof(recv_buf))
+            recv_buf_end = 0;
+        }
+      }
       break;
     case WStype_BIN:
       //Serial.printf("[%u] get binary lenght: %u\n", num, lenght);
@@ -50,6 +55,8 @@ DebugSerial::DebugSerial()
 {
   buf_len = 0;
   connected = 0;
+  recv_buf_start = recv_buf_end = 0;
+
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
 }
@@ -61,11 +68,19 @@ void DebugSerial::begin(int speed)
 
 bool DebugSerial::available(void)
 {
+  if (recv_buf_end != recv_buf_start)
+    return true;
   return Serial.available();
 }
 
 char DebugSerial::read(void)
 {
+  if (recv_buf_end != recv_buf_start) {
+    char ch = recv_buf[recv_buf_start];
+    if (++recv_buf_start == sizeof(recv_buf))
+      recv_buf_start = 0;
+    return ch;
+  }
   return Serial.read();
 }
 

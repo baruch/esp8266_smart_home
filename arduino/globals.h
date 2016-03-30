@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define VERSION "SHMVER-0.0.4c"
+#define VERSION "SHMVER-0.0.4d"
 #define CONFIG_FILE "/config.ini"
 #define NODE_TYPE_FILENAME "/nodetype.bin"
 #define UPGRADE_PORT 24320

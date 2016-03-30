@@ -48,8 +48,16 @@ void mqtt_setup() {
 }
 
 bool mqtt_connected() {
-  if (mqtt.connected())
-    return true;
+  return mqtt.connected();
+}
+
+
+void mqtt_loop(void)
+{
+  if (mqtt.connected()) {
+    mqtt.loop();
+    return;
+  }
 
   long now = millis();
   static long lastReconnectAttempt = 0;
@@ -63,21 +71,13 @@ bool mqtt_connected() {
       mqtt.publish(will_topic, "online", 1);
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);
-      return true;
     }
   }
-
-  return false;
-}
-
-void mqtt_loop(void)
-{
-  mqtt.loop();
 }
 
 void mqtt_publish_str(const char *name, const char *val)
 {
-  mqtt.publish(mqtt_tmp_topic(name), val, 1); 
+  mqtt.publish(mqtt_tmp_topic(name), val, 1);
 }
 
 void mqtt_publish_float(const char *name, float val)
@@ -86,4 +86,3 @@ void mqtt_publish_float(const char *name, float val)
   dtostrf(val, 0, 1, msg);
   mqtt_publish_str(name, msg);
 }
-

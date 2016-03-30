@@ -12,5 +12,7 @@ char nibbleToChar(uint32_t val);
 void print_hexdump(const char *buf, size_t buf_len);
 void print_str(const char *name, const char *val);
 void check_upgrade(void);
+void node_setup(void);
+void node_loop(void);
 
 #endif

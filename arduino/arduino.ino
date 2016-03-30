@@ -5,10 +5,7 @@
 #include "config.h"
 #include "common.h"
 #include "node_mqtt.h"
-#include "libraries/HTU21D/SparkFunHTU21D.h"
 #include <GDBStub.h>
-
-HTU21D htu21d;
 
 
 void spiffs_mount() {
@@ -77,13 +74,9 @@ void setup() {
   discover_server();
   check_upgrade();
   mqtt_setup();
+  node_setup();
   uint32_t t2 = ESP.getCycleCount();
 
-  htu21d.begin();
-
-  // Load node params
-  // Load wifi config
-  // Button reset check
   Serial.print("Setup done in ");
   Serial.print(clockCyclesToMicroseconds(t2 - t1));
   Serial.println(" micros");
@@ -144,31 +137,6 @@ void read_serial_commands() {
 void loop() {
   read_serial_commands();
   conditional_discover();
-
-  if (mqtt_connected()) {
-    mqtt_loop();
-
-    static long lastMsg = -60000; // Ensure the first time we are around we do the first report
-    long now = millis();
-    if (now - lastMsg > 60000) {
-      lastMsg = now;
-
-      {
-        float humd = htu21d.readHumidity();
-        float temp = htu21d.readTemperature();
-
-        mqtt_publish_float("humidity", humd);
-        mqtt_publish_float("temperature", temp);
-
-        Serial.print("Time:");
-        Serial.print(millis());
-        Serial.print(" Temperature:");
-        Serial.print(temp, 1);
-        Serial.print("C");
-        Serial.print(" Humidity:");
-        Serial.print(humd, 1);
-        Serial.println("%");
-      }
-    }
-  }
+  mqtt_loop();
+  node_loop();
 }

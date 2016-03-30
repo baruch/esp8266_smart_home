@@ -1,3 +1,5 @@
+#include <pgmspace.h>
+
 #include <FS.h> //this needs to be first, or it all crashes and burns...
 #include "DebugSerial.h"
 #include <ESP8266WiFi.h>
@@ -6,9 +8,19 @@
 #include "common.h"
 #include "node_mqtt.h"
 #include "libraries/HTU21D/SparkFunHTU21D.h"
+#include "libraries/ADS1X15/Adafruit_ADS1015.h"
+#include "libraries/BME280/Adafruit_BME280.h"
+#include "libraries/BMP180/BMP180.h"
+#include "libraries/TSL2561/TSL2561.h"
+#include "libraries/BH1750/BH1750.h"
 #include <GDBStub.h>
 
 HTU21D htu21d;
+Adafruit_BME280 bme280;
+TSL2561 tsl2561;
+BH1750 bh1750;
+BMP180 bmp180;
+Adafruit_ADS1015 ads1115;
 
 
 void spiffs_mount() {

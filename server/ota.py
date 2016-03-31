@@ -7,6 +7,17 @@ PORT = 24320
 node_list = None
 otafile = None
 
+node_types = {
+        1: 'Temperature/Humidity',
+}
+
+def node_type_str(node_type):
+    s = node_types.get(node_type, None)
+    if s is None:
+        return 'Unknown (%d)' % node_type
+    else:
+        return s
+
 @get('/node_v1.bin')
 def node_v1_download():
     node = node_list.get_node_by_ip(request.remote_addr)
@@ -44,7 +55,7 @@ def upgrade(node_id):
 
 @get('/')
 def index():
-    return template('index.tpl', nodes=node_list.get_node_list())
+    return template('index.tpl', nodes=node_list.get_node_list(), node_type_str=node_type_str)
 
 def start(_node_list, _otafile):
     global node_list, otafile

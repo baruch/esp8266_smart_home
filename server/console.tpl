@@ -37,6 +37,7 @@ Node: {{node_id}}<br/>
     function connect(host) {
         console.log('connect', host);
         if (window.WebSocket) {
+            isRunning = true;
             connectionLabel.value = "Connecting";
             if(socket) {
                 socket.close();
@@ -100,7 +101,7 @@ function clearText() {
             connect('ws://{{node_ip}}:81/');
         }
     }
-    window.setInterval(function() { autoconnect(); }, 1000);
+    window.setInterval(function() { autoconnect(); }, 10000);
     autoconnect();
 % end
 </script>

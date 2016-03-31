@@ -215,7 +215,8 @@ void discover_server() {
 
   udp.stop();
   Serial.println("Discovery done");
-  last_discovery = millis();
+  if (i < 5)
+    last_discovery = millis();
 }
 
 void conditional_discover(void)

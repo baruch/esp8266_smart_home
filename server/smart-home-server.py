@@ -107,16 +107,26 @@ class NodeList:
     def get_node_list(self):
         return map(lambda x: self._index_by_node[x].copy(), self._index_by_node)
 
-    def update_node(self, node_ip, node_id, node_type, node_desc, version):
+    def update_node(self, node_ip, node_id, node_type, node_desc, version, static_ip, static_gw, static_nm, dns):
         with self.lock:
-            print 'Updating node ip=%s id=%s type=%d desc=%s version=%s' % (node_ip, node_id, node_type, node_desc, version)
-            node = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'version': version, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time(), 'ip': node_ip}
+            print 'Updating node ip=%s id=%s type=%d desc=%s version=%s static_ip=%s gw=%s nm=%s dns=%s' % (node_ip, node_id, node_type, node_desc, version, static_ip, static_gw, static_nm, dns)
+            old_node = self._index_by_node.get(node_id, None)
+            node = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'version': version, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time(), 'ip': node_ip, 'static_ip': static_ip, 'static_gw': static_gw, 'static_nm': static_nm, 'dns': dns}
+            if old_node:
+                print 'Old node exists', len(old_node['node_desc']), len(node_desc)
+                if len(old_node['node_desc']) > 0 and len(node_desc) == 0:
+                    print 'Rewriting fields'
+                    for field in ('node_desc', 'static_ip', 'static_gw', 'static_nm', 'dns'):
+                        old_val = old_node.get(field, '')
+                        print 'Rewriting field', field, 'with old val', old_val, 'over', node[field]
+                        node[field] = old_val
             self._index_by_node[node_id] = node
             self._index_by_ip[node_ip] = node_id
             self.save_db()
         mqtt_publish(node_id, "status", "discovery")
         mqtt_publish(node_id, "version", version)
         mqtt_publish(node_id, "desc", node_desc)
+        return (node['node_desc'], node['static_ip'], node['static_gw'], node['static_nm'], node['dns'])
 
     def upgrade(self, node_id, ota_file):
         node = self.get_node_by_id(node_id)

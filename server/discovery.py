@@ -11,6 +11,12 @@ def parse_message_part(data):
     if len(data) < part_len + 1: return (None, '')
     return (data[1:part_len+1], data[part_len+1:])
 
+def translate_node_type(node_type):
+    try:
+        return int(node_type)
+    except ValueError:
+        return 0
+
 def parse_message(data):
     print 'message', data
     if data[0] != 'S': return (None, None, None, None)
@@ -22,13 +28,9 @@ def parse_message(data):
     version, data = parse_message_part(data)
 
     if node_id is None or node_type is None: return (None, None, None, None)
-    return (node_id, node_type, node_desc, version)
 
-def translate_node_type(node_type):
-    try:
-        return int(node_type)
-    except ValueError:
-        return 0
+    node_type = translate_node_type(node_type)
+    return (node_id, node_type, node_desc, version)
 
 class DiscoveryUDPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
@@ -40,7 +42,6 @@ class DiscoveryUDPHandler(SocketServer.BaseRequestHandler):
         if node_id is None: return
 
         node_ip = self.client_address[0]
-        node_type = translate_node_type(node_type)
         self.server.node_list.update_node(node_ip, node_id, node_type, node_desc, version)
 
         # send response

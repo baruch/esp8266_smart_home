@@ -9,6 +9,7 @@ import sys
 import os
 import md5
 import paho.mqtt.client as mqtt
+import pickle
 
 def choose_ip_addr(iface_addrs):
     for iface_addr in iface_addrs:
@@ -60,10 +61,35 @@ def mqtt_run():
     server_thread.start()
 
 class NodeList:
+    DB_FILENAME = 'node_list.db'
+
     def __init__(self):
         self._index_by_ip = {}
         self._index_by_node = {}
         self.lock = threading.Lock()
+        self.load_db()
+
+    def load_db(self):
+        try:
+            f = file(self.DB_FILENAME, 'r')
+            ip_index = pickle.load(f)
+            node_index = pickle.load(f)
+            f.close()
+            self._index_by_ip = ip_index
+            self._index_by_node = node_index
+        except IOError:
+            print 'Failed to load node list db'
+        except EOFError:
+            print 'Failed to load node list db (invalid file)'
+
+    def save_db(self):
+        try:
+            f = file(self.DB_FILENAME, 'w')
+            pickle.dump(self._index_by_ip, f)
+            pickle.dump(self._index_by_node, f)
+            f.close()
+        except IOError:
+            print 'Failed to write node list db'
 
     def get_node_by_ip(self, ip):
         if ip == '127.0.0.1': return {'node_id': 'local', 'node_type': 'test', 'node_desc': 'test'}
@@ -83,10 +109,11 @@ class NodeList:
 
     def update_node(self, node_ip, node_id, node_type, node_desc, version):
         with self.lock:
-            print 'Updating node ip=%s id=%s type=%s desc=%s version=%s' % (node_ip, node_id, node_type, node_desc, version)
+            print 'Updating node ip=%s id=%s type=%d desc=%s version=%s' % (node_ip, node_id, node_type, node_desc, version)
             node = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'version': version, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time(), 'ip': node_ip}
             self._index_by_node[node_id] = node
             self._index_by_ip[node_ip] = node_id
+            self.save_db()
         mqtt_publish(node_id, "status", "discovery")
         mqtt_publish(node_id, "version", version)
         mqtt_publish(node_id, "desc", node_desc)

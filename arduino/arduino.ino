@@ -31,6 +31,12 @@ void node_type_load(void) {
   f.close();
 }
 
+void node_type_save(void) {
+  File f = SPIFFS.open(NODE_TYPE_FILENAME, "w");
+  f.write((uint8_t*)&node_type, sizeof(node_type));
+  f.close();
+}
+
 void build_name() {
   uint32_t id;
   int i;
@@ -89,9 +95,7 @@ void read_configure_type(void)
   Serial.print("Node type set to ");
   Serial.println(node_type);
 
-  File f = SPIFFS.open(NODE_TYPE_FILENAME, "w");
-  f.write((uint8_t*)&node_type, sizeof(node_type));
-  f.close();
+  node_type_save();
 }
 
 void read_serial_commands() {

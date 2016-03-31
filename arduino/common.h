@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 void config_load(void);
+void node_type_save(void);
 void net_config(void);
 void discover_server(void);
 void conditional_discover(void);

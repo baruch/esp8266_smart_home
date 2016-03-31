@@ -71,10 +71,10 @@ class DiscoveryUDPHandler(SocketServer.BaseRequestHandler):
         if node_id is None: return
 
         node_ip = self.client_address[0]
-        node_desc, static_ip, static_gw, static_nm, dns = self.server.node_list.update_node(node_ip, node_id, node_type, node_desc, version, static_ip, static_gw, static_nm, dns)
+        node_desc, static_ip, static_gw, static_nm, dns, node_type = self.server.node_list.update_node(node_ip, node_id, node_type, node_desc, version, static_ip, static_gw, static_nm, dns)
 
         # send response
-        response = 'R' + self.server.server_ip + self.server.mqtt_port + encode_str(node_desc) + encode_ip(static_ip) + encode_ip(static_gw) + encode_ip(static_nm) + encode_ip(dns)
+        response = 'R' + self.server.server_ip + self.server.mqtt_port + encode_str(node_desc) + encode_ip(static_ip) + encode_ip(static_gw) + encode_ip(static_nm) + encode_ip(dns) + encode_str(str(node_type))
         
         socket.sendto(response, self.client_address)
 

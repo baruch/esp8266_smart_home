@@ -178,6 +178,7 @@ void discover_server() {
   char new_gw[16];
   char new_nm[16];
   char new_dns[16];
+  char new_node_type[10];
   int new_config = 0;
 
   udp.begin(DISCOVER_PORT);
@@ -295,6 +296,11 @@ void discover_server() {
     }
     cur_pos += ret;
 
+    ret = extract_str(reply, res, cur_pos, new_node_type, sizeof(new_node_type));
+    if (ret < 0) {
+      Serial.println("Bad Node type");
+      continue;
+    }
     Serial.println("New config done");
     new_config = 1;
     break;
@@ -307,22 +313,30 @@ void discover_server() {
     Serial.print("New config ");
     Serial.println(new_config);
 
-    if (new_config &&
-        (strcmp(new_desc, node_desc) != 0 ||
+    if (new_config) {
+      if (strcmp(new_desc, node_desc) != 0 ||
          strcmp(new_ip, static_ip) != 0 ||
          strcmp(new_gw, static_gw) != 0 ||
          strcmp(new_nm, static_nm) != 0 ||
-         strcmp(new_dns, dns) != 0))
-    {
-      Serial.println("Reconfigure");
-      strcpy(node_desc, new_desc);
-      strcpy(static_ip, new_ip);
-      strcpy(static_gw, new_gw);
-      strcpy(static_nm, new_nm);
-      strcpy(dns, new_dns);
+         strcmp(new_dns, dns) != 0)
+      {
+        Serial.println("Reconfigure");
+        strcpy(node_desc, new_desc);
+        strcpy(static_ip, new_ip);
+        strcpy(static_gw, new_gw);
+        strcpy(static_nm, new_nm);
+        strcpy(dns, new_dns);
 
-      config_save();
+        config_save();
+      }
+
+      if (node_type == 0) {
+        node_type = atoi(new_node_type);
+        if (node_type > 0)
+          node_type_save();
+      }
     }
+
   } else {
     Serial.println("Discovery problem");
   }

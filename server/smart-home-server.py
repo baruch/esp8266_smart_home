@@ -114,6 +114,8 @@ class NodeList:
             node = {'node_id': node_id, 'node_type': node_type, 'node_desc': node_desc, 'version': version, 'last_seen_cpu': time.clock(), 'last_seen_wall': time.time(), 'ip': node_ip, 'static_ip': static_ip, 'static_gw': static_gw, 'static_nm': static_nm, 'dns': dns}
             if old_node:
                 print 'Old node exists', len(old_node['node_desc']), len(node_desc)
+                if node_type == 0:
+                    node['node_type'] = old_node['node_type']
                 if len(old_node['node_desc']) > 0 and len(node_desc) == 0:
                     print 'Rewriting fields'
                     for field in ('node_desc', 'static_ip', 'static_gw', 'static_nm', 'dns'):
@@ -126,7 +128,7 @@ class NodeList:
         mqtt_publish(node_id, "status", "discovery")
         mqtt_publish(node_id, "version", version)
         mqtt_publish(node_id, "desc", node_desc)
-        return (node['node_desc'], node['static_ip'], node['static_gw'], node['static_nm'], node['dns'])
+        return (node['node_desc'], node['static_ip'], node['static_gw'], node['static_nm'], node['dns'], node['node_type'])
 
     def upgrade(self, node_id, ota_file):
         node = self.get_node_by_id(node_id)

@@ -45,6 +45,7 @@ void NodeRelayWithButton::loop(void)
 void NodeRelayWithButton::set_state(int state)
 {
   digitalWrite(BUTTON_RELAY, state);
+  mqtt_publish_bool("relay_state", state);
   relay_state = state;
   Serial.print("state change ");
   Serial.println(state);

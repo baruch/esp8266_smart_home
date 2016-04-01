@@ -8,5 +8,6 @@ bool mqtt_connected(void);
 void mqtt_loop(void);
 void mqtt_publish_float(const char *name, float val);
 void mqtt_publish_str(const char *name, const char *val);
+void mqtt_publish_bool(const char *name, bool val);
 
 #endif

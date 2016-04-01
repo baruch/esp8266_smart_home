@@ -86,3 +86,9 @@ void mqtt_publish_float(const char *name, float val)
   dtostrf(val, 0, 1, msg);
   mqtt_publish_str(name, msg);
 }
+
+void mqtt_publish_bool(const char *name, bool val)
+{
+  mqtt_publish_str(name, val ? "1" : "0");
+}
+

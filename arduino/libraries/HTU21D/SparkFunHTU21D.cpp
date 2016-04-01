@@ -60,7 +60,7 @@ float HTU21D::read_value(byte cmd)
                 num_read = Wire.requestFrom(HTDU21D_ADDRESS, 3);
         }
 
-        if (counter == MAX_COUNTER) return 998; //Error out
+        if (counter == MAX_COUNTER) return 0; //Error out
 
 	byte msb, lsb, checksum;
 	msb = Wire.read();
@@ -69,7 +69,7 @@ float HTU21D::read_value(byte cmd)
 
 	unsigned int raw_value = ((unsigned int) msb << 8) | (unsigned int) lsb;
 
-	if(check_crc(raw_value, checksum) != 0) return(999); //Error out
+	if(check_crc(raw_value, checksum) != 0) return(1); //Error out
 
         return raw_value & 0xFFFC; // Zero out the status bits
 }
@@ -82,6 +82,8 @@ float HTU21D::read_value(byte cmd)
 float HTU21D::readHumidity(void)
 {
         unsigned int rawHumidity = read_value(TRIGGER_HUMD_MEASURE_NOHOLD);
+        if (rawHumidity < 2)
+                return 998 + rawHumidity;
 	
 	//Given the raw humidity data, calculate the actual relative humidity
 	float tempRH = rawHumidity / (float)65536; //2^16 = 65536
@@ -98,6 +100,8 @@ float HTU21D::readHumidity(void)
 float HTU21D::readTemperature(void)
 {
         unsigned int rawTemperature = read_value(TRIGGER_TEMP_MEASURE_NOHOLD);
+        if (rawTemperature < 2)
+                return 998 + rawTemperature;
 
 	//Given the raw temperature data, calculate the actual temperature
 	float tempTemperature = rawTemperature / (float)65536; //2^16 = 65536

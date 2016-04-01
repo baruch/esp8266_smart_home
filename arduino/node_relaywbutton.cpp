@@ -19,27 +19,26 @@ void NodeRelayWithButton::setup(void)
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(BUTTON_RELAY, OUTPUT);
   button_state_changed = 0;
+  last_button_millis = 0;
   set_state(0);
-  attachInterrupt(BUTTON_PIN, pin_interrupt, RISING);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_interrupt, FALLING);
 }
 
 void NodeRelayWithButton::loop(void)
 {
   if (button_state_changed) {
-    Serial.println("button state changed");
-    toggle_state();
+    unsigned long now = millis();
+
+    if (now - last_button_millis > 100) {
+      Serial.print("time ");
+      Serial.print(millis());
+      Serial.println(" button state changed");
+      toggle_state();
+      last_button_millis = now;
+    }
+
     button_state_changed = 0;
   }
-
-  int state = digitalRead(BUTTON_PIN);
-  static int last_state = 1;
-  if (state != last_state) {
-    Serial.println("poll changed");
-    Serial.println(state);
-    Serial.print(last_state);
-    last_state = state;
-  }
-  
 }
 
 void NodeRelayWithButton::set_state(int state)

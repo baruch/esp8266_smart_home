@@ -17,6 +17,7 @@ public:
 private:
   int relay_state;
   int last_button_state;
+  unsigned long last_button_millis;
 };
 
 #endif

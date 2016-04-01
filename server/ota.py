@@ -1,6 +1,13 @@
 import threading
 from bottle import route, run, template, HTTPResponse, request, get, response, static_file
 
+paste_available = False
+try:
+    import paste
+    paste_available = True
+except ImportError:
+    print 'Paste is not available, server will be single threaded'
+
 HOST = '0.0.0.0'
 PORT = 24320
 
@@ -63,6 +70,9 @@ def start(_node_list, _otafile):
     node_list = _node_list
     otafile = _otafile
 
-    server_thread = threading.Thread(target=run, kwargs=dict(host=HOST, port=PORT))
+    args = dict(host=HOST, port=PORT)
+    if paste_available:
+        args['server'] = 'paste'
+    server_thread = threading.Thread(target=run, kwargs=args)
     server_thread.daemon = True
     server_thread.start()

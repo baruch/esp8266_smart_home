@@ -71,6 +71,7 @@ void mqtt_loop(void)
       mqtt.publish(will_topic, "online", 1);
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);
+      node_state_update();
     }
   }
 }

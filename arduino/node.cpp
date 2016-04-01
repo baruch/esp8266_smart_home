@@ -24,3 +24,9 @@ void node_loop(void)
     node->loop();
 }
 
+void node_state_update(void)
+{
+  if (node)
+    node->state_update();
+}
+

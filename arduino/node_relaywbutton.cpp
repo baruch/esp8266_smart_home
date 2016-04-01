@@ -28,12 +28,10 @@ void NodeRelayWithButton::loop(void)
     if (state) {
       if (debounce_count < DEBOUNCE_COUNT_MAX) {
         debounce_count++;
-        Serial.println(debounce_count);
       }
     } else {
       if (debounce_count > 0) {
         debounce_count--;
-        Serial.println(debounce_count);
         if (debounce_count == 0) {
           button_pressed();
         }

@@ -35,6 +35,10 @@ void node_type_save(void) {
   File f = SPIFFS.open(NODE_TYPE_FILENAME, "w");
   f.write((uint8_t*)&node_type, sizeof(node_type));
   f.close();
+
+  delay(100);
+  ESP.restart();
+  delay(1000);
 }
 
 void build_name() {

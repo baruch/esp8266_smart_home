@@ -7,38 +7,44 @@
 #define BUTTON_PIN 12 // GPIO12
 #define BUTTON_RELAY 13 // GPIO13
 
-static int button_state_changed;
-
-void pin_interrupt(void)
-{
-  button_state_changed = 1;
-}
+#define DEBOUNCE_COUNT_MAX 15
 
 void NodeRelayWithButton::setup(void)
 {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(BUTTON_RELAY, OUTPUT);
-  button_state_changed = 0;
-  last_button_millis = 0;
   set_state(0);
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_interrupt, FALLING);
+
+  debounce_count = DEBOUNCE_COUNT_MAX;
+  last_sample_millis = millis();
 }
 
 void NodeRelayWithButton::loop(void)
 {
-  if (button_state_changed) {
-    unsigned long now = millis();
-
-    if (now - last_button_millis > 100) {
-      Serial.print("time ");
-      Serial.print(millis());
-      Serial.println(" button state changed");
-      toggle_state();
-      last_button_millis = now;
+  unsigned long now = millis();
+  if (now != last_sample_millis) {
+    last_sample_millis = now;
+    int state = digitalRead(BUTTON_PIN);
+    if (state) {
+      if (debounce_count < DEBOUNCE_COUNT_MAX) {
+        debounce_count++;
+        Serial.println(debounce_count);
+      }
+    } else {
+      if (debounce_count > 0) {
+        debounce_count--;
+        Serial.println(debounce_count);
+        if (debounce_count == 0) {
+          button_pressed();
+        }
+      }
     }
-
-    button_state_changed = 0;
   }
+}
+
+void NodeRelayWithButton::button_pressed(void)
+{
+  toggle_state();
 }
 
 void NodeRelayWithButton::state_update(void)

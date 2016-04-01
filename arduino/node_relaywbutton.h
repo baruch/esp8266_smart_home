@@ -16,9 +16,11 @@ public:
   void set_state(int state);
   void toggle_state(void);
 private:
+  void button_pressed(void);
+
   int relay_state;
-  int last_button_state;
-  unsigned long last_button_millis;
+  unsigned long debounce_count;
+  unsigned long last_sample_millis;
 };
 
 #endif

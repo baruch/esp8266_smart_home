@@ -9,6 +9,7 @@ otafile = None
 
 node_types = {
         1: 'Temperature/Humidity',
+        2: 'Relay with Button',
 }
 
 def node_type_str(node_type):

@@ -96,11 +96,15 @@ void setup() {
 void read_configure_type(void)
 {
   Serial.println("Configure node type");
-  node_type = Serial.parseInt();
+  int new_node_type = Serial.parseInt();
   Serial.print("Node type set to ");
-  Serial.println(node_type);
+  Serial.println(new_node_type);
 
-  node_type_save();
+  if (node_type != new_node_type) {
+    Serial.println("Node type changed, saving it");
+    node_type = new_node_type;
+    node_type_save();
+  }
 }
 
 void read_serial_commands() {

@@ -79,12 +79,13 @@ void setup() {
 
   spiffs_mount();
   node_type_load();
+  node_setup();
+
   config_load();
   net_config();
   discover_server();
   check_upgrade();
   mqtt_setup();
-  node_setup();
   uint32_t t2 = ESP.getCycleCount();
 
   Serial.print("Setup done in ");

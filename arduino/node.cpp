@@ -24,9 +24,9 @@ void node_loop(void)
     node->loop();
 }
 
-void node_state_update(void)
+void node_mqtt_connected(void)
 {
   if (node)
-    node->state_update();
+    node->mqtt_connected_event();
 }
 

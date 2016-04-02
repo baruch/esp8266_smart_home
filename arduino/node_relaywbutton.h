@@ -12,6 +12,7 @@ class NodeRelayWithButton : public Node {
 public:
   void setup(void);
   void loop(void);
+  void mqtt_connected_event(void);
   void state_update(void);
   void set_state(int state);
   void toggle_state(void);

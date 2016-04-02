@@ -15,13 +15,13 @@ void print_str(const char *name, const char *val);
 void check_upgrade(void);
 void node_setup(void);
 void node_loop(void);
-void node_state_update(void);
+void node_mqtt_connected(void);
 void restart();
 
 class Node {
 public:
   virtual void setup(void) {};
   virtual void loop(void) {};
-  virtual void state_update(void) {};
+  virtual void mqtt_connected_event(void) {};
 };
 #endif

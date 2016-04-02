@@ -45,6 +45,11 @@ void NodeRelayWithButton::button_pressed(void)
   toggle_state();
 }
 
+void NodeRelayWithButton::mqtt_connected_event(void)
+{
+  state_update();
+}
+
 void NodeRelayWithButton::state_update(void)
 {
   mqtt_publish_bool("relay_state", relay_state);

@@ -36,4 +36,3 @@ void NodeHTU21D::loop(void)
     }
   }
 }
-

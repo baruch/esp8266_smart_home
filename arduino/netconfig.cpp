@@ -178,6 +178,7 @@ void discover_server() {
   char new_node_type[10];
   int new_config = 0;
 
+  last_discovery = 0;
   udp.begin(DISCOVER_PORT);
   res = udp.beginPacket(INADDR_BCAST, DISCOVER_PORT);
   if (res != 1) {

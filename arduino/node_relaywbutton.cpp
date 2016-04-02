@@ -13,7 +13,7 @@ void NodeRelayWithButton::setup(void)
 {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(BUTTON_RELAY, OUTPUT);
-  set_state(0);
+  set_state(1); // Default to output turned on
 
   debounce_count = DEBOUNCE_COUNT_MAX;
   last_sample_millis = millis();

@@ -47,9 +47,7 @@ void config_save(void)
     cfg.writeFile();
     Serial.println("save done");
 
-    delay(100);
-    ESP.restart();
-    delay(1000);
+    restart();
 }
 
 void configModeCallback (WiFiManager *myWiFiManager) {
@@ -88,8 +86,7 @@ void net_config() {
   if (!wifiManager.autoConnect()) {
     // Not connected
     Serial.println("Failed to connect to AP");
-    delay(1000);
-    ESP.restart();
+    restart();
   }
 
   Serial.println("Connected");

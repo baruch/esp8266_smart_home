@@ -138,4 +138,9 @@ size_t DebugSerial::write(const uint8_t *buffer, size_t size)
   return size;
 }
 
+void DebugSerial::disconnect(void)
+{
+  webSocket.disconnect();
+}
+
 DebugSerial iDebugSerial;

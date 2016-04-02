@@ -1,4 +1,6 @@
 #include "common.h"
+#include <Arduino.h>
+#include "node_mqtt.h"
 #include "DebugSerial.h"
 
 void print_str(const char *name, const char *val)
@@ -42,5 +44,22 @@ char nibbleToChar(uint32_t val)
     return '0' + val;
   else
     return 'A' + val - 10;
+}
+
+void restart(void)
+{
+  // We want to send any message pending
+  delay(50);
+
+  // Next we want to disconnect and let the disconnect propogate to the clients
+  iDebugSerial.disconnect();
+  mqtt_disconnect();
+  delay(50);
+
+  // Now we reset
+  ESP.restart();
+
+  // It was shown that after a restart we need to delay for the restart to work reliably
+  delay(1000);
 }
 

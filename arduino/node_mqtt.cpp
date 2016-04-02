@@ -47,6 +47,11 @@ void mqtt_setup() {
   mqtt.setCallback(mqtt_callback);
 }
 
+void mqtt_disconnect(void)
+{
+  mqtt.disconnect();
+}
+
 bool mqtt_connected() {
   return mqtt.connected();
 }

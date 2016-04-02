@@ -16,6 +16,7 @@ void check_upgrade(void);
 void node_setup(void);
 void node_loop(void);
 void node_state_update(void);
+void restart();
 
 class Node {
 public:

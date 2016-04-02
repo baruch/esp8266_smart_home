@@ -36,9 +36,7 @@ void node_type_save(void) {
   f.write((uint8_t*)&node_type, sizeof(node_type));
   f.close();
 
-  delay(100);
-  ESP.restart();
-  delay(1000);
+  restart();
 }
 
 void build_name() {
@@ -120,12 +118,10 @@ void read_serial_commands() {
       WiFi.disconnect(true);
       SPIFFS.remove(CONFIG_FILE);
       Serial.println("Clearing done");
-      delay(100);
-      ESP.restart();
+      restart();
     } else if (ch == 'r') {
       Serial.println("Reset");
-      delay(100);
-      ESP.restart();
+      restart();
     } else if (ch == 'u') {
       check_upgrade();
     } else if (ch == 'p') {

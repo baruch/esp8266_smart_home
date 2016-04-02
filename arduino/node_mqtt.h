@@ -4,6 +4,7 @@
 void mqtt_topic(char *buf, int buf_len, const char *name);
 const char * mqtt_tmp_topic(const char *name);
 void mqtt_setup(void);
+void mqtt_disconnect(void);
 bool mqtt_connected(void);
 void mqtt_loop(void);
 void mqtt_publish_float(const char *name, float val);

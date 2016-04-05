@@ -5,7 +5,7 @@
 #include "config.h"
 #include "common.h"
 #include "node_mqtt.h"
-#include <GDBStub.h>
+//#include <GDBStub.h>
 
 
 void spiffs_mount() {

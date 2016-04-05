@@ -2,6 +2,7 @@
 #include "node_mqtt.h"
 #include "node_htu21d.h"
 #include "node_relaywbutton.h"
+#include "node_soilmoisture.h"
 #include "DebugSerial.h"
 
 static Node *node;
@@ -12,6 +13,7 @@ void node_setup(void)
   switch (node_type) {
     case 1: node = new NodeHTU21D(); break;
     case 2: node = new NodeRelayWithButton(); break;
+    case 3: node = new NodeSoilMoisture(); break;
   }
 
   if (node)

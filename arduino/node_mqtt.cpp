@@ -89,7 +89,7 @@ void mqtt_publish_str(const char *name, const char *val)
 void mqtt_publish_float(const char *name, float val)
 {
   char msg[20];
-  dtostrf(val, 0, 1, msg);
+  dtostrf(val, 0, 4, msg);
   mqtt_publish_str(name, msg);
 }
 

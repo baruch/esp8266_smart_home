@@ -7,7 +7,7 @@
 class NodeHTU21D : public Node {
 public:
   void setup(void);
-  void loop(void);
+  unsigned loop(void);
 private:
   HTU21D htu21d;
 };

@@ -5,34 +5,26 @@
 
 void NodeHTU21D::setup(void)
 {
+  m_loop_only_if_connected = true;
   htu21d.begin();
 }
 
-void NodeHTU21D::loop(void)
+unsigned NodeHTU21D::loop(void)
 {
-  static long lastMsg = -60000; // Ensure the first time we are around we do the first report
+  float humd = htu21d.readHumidity();
+  mqtt_publish_float("humidity", humd);
   
-  long now = millis();
-  if (now - lastMsg > 60000) {
-    lastMsg = now;
+  float temp = htu21d.readTemperature();
+  mqtt_publish_float("temperature", temp);
 
-    {
-      float humd = htu21d.readHumidity();
-      float temp = htu21d.readTemperature();
+  Serial.print("Time:");
+  Serial.print(millis());
+  Serial.print(" Temperature:");
+  Serial.print(temp, 1);
+  Serial.print("C");
+  Serial.print(" Humidity:");
+  Serial.print(humd, 1);
+  Serial.println("%");
 
-      if (mqtt_connected()) {
-        mqtt_publish_float("humidity", humd);
-        mqtt_publish_float("temperature", temp);
-      }
-
-      Serial.print("Time:");
-      Serial.print(millis());
-      Serial.print(" Temperature:");
-      Serial.print(temp, 1);
-      Serial.print("C");
-      Serial.print(" Humidity:");
-      Serial.print(humd, 1);
-      Serial.println("%");
-    }
-  }
+  return 60;
 }

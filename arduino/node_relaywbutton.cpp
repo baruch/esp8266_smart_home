@@ -19,7 +19,7 @@ void NodeRelayWithButton::setup(void)
   last_sample_millis = millis();
 }
 
-void NodeRelayWithButton::loop(void)
+unsigned NodeRelayWithButton::loop(void)
 {
   unsigned long now = millis();
   if (now != last_sample_millis) {
@@ -38,6 +38,8 @@ void NodeRelayWithButton::loop(void)
       }
     }
   }
+
+  return 0;
 }
 
 void NodeRelayWithButton::button_pressed(void)

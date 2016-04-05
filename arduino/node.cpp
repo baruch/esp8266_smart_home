@@ -18,10 +18,13 @@ void node_setup(void)
     node->setup();
 }
 
-void node_loop(void)
+unsigned node_loop(void)
 {
-  if (node)
-    node->loop();
+  unsigned ret = 0;
+  if (node && (node->loop_only_if_connected() == false || mqtt_connected())) {
+    ret = node->loop();
+  }
+  return ret;
 }
 
 void node_mqtt_connected(void)

@@ -36,3 +36,12 @@ void node_mqtt_connected(void)
     node->mqtt_connected_event();
 }
 
+bool node_is_powered(void)
+{
+  // For now shortcut with using loop_only_if_connected() since they are the same for all current nodes
+  if (node && node->loop_only_if_connected() == false)
+    return true;
+
+  return false;
+}
+

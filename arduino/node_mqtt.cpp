@@ -65,18 +65,28 @@ void mqtt_loop(void)
   }
 
   long now = millis();
-  static long lastReconnectAttempt = 0;
-  if (now - lastReconnectAttempt > 5000) {
+  static long lastReconnectAttempt = -2000;
+  if (now - lastReconnectAttempt > 2000) {
     lastReconnectAttempt = now;
-    Serial.println("Attempting MQTT connection...");
     const char *will_topic = mqtt_tmp_topic("online");
     if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {
-      Serial.println("MQTT connected");
+      Serial.print("MQTT connected in ");
+      Serial.print(millis() - lastReconnectAttempt);
+      Serial.println(" msec");
+
       // Once connected, publish an announcement...
       mqtt.publish(will_topic, "online", 1);
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);
       node_mqtt_connected();
+    } else if (now - lastReconnectAttempt > 15000) {
+      Serial.println("Failed to connect to MQTT");
+      if (node_is_powered()) {
+        restart();
+      } else {
+        // Node not powered, need to save energy
+        deep_sleep(DEFAULT_DEEP_SLEEP_TIME);
+      }
     }
   }
 }

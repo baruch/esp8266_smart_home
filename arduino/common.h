@@ -16,6 +16,7 @@ void check_upgrade(void);
 void node_setup(void);
 unsigned node_loop(void);
 void node_mqtt_connected(void);
+bool node_is_powered(void);
 void restart();
 void deep_sleep(unsigned seconds);
 

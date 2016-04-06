@@ -26,5 +26,5 @@ unsigned NodeHTU21D::loop(void)
   Serial.print(humd, 1);
   Serial.println("%");
 
-  return 60;
+  return DEFAULT_DEEP_SLEEP_TIME;
 }

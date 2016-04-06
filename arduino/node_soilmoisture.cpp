@@ -62,5 +62,5 @@ unsigned NodeSoilMoisture::loop(void)
   Serial.print(" Digital: ");
   Serial.println(moisture_digital, 4);
 
-  return 60;
+  return DEFAULT_DEEP_SLEEP_TIME;
 }

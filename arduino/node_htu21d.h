@@ -5,11 +5,11 @@
 #include "libraries/HTU21D/SparkFunHTU21D.h"
 
 class NodeHTU21D : public Node {
-public:
-  void setup(void);
-  unsigned loop(void);
-private:
-  HTU21D htu21d;
+  public:
+    void setup(void);
+    unsigned loop(void);
+  private:
+    HTU21D htu21d;
 };
 
 #endif

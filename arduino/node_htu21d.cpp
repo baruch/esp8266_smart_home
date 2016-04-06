@@ -13,7 +13,7 @@ unsigned NodeHTU21D::loop(void)
 {
   float humd = htu21d.readHumidity();
   mqtt_publish_float("humidity", humd);
-  
+
   float temp = htu21d.readTemperature();
   mqtt_publish_float("temperature", temp);
 

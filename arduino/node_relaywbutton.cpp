@@ -69,6 +69,6 @@ void NodeRelayWithButton::set_state(int state)
 void NodeRelayWithButton::toggle_state(void)
 {
   Serial.println("Toggle state");
-  set_state(1-relay_state);
+  set_state(1 - relay_state);
 }
 

@@ -47,7 +47,7 @@ bool Config::readFile() {
     Serial.println(" doesn't exist");
     return false;
   }
-  
+
   File configFile = SPIFFS.open(_filename, "r");
   ch = configFile.read();
   if (ch != 'C') {
@@ -87,7 +87,7 @@ bool Config::readFile() {
       case 'S':
         {
           char value[64];
-          if (l > sizeof(value)-1) {
+          if (l > sizeof(value) - 1) {
             Serial.print("Config error: string length invalid");
             Serial.println(l);
             res = false;
@@ -107,7 +107,7 @@ bool Config::readFile() {
         break;
     }
   }
-  
+
   configFile.close();
   return res;
 }
@@ -127,7 +127,7 @@ bool Config::writeFile() {
           l = strlen(keys[i]);
           configFile.write(l);
           configFile.write((uint8_t*)keys[i], l);
-          
+
           l = strlen((char*)values[i]);
           configFile.write(l);
           configFile.write((uint8_t*)values[i], l);
@@ -135,11 +135,11 @@ bool Config::writeFile() {
         break;
       case CONFIG_TYPE_INT:
         configFile.write('I');
-        
+
         uint8_t l = strlen(keys[i]);
         configFile.write(l);
         configFile.write((uint8_t*)keys[i], l);
-          
+
         configFile.write(sizeof(int));
         configFile.write((uint8_t*)&values[i], sizeof(int));
         break;
@@ -230,6 +230,6 @@ void Config::setValueStr(const char *key, const char *value) {
   if (i == -1)
     return;
 
- values[i] = strdup(value);
+  values[i] = strdup(value);
 }
 

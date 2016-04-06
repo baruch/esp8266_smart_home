@@ -35,7 +35,7 @@ void print_hexdump(const char *buf, size_t buf_len)
   size_t i;
 
   for (i = 0; i < buf_len; i += 16)
-    print_hexdump_line(buf+i, buf_len - i);
+    print_hexdump_line(buf + i, buf_len - i);
 }
 
 char nibbleToChar(uint32_t val)

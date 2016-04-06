@@ -37,17 +37,17 @@ void config_load() {
 
 void config_save(void)
 {
-    Serial.println("saving config");
-    Config cfg(CONFIG_FILE);
-    cfg.setValueStr("ip", static_ip);
-    cfg.setValueStr("gw", static_gw);
-    cfg.setValueStr("nm", static_nm);
-    cfg.setValueStr("dns", dns);
-    cfg.setValueStr("desc", node_desc);
-    cfg.writeFile();
-    Serial.println("save done");
+  Serial.println("saving config");
+  Config cfg(CONFIG_FILE);
+  cfg.setValueStr("ip", static_ip);
+  cfg.setValueStr("gw", static_gw);
+  cfg.setValueStr("nm", static_nm);
+  cfg.setValueStr("dns", dns);
+  cfg.setValueStr("desc", node_desc);
+  cfg.writeFile();
+  Serial.println("save done");
 
-    restart();
+  restart();
 }
 
 void configModeCallback (WiFiManager *myWiFiManager) {
@@ -142,7 +142,7 @@ static int extract_ip(const char *buf, int buf_len, int start, char *ip_str)
   if (buf_len < start + 5 - 1) // Ensure we have all data
     return -1;
 
-  sprintf(ip_str, "%d.%d.%d.%d", buf[start+1], buf[start+2], buf[start+3], buf[start+4]);
+  sprintf(ip_str, "%d.%d.%d.%d", buf[start + 1], buf[start + 2], buf[start + 3], buf[start + 4]);
   return 5;
 }
 
@@ -159,9 +159,9 @@ static int extract_str(const char *buf, int buf_len, int start, char *out, int m
   if (buf_len < start + str_len) // Ensure we have all data
     return -1;
 
-  memcpy(out, buf+start+1, str_len);
+  memcpy(out, buf + start + 1, str_len);
   out[str_len] = 0;
-  return str_len+1;
+  return str_len + 1;
 }
 
 void discover_server() {
@@ -272,14 +272,14 @@ void discover_server() {
       continue;
     }
     cur_pos += ret;
-    
+
     ret  = extract_ip(reply, res, cur_pos, new_gw);
     if (ret < 0) {
       Serial.println("Bad GW");
       continue;
     }
     cur_pos += ret;
-    
+
     ret  = extract_ip(reply, res, cur_pos, new_nm);
     if (ret < 0) {
       Serial.println("Bad NM");
@@ -313,10 +313,10 @@ void discover_server() {
 
     if (new_config) {
       if (strcmp(new_desc, node_desc) != 0 ||
-         strcmp(new_ip, static_ip) != 0 ||
-         strcmp(new_gw, static_gw) != 0 ||
-         strcmp(new_nm, static_nm) != 0 ||
-         strcmp(new_dns, dns) != 0)
+          strcmp(new_ip, static_ip) != 0 ||
+          strcmp(new_gw, static_gw) != 0 ||
+          strcmp(new_nm, static_nm) != 0 ||
+          strcmp(new_dns, dns) != 0)
       {
         Serial.println("Reconfigure");
         strcpy(node_desc, new_desc);

@@ -115,9 +115,9 @@ void DebugSerial::add_to_buf(const uint8_t *buffer, size_t size)
     }
   }
 
-  memcpy(buf+buf_len, buffer, size);
+  memcpy(buf + buf_len, buffer, size);
   buf_len += size;
-  if (connected && buf[buf_len-1] == '\n') {
+  if (connected && buf[buf_len - 1] == '\n') {
     webSocket.broadcastTXT(buf, buf_len);
     buf_len = 0;
   }

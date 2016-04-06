@@ -9,7 +9,7 @@ class NodeSoilMoisture : public Node {
     void setup(void);
     unsigned loop(void);
   private:
-    uint16_t read_value(enum ads1115_mux mux);
+    float read_value(enum ads1115_mux mux);
     ADS1115 m_ads1115;
 };
 

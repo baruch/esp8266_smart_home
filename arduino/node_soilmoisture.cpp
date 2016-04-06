@@ -15,7 +15,7 @@ void NodeSoilMoisture::setup(void)
   m_ads1115.set_pga(ADS1115_PGA_ONE);
 }
 
-uint16_t NodeSoilMoisture::read_value(enum ads1115_mux mux)
+float NodeSoilMoisture::read_value(enum ads1115_mux mux)
 {
   const int NUM_WAITS = 10;
   m_ads1115.set_mux(mux);
@@ -34,23 +34,23 @@ uint16_t NodeSoilMoisture::read_value(enum ads1115_mux mux)
     Serial.println("read timedout");
     return 0xFFFF;
   }
-  return m_ads1115.read_sample();
+  return m_ads1115.read_sample_float();
 }
 
 unsigned NodeSoilMoisture::loop(void)
 {
   // We read the battery through a 2:1 voltage divider so upscale it in the ADC
   m_ads1115.set_pga(ADS1115_PGA_TWO);
-  float bat = read_value(ADS1115_MUX_GND_AIN0) * 4.096 / 32767;
+  float bat = read_value(ADS1115_MUX_GND_AIN0)*2.0;
   mqtt_publish_float("battery", bat);
 
   // The other values are read without any filtering and have a max of 3.3v so no scaling
   m_ads1115.set_pga(ADS1115_PGA_ONE);
 
-  float moisture_analog = read_value(ADS1115_MUX_GND_AIN2) * 6.144 / 32767;
+  float moisture_analog = read_value(ADS1115_MUX_GND_AIN2);
   mqtt_publish_float("moisture", moisture_analog);
 
-  float moisture_digital = read_value(ADS1115_MUX_GND_AIN3) * 6.144 / 32767;
+  float moisture_digital = read_value(ADS1115_MUX_GND_AIN3);
   mqtt_publish_float("trigger", moisture_digital);
 
   Serial.print("Time:");

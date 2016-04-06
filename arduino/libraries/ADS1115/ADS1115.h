@@ -86,6 +86,7 @@ public:
 	uint8_t trigger_sample();
 	bool is_sample_in_progress();
 	uint16_t read_sample();
+	float read_sample_float();
 
 	void set_comp_queue(enum ads1115_comp_queue val) { set_config(val, ADS1115_COMP_QUEUE_MASK); }
 	void set_comp_latching(enum ads1115_comp_latch val) { set_config(val, ADS1115_COMP_LATCH_MASK); }
@@ -93,7 +94,7 @@ public:
 	void set_comp_mode(enum ads1115_comp_mode val) { set_config(val, ADS1115_COMP_MODE_MASK); }
 	void set_data_rate(enum ads1115_data_rate val) { set_config(val, ADS1115_DATA_RATE_MASK); }
 	void set_mode(enum ads1115_mode val) { set_config(val, ADS1115_MODE_MASK); }
-	void set_pga(enum ads1115_pga val) { set_config(val, ADS1115_PGA_MASK); }
+	void set_pga(enum ads1115_pga val) { set_config(val, ADS1115_PGA_MASK); m_voltage_range = val >> ADS1115_PGA_SHIFT; }
 	void set_mux(enum ads1115_mux val) { set_config(val, ADS1115_MUX_MASK); }
 
 private:
@@ -106,6 +107,7 @@ private:
 
 	uint8_t m_address;
 	uint16_t m_config;
+	int m_voltage_range;
 };
 
 #endif

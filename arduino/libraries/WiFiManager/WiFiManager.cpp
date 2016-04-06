@@ -464,6 +464,8 @@ void WiFiManager::handleWifi(boolean scan) {
       }
       page += "<br/>";
     }
+
+    WiFi.scanDelete(); // Free memory used in the scan
   }
 
   page += FPSTR(HTTP_FORM_START);

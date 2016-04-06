@@ -75,7 +75,7 @@ uint16_t ADS1115::read_sample()
 
 float ADS1115::read_sample_float()
 {
-        static float ranges[] = { 6.144, 4.096, 2.048, 1.024, 0.512, 0.256 };
+        static float ranges[] = { 6.144 / 32767.0, 4.096 / 32767.0, 2.048 / 32767.0, 1.024 / 32767.0, 0.512 / 32767.0, 0.256 / 32767.0};
         float val = read_sample();
-        return val * ranges[m_voltage_range] / 32767.0;
+        return val * ranges[m_voltage_range];
 }

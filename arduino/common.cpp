@@ -1,6 +1,7 @@
 #include "common.h"
 #include <Arduino.h>
 #include "node_mqtt.h"
+#include <ESP8266WiFi.h>
 #include "DebugSerial.h"
 
 void print_str(const char *name, const char *val)
@@ -61,5 +62,18 @@ void restart(void)
 
   // It was shown that after a restart we need to delay for the restart to work reliably
   delay(1000);
+}
+
+void deep_sleep(unsigned seconds)
+{
+  Serial.print("Going to sleep for ");
+  Serial.print(seconds);
+  Serial.println(" seconds");
+  delay(1);
+  mqtt_loop();
+  delay(1);
+  WiFiClient::stopAll();
+  delay(1);
+  ESP.deepSleep(seconds * 1000 * 1000);
 }
 

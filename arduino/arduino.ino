@@ -150,13 +150,6 @@ void loop() {
 
   unsigned sleep_interval = node_loop();
   if (sleep_interval) {
-    Serial.print("Going to sleep for ");
-    Serial.print(sleep_interval);
-    Serial.println(" seconds");
-    delay(1);
-    mqtt_loop();
-    delay(1);
-    WiFiClient::stopAll();
-    ESP.deepSleep(sleep_interval * 1000 * 1000);
+    deep_sleep(sleep_interval);
   }
 }

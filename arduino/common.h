@@ -17,6 +17,7 @@ void node_setup(void);
 unsigned node_loop(void);
 void node_mqtt_connected(void);
 void restart();
+void deep_sleep(unsigned seconds);
 
 class Node {
 public:

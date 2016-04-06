@@ -14,6 +14,7 @@ void node_setup(void)
     case 1: node = new NodeHTU21D(); break;
     case 2: node = new NodeRelayWithButton(); break;
     case 3: node = new NodeSoilMoisture(); break;
+    default: Serial.print("Unknown node type "); Serial.println(node_type); break;
   }
 
   if (node)

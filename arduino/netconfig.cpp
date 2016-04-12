@@ -343,6 +343,9 @@ void discover_server() {
 
 void conditional_discover(void)
 {
+  if (!WiFi.isConnected())
+    return;
+
   if (millis() - last_discovery > DISCOVERY_CYCLES)
     discover_server();
 }

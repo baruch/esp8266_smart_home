@@ -1,6 +1,6 @@
 #include <FS.h> //this needs to be first, or it all crashes and burns...
 #include "DebugSerial.h"
-#include <ESP8266WiFi.h>
+#include "libraries/WiFiAsyncManager/WiFiAsyncManager.h"
 #include <Esp.h>
 #include "config.h"
 #include "common.h"
@@ -77,9 +77,7 @@ void setup() {
   node_setup();
 
   config_load();
-  net_config();
-  discover_server();
-  check_upgrade();
+  net_config_setup();
   mqtt_setup();
   unsigned long t2 = millis();
 
@@ -143,6 +141,7 @@ void read_serial_commands() {
 
 void loop() {
   read_serial_commands();
+  net_config_loop();
   conditional_discover();
   mqtt_loop();
 

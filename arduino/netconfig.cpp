@@ -2,18 +2,15 @@
 #include "globals.h"
 #include "config.h"
 
-#include <ESP8266WiFi.h>
-#include <Esp.h>
-#include <ESP8266httpUpdate.h>
+#include "libraries/WiFiAsyncManager/WiFiAsyncManager.h"
+#include <WiFiUdp.h>
 
 #include "DebugSerial.h"
-
-#include "libraries/WiFiManager/WiFiManager.h"
 
 #define DISCOVERY_CYCLES (60*60*1000) // an hour in msecs
 
 static bool shouldSaveConfig;
-static unsigned last_discovery;
+static long unsigned next_discovery;
 
 void config_load() {
   Serial.println("SPIFFS initialized");
@@ -47,13 +44,13 @@ void config_save(void)
   cfg.writeFile();
   Serial.println("save done");
 
+  delay(1000);
   restart();
 }
 
-void configModeCallback (WiFiManager *myWiFiManager) {
-  Serial.println("Entered config mode");
+void configModeCallback() {
+  Serial.print("Entered config mode, SSID=");
   Serial.println(WiFi.softAPIP());
-  Serial.println(myWiFiManager->getConfigPortalSSID());
 }
 
 void saveConfigCallback () {
@@ -61,50 +58,42 @@ void saveConfigCallback () {
   shouldSaveConfig = true;
 }
 
-void net_config() {
-  WiFiManager wifiManager;
+void net_config_setup() {
+  IPAddress ip, gw, nm, dns_ip;
+  ip.fromString(static_ip);
+  gw.fromString(static_gw);
+  nm.fromString(static_nm);
+  dns_ip.fromString(dns);
 
-  WiFiManagerParameter node_desc_param("desc", "Description", node_desc, 32);
-  WiFiManagerParameter custom_dns("dns", "Domain Name Server", dns, 40);
+  wifi.begin(ip, gw, nm, dns_ip);
+  next_discovery = 0; // Try as soon as we have network
+}
 
-  if (strlen(static_ip) > 0) {
-    IPAddress _ip, _gw, _nm;
-    _ip.fromString(static_ip);
-    _gw.fromString(static_gw);
-    _nm.fromString(static_nm);
-
-    wifiManager.setSTAStaticIPConfig(_ip, _gw, _nm);
+void ip_to_str(IPAddress &ip, char *buf, size_t buf_len)
+{
+  if (static_cast<uint32_t>(ip) != 0) {
+    ip.toString().toCharArray(buf, buf_len, 0);
+  } else {
+    buf[0] = 0;
   }
+}
 
-  wifiManager.setForceStaticQuestion(true);
-  wifiManager.addParameter(&node_desc_param);
-  wifiManager.addParameter(&custom_dns);
+void net_config_loop() {
+  wifi.loop();
 
-  //wifiManager.setTimeout(600);
-  wifiManager.setAPCallback(configModeCallback);
-  wifiManager.setSaveConfigCallback(saveConfigCallback);
-  if (!wifiManager.autoConnect()) {
-    // Not connected
-    Serial.println("Failed to connect to AP");
-    restart();
-  }
+  if (wifi.is_config_changed()) {
+    //save the custom parameters to FS
+    IPAddress _ip, _gw, _sn, _dns;
 
-  Serial.println("Connected");
-  Serial.println(WiFi.localIP());
-  Serial.println(WiFi.gatewayIP());
-  Serial.println(WiFi.subnetMask());
+    wifi.get_static_ip(_ip, _gw, _sn, _dns);
 
+    ip_to_str(_ip, static_ip, sizeof(static_ip));
+    ip_to_str(_gw, static_gw, sizeof(static_gw));
+    ip_to_str(_sn, static_nm, sizeof(static_nm));
+    ip_to_str(_dns, dns, sizeof(dns));
 
-  //save the custom parameters to FS
-  if (shouldSaveConfig) {
-    IPAddress _ip, _gw, _sn;
-    wifiManager.getSTAStaticIPConfig(_ip, _gw, _sn);
-    _ip.toString().toCharArray(static_ip, sizeof(static_ip), 0);
-    _gw.toString().toCharArray(static_gw, sizeof(static_gw), 0);
-    _sn.toString().toCharArray(static_nm, sizeof(static_nm), 0);
+    wifi.get_desc(node_desc, sizeof(node_desc));
 
-    strcpy(dns, custom_dns.getValue());
-    strcpy(node_desc, node_desc_param.getValue());
     config_save();
     // config save will restart
   }
@@ -177,14 +166,13 @@ void discover_server() {
   char new_node_type[10];
   int new_config = 0;
 
-  last_discovery = 0;
+  next_discovery = millis() + 10 * 1000; // If we fail, try again in 10 seconds
   udp.begin(DISCOVER_PORT);
 
   IPAddress broadcast_ip = ~WiFi.subnetMask() | WiFi.gatewayIP();
   res = udp.beginPacket(broadcast_ip, DISCOVER_PORT);
   if (res != 1) {
     Serial.println("Failed to prepare udp packet for send");
-    last_discovery = -DISCOVERY_CYCLES;
     return;
   }
 
@@ -204,7 +192,6 @@ void discover_server() {
   res = udp.endPacket();
   if (res != 1) {
     Serial.println("Failed to send udp discover packet");
-    last_discovery = DISCOVERY_CYCLES;
     return;
   }
 
@@ -308,7 +295,7 @@ void discover_server() {
   udp.stop();
   Serial.println("Discovery done");
   if (i < 5) {
-    last_discovery = millis();
+    next_discovery = millis() + DISCOVERY_CYCLES;
     Serial.print("New config ");
     Serial.println(new_config);
 
@@ -346,7 +333,7 @@ void conditional_discover(void)
   if (!WiFi.isConnected())
     return;
 
-  if (millis() - last_discovery > DISCOVERY_CYCLES)
+  if (millis() > next_discovery)
     discover_server();
 }
 

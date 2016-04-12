@@ -6,7 +6,8 @@
 
 void config_load(void);
 void node_type_save(void);
-void net_config(void);
+void net_config_setup(void);
+void net_config_loop(void);
 void discover_server(void);
 void conditional_discover(void);
 char nibbleToChar(uint32_t val);

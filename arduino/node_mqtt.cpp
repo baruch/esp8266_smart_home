@@ -1,6 +1,7 @@
 #include "node_mqtt.h"
 #include "libraries/PubSubClient/PubSubClient.h"
 #include "WiFiClient.h"
+#include <ESP8266WiFi.h>
 #include "DebugSerial.h"
 #include "globals.h"
 #include "common.h"
@@ -59,6 +60,9 @@ bool mqtt_connected() {
 
 void mqtt_loop(void)
 {
+  if (!WiFi.isConnected())
+    return;
+
   if (mqtt.connected()) {
     mqtt.loop();
     return;

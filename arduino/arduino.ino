@@ -60,7 +60,7 @@ void build_name() {
 }
 
 void setup() {
-  uint32_t t1 = ESP.getCycleCount();
+  unsigned long t1 = millis();
   node_type = 0;
   node_desc[0] = 0;
   build_name();
@@ -84,11 +84,11 @@ void setup() {
   discover_server();
   check_upgrade();
   mqtt_setup();
-  uint32_t t2 = ESP.getCycleCount();
+  unsigned long t2 = millis();
 
   Serial.print("Setup done in ");
-  Serial.print(clockCyclesToMicroseconds(t2 - t1));
-  Serial.println(" micros");
+  Serial.print(t2 - t1);
+  Serial.println(" millis");
 }
 
 void read_configure_type(void)

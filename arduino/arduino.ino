@@ -66,9 +66,6 @@ void setup() {
   build_name();
 
   Serial.begin(115200);
-#ifdef DEBUG
-  delay(10000); // Wait for port to open, debug only
-#endif
 
   Serial.println('*');
   Serial.println(VERSION);

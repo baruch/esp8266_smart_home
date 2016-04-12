@@ -112,6 +112,7 @@ void read_serial_commands() {
       Serial.println(node_type);
     } else if (ch == 'f') {
       Serial.println("Clearing Config");
+      WiFi.persistent(true);
       WiFi.disconnect(true);
       SPIFFS.remove(CONFIG_FILE);
       Serial.println("Clearing done");

@@ -208,15 +208,15 @@ void discover_server() {
     return;
   }
 
-  for (i = 0; i < 5; i ++) {
+  for (i = 0, res = -1; i < 5; i ++) {
     Serial.println("Packet sent");
     int wait;
-    for (wait = 0, res = -1; res == -1 && wait < 250; wait++) {
+    for (wait = 0; res <= 0 && wait < 250; wait++) {
       delay(1);
       res = udp.parsePacket();
     }
 
-    if (res == -1) {
+    if (res <= 0) {
       Serial.println("Packet reply timed out, retrying");
       continue;
     }

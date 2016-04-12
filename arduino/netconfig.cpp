@@ -167,7 +167,6 @@ static int extract_str(const char *buf, int buf_len, int start, char *out, int m
 void discover_server() {
   WiFiUDP udp;
   int res;
-  const IPAddress INADDR_BCAST(255, 255, 255, 255);
   char buf[64];
   char reply[128];
   char new_desc[32];
@@ -180,7 +179,9 @@ void discover_server() {
 
   last_discovery = 0;
   udp.begin(DISCOVER_PORT);
-  res = udp.beginPacket(INADDR_BCAST, DISCOVER_PORT);
+
+  IPAddress broadcast_ip = ~WiFi.subnetMask() | WiFi.gatewayIP();
+  res = udp.beginPacket(broadcast_ip, DISCOVER_PORT);
   if (res != 1) {
     Serial.println("Failed to prepare udp packet for send");
     last_discovery = -DISCOVERY_CYCLES;

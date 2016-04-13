@@ -6,7 +6,7 @@
 
 #define DISCOVERY_CYCLES (60*60*1000) // an hour in msecs
 static long unsigned next_discovery;
-
+static WiFiUDP udp;
 
 int discover_set_buf(char *buf, int start, const uint8_t *src, int src_len)
 {
@@ -62,32 +62,20 @@ static int extract_str(const char *buf, int buf_len, int start, char *out, int m
   return str_len + 1;
 }
 
-
-void discover_server() {
-  WiFiUDP udp;
-  int res;
+static bool discover_send_pkt()
+{
   char buf[64];
-  char reply[128];
-  char new_desc[32];
-  char new_ip[16];
-  char new_gw[16];
-  char new_nm[16];
-  char new_dns[16];
-  char new_node_type[10];
-  int new_config = 0;
+  int res;
+  int pktlen;
 
-  next_discovery = millis() + 10 * 1000; // If we fail, try again in 10 seconds
   udp.begin(DISCOVER_PORT);
 
   IPAddress broadcast_ip = ~WiFi.subnetMask() | WiFi.gatewayIP();
   res = udp.beginPacket(broadcast_ip, DISCOVER_PORT);
   if (res != 1) {
     Serial.println("Failed to prepare udp packet for send");
-    return;
+    return false;
   }
-
-  int pktlen;
-  int i;
 
   buf[0] = 'S';
   pktlen = 1;
@@ -102,8 +90,27 @@ void discover_server() {
   res = udp.endPacket();
   if (res != 1) {
     Serial.println("Failed to send udp discover packet");
-    return;
+    return false;
   }
+
+  return true;
+}
+
+void discover_server() {
+  int res;
+  char reply[128];
+  char new_desc[32];
+  char new_ip[16];
+  char new_gw[16];
+  char new_nm[16];
+  char new_dns[16];
+  char new_node_type[10];
+  int new_config = 0;
+  int i;
+
+  next_discovery = millis() + 10 * 1000; // If we fail, try again in 10 seconds
+  if (!discover_send_pkt())
+    return;
 
   for (i = 0, res = -1; i < 5; i ++) {
     Serial.println("Packet sent");

@@ -96,15 +96,112 @@ static bool discover_send_pkt()
   return true;
 }
 
-void discover_server() {
-  int res;
-  char reply[128];
+static bool parse_packet(const char *reply, int reply_len)
+{
   char new_desc[32];
   char new_ip[16];
   char new_gw[16];
   char new_nm[16];
   char new_dns[16];
   char new_node_type[10];
+
+  if (reply[0] != 'R') {
+    Serial.println("Invalid reply header");
+    return false;
+  }
+  int cur_pos = 1;
+
+  int ret = extract_ip(reply, reply_len, 1, mqtt_server);
+  if (ret < 0) {
+    Serial.println("Invalid MQTT IP");
+    return false;
+  }
+  print_str("MQTT IP", mqtt_server);
+  cur_pos += ret;
+
+  if (reply[cur_pos] != 2) {
+    Serial.println("Invalid port length");
+    return false;
+  }
+
+  mqtt_port = reply[7] | (reply[8] << 8);
+  Serial.print("MQTT Port: ");
+  Serial.println(mqtt_port);
+  cur_pos += 3;
+
+  if (reply_len <= cur_pos)
+    return false;
+
+  ret = extract_str(reply, reply_len, cur_pos, new_desc, sizeof(new_desc));
+  if (ret < 0) {
+    Serial.println("Bad desc");
+    return false;
+  }
+  cur_pos += ret;
+
+  ret = extract_ip(reply, reply_len, cur_pos, new_ip);
+  if (ret < 0) {
+    Serial.println("Bad IP");
+    return false;
+  }
+  cur_pos += ret;
+
+  ret  = extract_ip(reply, reply_len, cur_pos, new_gw);
+  if (ret < 0) {
+    Serial.println("Bad GW");
+    return false;
+  }
+  cur_pos += ret;
+
+  ret  = extract_ip(reply, reply_len, cur_pos, new_nm);
+  if (ret < 0) {
+    Serial.println("Bad NM");
+    return false;
+  }
+  cur_pos += ret;
+
+  ret  = extract_ip(reply, reply_len, cur_pos, new_dns);
+  if (ret < 0) {
+    Serial.println("Bad DNS");
+    return false;
+  }
+  cur_pos += ret;
+
+  ret = extract_str(reply, reply_len, cur_pos, new_node_type, sizeof(new_node_type));
+  if (ret < 0) {
+    Serial.println("Bad Node type");
+    return false;
+  }
+  Serial.println("New config done");
+
+  if (strcmp(new_desc, node_desc) != 0 ||
+      strcmp(new_ip, static_ip) != 0 ||
+      strcmp(new_gw, static_gw) != 0 ||
+      strcmp(new_nm, static_nm) != 0 ||
+      strcmp(new_dns, dns) != 0)
+  {
+    Serial.println("Reconfigure");
+    strcpy(node_desc, new_desc);
+    strcpy(static_ip, new_ip);
+    strcpy(static_gw, new_gw);
+    strcpy(static_nm, new_nm);
+    strcpy(dns, new_dns);
+
+    config_save();
+  }
+
+  if (node_type == 0) {
+    node_type = atoi(new_node_type);
+    if (node_type > 0)
+      node_type_save();
+  }
+
+  return true;
+}
+
+void discover_server() {
+  int res;
+  char reply[128];
   int new_config = 0;
   int i;
 
@@ -137,110 +234,15 @@ void discover_server() {
     Serial.println("Packet:");
     print_hexdump(reply, res);
 
-    if (reply[0] != 'R') {
-      Serial.println("Invalid reply header");
-      continue;
-    }
-    int cur_pos = 1;
-
-    int ret = extract_ip(reply, res, 1, mqtt_server);
-    if (ret < 0) {
-      Serial.println("Invalid MQTT IP");
-      continue;
-    }
-    print_str("MQTT IP", mqtt_server);
-    cur_pos += ret;
-
-    if (reply[cur_pos] != 2) {
-      Serial.println("Invalid port length");
-      continue;
-    }
-
-    mqtt_port = reply[7] | (reply[8] << 8);
-    Serial.print("MQTT Port: ");
-    Serial.println(mqtt_port);
-    cur_pos += 3;
-
-    if (res <= cur_pos)
+    if (parse_packet(reply, res))
       break;
-
-    ret = extract_str(reply, res, cur_pos, new_desc, sizeof(new_desc));
-    if (ret < 0) {
-      Serial.println("Bad desc");
-      continue;
-    }
-    cur_pos += ret;
-
-    ret = extract_ip(reply, res, cur_pos, new_ip);
-    if (ret < 0) {
-      Serial.println("Bad IP");
-      continue;
-    }
-    cur_pos += ret;
-
-    ret  = extract_ip(reply, res, cur_pos, new_gw);
-    if (ret < 0) {
-      Serial.println("Bad GW");
-      continue;
-    }
-    cur_pos += ret;
-
-    ret  = extract_ip(reply, res, cur_pos, new_nm);
-    if (ret < 0) {
-      Serial.println("Bad NM");
-      continue;
-    }
-    cur_pos += ret;
-
-    ret  = extract_ip(reply, res, cur_pos, new_dns);
-    if (ret < 0) {
-      Serial.println("Bad DNS");
-      continue;
-    }
-    cur_pos += ret;
-
-    ret = extract_str(reply, res, cur_pos, new_node_type, sizeof(new_node_type));
-    if (ret < 0) {
-      Serial.println("Bad Node type");
-      continue;
-    }
-    Serial.println("New config done");
-    new_config = 1;
-    break;
   }
 
   udp.stop();
   Serial.println("Discovery done");
   if (i < 5) {
     next_discovery = millis() + DISCOVERY_CYCLES;
-    Serial.print("New config ");
-    Serial.println(new_config);
-
-    if (new_config) {
-      if (strcmp(new_desc, node_desc) != 0 ||
-          strcmp(new_ip, static_ip) != 0 ||
-          strcmp(new_gw, static_gw) != 0 ||
-          strcmp(new_nm, static_nm) != 0 ||
-          strcmp(new_dns, dns) != 0)
-      {
-        Serial.println("Reconfigure");
-        strcpy(node_desc, new_desc);
-        strcpy(static_ip, new_ip);
-        strcpy(static_gw, new_gw);
-        strcpy(static_nm, new_nm);
-        strcpy(dns, new_dns);
-
-        config_save();
-      }
-
-      if (node_type == 0) {
-        node_type = atoi(new_node_type);
-        if (node_type > 0)
-          node_type_save();
-      }
-    }
-
-  } else {
+   } else {
     Serial.println("Discovery problem");
   }
 }

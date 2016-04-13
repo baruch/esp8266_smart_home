@@ -209,42 +209,33 @@ void discover_server() {
   if (!discover_send_pkt())
     return;
 
-  for (i = 0, res = -1; i < 5; i ++) {
-    Serial.println("Packet sent");
-    int wait;
-    for (wait = 0; res <= 0 && wait < 250; wait++) {
-      delay(1);
-      res = udp.parsePacket();
-    }
+  Serial.println("Packet sent");
+  int wait;
+  for (wait = 0; res <= 0 && wait < 250; wait++) {
+    delay(1);
+    res = udp.parsePacket();
+  }
 
-    if (res <= 0) {
-      Serial.println("Packet reply timed out, retrying");
-      continue;
-    }
-
+  if (res <= 0) {
+    Serial.println("Discovery failed, packet timed out");
+  } else {
     Serial.print("Pkt reply took ");
     Serial.print(wait);
     Serial.println(" msec");
 
     res = udp.read(reply, sizeof(reply));
-    if (res < 9) {
-      Serial.printf("Not enough data in the reply (len=%d)\n", res);
-      continue;
-    }
     Serial.println("Packet:");
     print_hexdump(reply, res);
 
-    if (parse_packet(reply, res))
-      break;
+    if (res >= 9 && parse_packet(reply, res)) {
+      Serial.println("Discovery done");
+      next_discovery = millis() + DISCOVERY_CYCLES;
+    } else {
+      Serial.println("Failed to parse packet");
+    }
   }
 
   udp.stop();
-  Serial.println("Discovery done");
-  if (i < 5) {
-    next_discovery = millis() + DISCOVERY_CYCLES;
-   } else {
-    Serial.println("Discovery problem");
-  }
 }
 
 void conditional_discover(void)

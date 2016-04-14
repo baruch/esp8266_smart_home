@@ -42,7 +42,6 @@ uint16_t ADS1115::read_register(uint8_t reg)
         uint8_t result = Wire.requestFrom(m_address, 2, true);
         if (result != 2) {
                 Wire.flush();
-                Serial.println("Not enough data read");
                 return 0;
         }
 

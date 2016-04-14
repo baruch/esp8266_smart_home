@@ -1,4 +1,5 @@
 #include "config.h"
+#include "libraries/DebugPrint/DebugPrint.h"
 #include <FS.h>
 
 Config::Config(const char *filename)
@@ -41,17 +42,14 @@ bool Config::readFile() {
 
   // If file doesn't exist we are done
   if (!SPIFFS.exists(_filename)) {
-    Serial.print("Config file ");
-    Serial.print(_filename);
-    Serial.println(" doesn't exist");
+    debug.println("Config file ", _filename, "doesn't exist");
     return false;
   }
 
   File configFile = SPIFFS.open(_filename, "r");
   ch = configFile.read();
   if (ch != 'C') {
-    Serial.print("Config Error: Invalid header, got ");
-    Serial.println(ch, HEX);
+    debug.println("Config Error: Invalid header, got ", (int)ch);
     res = false;
   }
 
@@ -60,8 +58,7 @@ bool Config::readFile() {
     uint8_t l = configFile.read();
 
     if (l == 0 || l > 31) {
-      Serial.print("Config Error: Invalid length ");
-      Serial.println(l);
+      debug.println("Config Error: Invalid length ", l);
       res = false;
       break;
     }
@@ -79,7 +76,7 @@ bool Config::readFile() {
           configFile.read((uint8_t*)&val, sizeof(int));
           setValueInt(key, val);
         } else {
-          Serial.println("Config error: integer type not of sizeof(int)");
+          debug.println("Config error: integer type not of sizeof(int), got ", l);
           res = false;
         }
         break;
@@ -87,8 +84,7 @@ bool Config::readFile() {
         {
           char value[64];
           if (l > sizeof(value) - 1) {
-            Serial.print("Config error: string length invalid");
-            Serial.println(l);
+            debug.println("Config error: string is too long at ", l);
             res = false;
           } else {
             configFile.read((uint8_t*)value, l);
@@ -98,10 +94,7 @@ bool Config::readFile() {
         }
         break;
       default:
-        Serial.print("Config Error: Unknown field type '");
-        Serial.print(t);
-        Serial.print("'=0x");
-        Serial.println(t, HEX);
+        debug.println("Config Error: Unknown field type ", (int)t);
         res = false;
         break;
     }
@@ -199,7 +192,7 @@ int Config::allocate_entry(const char *key, ConfigType ctype) {
     }
     // No free entry found
     if (i == NUM_CONFIG_ENTRIES) {
-      Serial.println("BUG: Failed to find empty space in config");
+      debug.println("BUG: Failed to find empty space in config");
       return -1;
     }
   }

@@ -13,9 +13,7 @@ static char mqtt_upgrade_topic[40];
 static unsigned long next_reconnect = 0;
 
 static void mqtt_callback(char* topic, byte* payload, int len) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
+  debug.println("Message arrived [", topic, ']');
   for (int i = 0; i < len; i++) {
     Serial.print((char)payload[i]);
   }
@@ -25,7 +23,7 @@ static void mqtt_callback(char* topic, byte* payload, int len) {
     if (strncmp((const char*)payload, VERSION, len) != 0) {
       check_upgrade();
     } else {
-      Serial.println("Asking to upgrade to our version, not doing anything");
+      debug.println("Asking to upgrade to our version, not doing anything");
     }
   }
 }
@@ -76,7 +74,7 @@ void mqtt_loop(void)
     next_reconnect = millis() + MQTT_RECONNECT_TIMEOUT;
     const char *will_topic = mqtt_tmp_topic("online");
     if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {
-      Serial.println("MQTT connected");
+      debug.println("MQTT connected");
 
       // Once connected, publish an announcement...
       mqtt.publish(will_topic, "online", 1);

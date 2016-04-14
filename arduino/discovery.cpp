@@ -76,7 +76,7 @@ static bool discover_send_pkt()
   IPAddress broadcast_ip = ~WiFi.subnetMask() | WiFi.gatewayIP();
   res = udp.beginPacket(broadcast_ip, DISCOVER_PORT);
   if (res != 1) {
-    Serial.println("Failed to prepare udp packet for send");
+    debug.println("Failed to prepare udp packet for send");
     return false;
   }
 
@@ -92,7 +92,7 @@ static bool discover_send_pkt()
 
   res = udp.endPacket();
   if (res != 1) {
-    Serial.println("Failed to send udp discover packet");
+    debug.println("Failed to send udp discover packet");
     return false;
   }
 
@@ -111,27 +111,26 @@ static bool parse_packet(const char *reply, int reply_len)
   int new_mqtt_port;
 
   if (reply[0] != 'R') {
-    Serial.println("Invalid reply header");
+    debug.println("Invalid reply header, got ", (int)reply[0]);
     return false;
   }
   int cur_pos = 1;
 
   int ret = extract_ip(reply, reply_len, 1, new_mqtt_server);
   if (ret < 0) {
-    Serial.println("Invalid MQTT IP");
+    debug.println("Invalid MQTT IP");
     return false;
   }
-  print_str("MQTT IP", mqtt_server);
+  debug.println("MQTT IP: '", new_mqtt_server, '\'');
   cur_pos += ret;
 
   if (reply[cur_pos] != 2) {
-    Serial.println("Invalid port length");
+    debug.println("Invalid port length");
     return false;
   }
 
   new_mqtt_port = reply[7] | (reply[8] << 8);
-  Serial.print("MQTT Port: ");
-  Serial.println(mqtt_port);
+  debug.println("MQTT Port: ", new_mqtt_port);
   cur_pos += 3;
 
   if (reply_len <= cur_pos)
@@ -139,45 +138,45 @@ static bool parse_packet(const char *reply, int reply_len)
 
   ret = extract_str(reply, reply_len, cur_pos, new_desc, sizeof(new_desc));
   if (ret < 0) {
-    Serial.println("Bad desc");
+    debug.println("Bad desc");
     return false;
   }
   cur_pos += ret;
 
   ret = extract_ip(reply, reply_len, cur_pos, new_ip);
   if (ret < 0) {
-    Serial.println("Bad IP");
+    debug.println("Bad IP");
     return false;
   }
   cur_pos += ret;
 
   ret  = extract_ip(reply, reply_len, cur_pos, new_gw);
   if (ret < 0) {
-    Serial.println("Bad GW");
+    debug.println("Bad GW");
     return false;
   }
   cur_pos += ret;
 
   ret  = extract_ip(reply, reply_len, cur_pos, new_nm);
   if (ret < 0) {
-    Serial.println("Bad NM");
+    debug.println("Bad NM");
     return false;
   }
   cur_pos += ret;
 
   ret  = extract_ip(reply, reply_len, cur_pos, new_dns);
   if (ret < 0) {
-    Serial.println("Bad DNS");
+    debug.println("Bad DNS");
     return false;
   }
   cur_pos += ret;
 
   ret = extract_str(reply, reply_len, cur_pos, new_node_type, sizeof(new_node_type));
   if (ret < 0) {
-    Serial.println("Bad Node type");
+    debug.println("Bad Node type");
     return false;
   }
-  Serial.println("New config done");
+  debug.println("New config done");
 
   if (strcmp(new_mqtt_server, mqtt_server) != 0 || new_mqtt_port != mqtt_port) {
     memcpy(mqtt_server, new_mqtt_server, sizeof(mqtt_server));
@@ -191,7 +190,7 @@ static bool parse_packet(const char *reply, int reply_len)
       strcmp(new_nm, static_nm) != 0 ||
       strcmp(new_dns, dns) != 0)
   {
-    Serial.println("Reconfigure");
+    debug.println("Reconfigure");
     strcpy(node_desc, new_desc);
     strcpy(static_ip, new_ip);
     strcpy(static_gw, new_gw);
@@ -218,14 +217,14 @@ static bool check_reply() {
 
   if (res > 0) {
     res = udp.read(reply, sizeof(reply));
-    Serial.println("Packet:");
+    debug.println("Packet:");
     print_hexdump(reply, res);
 
     if (res >= 9 && parse_packet(reply, res)) {
-      Serial.println("Discovery done");
+      debug.println("Discovery done");
       return true;
     } else {
-      Serial.println("Failed to parse packet");
+      debug.println("Failed to parse packet");
     }
   }
 
@@ -253,14 +252,14 @@ void discover_poll(void)
         }
       } else if (TIME_PASSED(next_reply)) {
         // Reply timed out
-        Serial.println("Packet receipt timed out");
+        debug.println("Packet receipt timed out");
         next_reply = 0;
         next_discovery = millis() + 10 * 1000; // If we fail, try again in 10 seconds
         udp.stop();
       }
     } else if (TIME_PASSED(next_discovery)) {
       if (discover_send_pkt()) {
-        Serial.println("Packet sent");
+        debug.println("Packet sent");
         next_reply = millis() + 250;
         if (next_reply == 0)
           next_reply = 1;

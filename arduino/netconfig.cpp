@@ -5,15 +5,11 @@
 #include "libraries/WiFiAsyncManager/WiFiAsyncManager.h"
 #include <WiFiUdp.h>
 
-static bool shouldSaveConfig;
-
 void config_load() {
-  Serial.println("SPIFFS initialized");
   Config cfg(CONFIG_FILE);
 
-  Serial.println("Loading config");
   cfg.readFile();
-  Serial.println("Config loaded");
+  debug.println("Config loaded");
   strcpy(static_ip, cfg.getValueStr("ip"));
   strcpy(static_gw, cfg.getValueStr("gw"));
   strcpy(static_nm, cfg.getValueStr("nm"));
@@ -29,7 +25,7 @@ void config_load() {
 
 void config_save(void)
 {
-  Serial.println("saving config");
+  debug.println("saving config");
   Config cfg(CONFIG_FILE);
   cfg.setValueStr("ip", static_ip);
   cfg.setValueStr("gw", static_gw);
@@ -37,20 +33,10 @@ void config_save(void)
   cfg.setValueStr("dns", dns);
   cfg.setValueStr("desc", node_desc);
   cfg.writeFile();
-  Serial.println("save done");
+  debug.println("save done");
 
   delay(1000);
   restart();
-}
-
-void configModeCallback() {
-  Serial.print("Entered config mode, SSID=");
-  Serial.println(WiFi.softAPIP());
-}
-
-void saveConfigCallback () {
-  Serial.println("Should save config");
-  shouldSaveConfig = true;
 }
 
 void net_config_setup() {

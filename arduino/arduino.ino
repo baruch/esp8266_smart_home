@@ -3,18 +3,20 @@
 #include <Esp.h>
 #include "config.h"
 #include "common.h"
+#include "globals.h"
 #include "node_mqtt.h"
 //#include <GDBStub.h>
 
 
 void spiffs_mount() {
   if (!SPIFFS.begin()) {
-    Serial.println("SPIFFs not initialized, reinitializing");
+    debug.println("SPIFFs not initialized, reinitializing");
     if (!SPIFFS.format()) {
-      Serial.println("SPIFFs format failed.");
+      debug.println("SPIFFs format failed.");
       while (1);
     }
   }
+  debug.println("SPIFFS initialized");
 }
 
 void node_type_load(void) {
@@ -22,7 +24,7 @@ void node_type_load(void) {
   File f = SPIFFS.open(NODE_TYPE_FILENAME, "r");
   size_t size = f.size();
   if (size > sizeof(node_type)) {
-    Serial.println("Trimming node type file");
+    debug.println("Trimming node type file");
     size = sizeof(node_type);
   }
   if (size > 0)
@@ -66,10 +68,10 @@ void setup() {
 
   Serial.begin(115200);
 
-  Serial.println('*');
-  Serial.println(VERSION);
-  Serial.println(ESP.getResetInfo());
-  Serial.println(ESP.getResetReason());
+  debug.println('*');
+  debug.println(VERSION);
+  debug.println(ESP.getResetInfo());
+  debug.println(ESP.getResetReason());
 
   spiffs_mount();
   node_type_load();
@@ -80,22 +82,20 @@ void setup() {
   mqtt_setup();
   unsigned long t2 = millis();
 
-  Serial.print("Setup done in ");
-  Serial.print(t2 - t1);
-  Serial.println(" millis");
+  debug.println("Setup done in ", t2-t1, " millis");
 }
 
 void read_configure_type(void)
 {
-  Serial.println("Configure node type");
   int new_node_type = Serial.parseInt();
-  Serial.print("Node type set to ");
-  Serial.println(new_node_type);
+  debug.println("Node type set to ", new_node_type);
 
   if (node_type != new_node_type) {
-    Serial.println("Node type changed, saving it");
+    debug.println("Node type changed, saving it");
     node_type = new_node_type;
     node_type_save();
+  } else {
+    debug.println("Node type not changed");
   }
 }
 
@@ -105,33 +105,31 @@ void read_serial_commands() {
     if (ch == 't') {
       read_configure_type();
     } else if (ch == 'T') {
-      Serial.print("Node type config: ");
-      Serial.println(node_type);
+      debug.println("Node type config: ", node_type);
     } else if (ch == 'f') {
-      Serial.println("Clearing Config");
+      debug.println("Clearing Config");
       WiFi.persistent(true);
       WiFi.disconnect(true);
       SPIFFS.remove(CONFIG_FILE);
-      Serial.println("Clearing done");
+      debug.println("Clearing done");
       restart();
     } else if (ch == 'r') {
-      Serial.println("Reset");
+      debug.println("Reset");
       restart();
     } else if (ch == 'u') {
       check_upgrade();
     } else if (ch == 'p') {
       char buf[1024];
       File f = SPIFFS.open(CONFIG_FILE, "r");
-      Serial.print("File size is ");
-      Serial.println(f.size());
+      debug.println("File size is ", f.size());
       if (f.size()) {
         size_t len = f.read((uint8_t*)buf, sizeof(buf));
         f.close();
-        Serial.println("FILE START");
+        debug.println("FILE START");
         print_hexdump(buf, len);
-        Serial.println("FILE END");
+        debug.println("FILE END");
       } else {
-        Serial.println("Empty or non-existent file");
+        debug.println("Empty or non-existent file");
       }
     }
 

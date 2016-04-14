@@ -5,10 +5,7 @@
 
 void print_str(const char *name, const char *val)
 {
-  Serial.print(name);
-  Serial.print(": \"");
-  Serial.print(val);
-  Serial.println('"');
+  debug.println(name, ": \"", val, '"');
 }
 
 static void print_hexdump_line(const char *buf, size_t buf_len)
@@ -64,9 +61,7 @@ void restart(void)
 
 void deep_sleep(unsigned seconds)
 {
-  Serial.print("Going to sleep for ");
-  Serial.print(seconds);
-  Serial.println(" seconds");
+  debug.println("Going to sleep for ", seconds, " seconds");
   delay(1);
   mqtt_loop();
   delay(1);

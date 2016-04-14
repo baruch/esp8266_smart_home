@@ -30,7 +30,7 @@ float NodeSoilMoisture::read_value(enum ads1115_mux mux)
   }
   if (i == NUM_WAITS)
   {
-    Serial.println("read timedout");
+    debug.println("read timedout");
     return 0xFFFF;
   }
   return m_ads1115.read_sample_float();
@@ -52,14 +52,7 @@ unsigned NodeSoilMoisture::loop(void)
   float moisture_digital = read_value(ADS1115_MUX_GND_AIN3);
   mqtt_publish_float("trigger", moisture_digital);
 
-  Serial.print("Time:");
-  Serial.print(millis());
-  Serial.print(" Battery: ");
-  Serial.print(bat, 4);
-  Serial.print(" Moisture: ");
-  Serial.print(moisture_analog, 4);
-  Serial.print(" Digital: ");
-  Serial.println(moisture_digital, 4);
+  debug.println("Battery: ", bat, " Moisture: ", moisture_analog, " Digital: ", moisture_digital);
 
   return DEFAULT_DEEP_SLEEP_TIME;
 }

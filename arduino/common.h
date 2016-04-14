@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "globals.h"
+#include "libraries/DebugPrint/DebugPrint.h"
 
 #define TIME_PASSED(next) (next == 0 || ( ((long)(millis()-next)) >= 0 ))
 

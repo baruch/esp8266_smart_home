@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "common.h"
 #include "globals.h"
+#include "node_mqtt.h"
 
 #define DISCOVERY_CYCLES (60*60*1000) // an hour in msecs
 static long unsigned next_discovery;
@@ -106,6 +107,8 @@ static bool parse_packet(const char *reply, int reply_len)
   char new_nm[16];
   char new_dns[16];
   char new_node_type[10];
+  char new_mqtt_server[40];
+  int new_mqtt_port;
 
   if (reply[0] != 'R') {
     Serial.println("Invalid reply header");
@@ -113,7 +116,7 @@ static bool parse_packet(const char *reply, int reply_len)
   }
   int cur_pos = 1;
 
-  int ret = extract_ip(reply, reply_len, 1, mqtt_server);
+  int ret = extract_ip(reply, reply_len, 1, new_mqtt_server);
   if (ret < 0) {
     Serial.println("Invalid MQTT IP");
     return false;
@@ -126,7 +129,7 @@ static bool parse_packet(const char *reply, int reply_len)
     return false;
   }
 
-  mqtt_port = reply[7] | (reply[8] << 8);
+  new_mqtt_port = reply[7] | (reply[8] << 8);
   Serial.print("MQTT Port: ");
   Serial.println(mqtt_port);
   cur_pos += 3;
@@ -175,6 +178,12 @@ static bool parse_packet(const char *reply, int reply_len)
     return false;
   }
   Serial.println("New config done");
+
+  if (strcmp(new_mqtt_server, mqtt_server) != 0 || new_mqtt_port != mqtt_port) {
+    memcpy(mqtt_server, new_mqtt_server, sizeof(mqtt_server));
+    mqtt_port = new_mqtt_port;
+    mqtt_setup();
+  }
 
   if (strcmp(new_desc, node_desc) != 0 ||
       strcmp(new_ip, static_ip) != 0 ||

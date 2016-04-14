@@ -6,9 +6,12 @@
 #include "globals.h"
 #include "common.h"
 
+#define MQTT_RECONNECT_TIMEOUT 2000
+
 static WiFiClient mqtt_client;
 static PubSubClient mqtt(mqtt_client);
 static char mqtt_upgrade_topic[40];
+static unsigned long next_reconnect = 0;
 
 static void mqtt_callback(char* topic, byte* payload, int len) {
   Serial.print("Message arrived [");
@@ -60,37 +63,27 @@ bool mqtt_connected() {
 
 void mqtt_loop(void)
 {
-  if (!WiFi.isConnected())
+  if (!WiFi.isConnected()) {
+    next_reconnect = 0;
     return;
+  }
 
   if (mqtt.connected()) {
     mqtt.loop();
     return;
   }
 
-  long now = millis();
-  static long lastReconnectAttempt = -2000;
-  if (now - lastReconnectAttempt > 2000) {
-    lastReconnectAttempt = now;
+  if (TIME_PASSED(next_reconnect)) {
+    next_reconnect = millis() + MQTT_RECONNECT_TIMEOUT;
     const char *will_topic = mqtt_tmp_topic("online");
     if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {
-      Serial.print("MQTT connected in ");
-      Serial.print(millis() - lastReconnectAttempt);
-      Serial.println(" msec");
+      Serial.println("MQTT connected");
 
       // Once connected, publish an announcement...
       mqtt.publish(will_topic, "online", 1);
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);
       node_mqtt_connected();
-    } else if (now - lastReconnectAttempt > 15000) {
-      Serial.println("Failed to connect to MQTT");
-      if (node_is_powered()) {
-        restart();
-      } else {
-        // Node not powered, need to save energy
-        deep_sleep(DEFAULT_DEEP_SLEEP_TIME);
-      }
     }
   }
 }

@@ -142,7 +142,7 @@ void read_serial_commands() {
 void loop() {
   read_serial_commands();
   net_config_loop();
-  conditional_discover();
+  discover_poll();
   mqtt_loop();
 
   unsigned sleep_interval = node_loop();

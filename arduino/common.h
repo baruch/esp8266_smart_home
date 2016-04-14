@@ -4,13 +4,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define TIME_PASSED(next) (next == 0 || ( ((long)(millis()-next)) >= 0 ))
+
 void config_load(void);
 void node_type_save(void);
 void net_config_setup(void);
 void net_config_loop(void);
 void config_save(void);
-void discover_server(void);
-void conditional_discover(void);
+void discover_poll(void);
 void discovery_now(void);
 char nibbleToChar(uint32_t val);
 void print_hexdump(const char *buf, size_t buf_len);

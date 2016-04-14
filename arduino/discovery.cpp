@@ -7,6 +7,8 @@
 #define DISCOVERY_CYCLES (60*60*1000) // an hour in msecs
 static long unsigned next_discovery;
 static WiFiUDP udp;
+static unsigned long next_reply;
+static bool first_successful_discovery = true;
 
 int discover_set_buf(char *buf, int start, const uint8_t *src, int src_len)
 {
@@ -199,52 +201,63 @@ static bool parse_packet(const char *reply, int reply_len)
   return true;
 }
 
-void discover_server() {
+static bool check_reply() {
   int res;
   char reply[128];
-  int new_config = 0;
-  int i;
 
-  next_discovery = millis() + 10 * 1000; // If we fail, try again in 10 seconds
-  if (!discover_send_pkt())
-    return;
+  res = udp.parsePacket();
 
-  Serial.println("Packet sent");
-  int wait;
-  for (wait = 0; res <= 0 && wait < 250; wait++) {
-    delay(1);
-    res = udp.parsePacket();
-  }
-
-  if (res <= 0) {
-    Serial.println("Discovery failed, packet timed out");
-  } else {
-    Serial.print("Pkt reply took ");
-    Serial.print(wait);
-    Serial.println(" msec");
-
+  if (res > 0) {
     res = udp.read(reply, sizeof(reply));
     Serial.println("Packet:");
     print_hexdump(reply, res);
 
     if (res >= 9 && parse_packet(reply, res)) {
       Serial.println("Discovery done");
-      next_discovery = millis() + DISCOVERY_CYCLES;
+      return true;
     } else {
       Serial.println("Failed to parse packet");
     }
   }
 
-  udp.stop();
+  return false;
 }
 
-void conditional_discover(void)
+void discover_poll(void)
 {
-  if (!WiFi.isConnected())
-    return;
-
-  if (millis() >= next_discovery)
-    discover_server();
+  if (!WiFi.isConnected()) {
+    if (next_reply) {
+      udp.stop();
+      next_reply = 0;
+    }
+  } else {
+    if (next_reply) {
+      // We sent a packet and wait for a reply
+      if (check_reply()) {
+        // Reply received and parsed ok
+        next_reply = 0;
+        next_discovery = millis() + DISCOVERY_CYCLES;
+        udp.stop();
+        if (first_successful_discovery) {
+          first_successful_discovery = false;
+          check_upgrade();
+        }
+      } else if (TIME_PASSED(next_reply)) {
+        // Reply timed out
+        Serial.println("Packet receipt timed out");
+        next_reply = 0;
+        next_discovery = millis() + 10 * 1000; // If we fail, try again in 10 seconds
+        udp.stop();
+      }
+    } else if (TIME_PASSED(next_discovery)) {
+      if (discover_send_pkt()) {
+        Serial.println("Packet sent");
+        next_reply = millis() + 250;
+        if (next_reply == 0)
+          next_reply = 1;
+      }
+    }
+  }
 }
 
 void discovery_now(void)

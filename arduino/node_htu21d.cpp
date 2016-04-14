@@ -1,7 +1,6 @@
 #include "common.h"
 #include "node_mqtt.h"
 #include "node_htu21d.h"
-#include "DebugSerial.h"
 
 void NodeHTU21D::setup(void)
 {

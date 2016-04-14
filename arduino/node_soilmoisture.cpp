@@ -3,7 +3,6 @@
 #include "node_soilmoisture.h"
 #include <Arduino.h>
 #include "WiFiClient.h"
-#include "DebugSerial.h"
 
 void NodeSoilMoisture::setup(void)
 {

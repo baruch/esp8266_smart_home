@@ -1,6 +1,5 @@
 #include "config.h"
 #include <FS.h>
-#include "DebugSerial.h"
 
 Config::Config(const char *filename)
 {

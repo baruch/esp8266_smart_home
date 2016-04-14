@@ -2,7 +2,6 @@
 #include "node_mqtt.h"
 #include "node_relaywbutton.h"
 #include <Arduino.h>
-#include "DebugSerial.h"
 
 #define BUTTON_PIN 12 // GPIO12
 #define BUTTON_RELAY 13 // GPIO13

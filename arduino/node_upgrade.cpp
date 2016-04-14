@@ -1,5 +1,4 @@
 #include <ESP8266httpUpdate.h>
-#include "DebugSerial.h"
 #include "common.h"
 #include "node_mqtt.h"
 #include "globals.h"

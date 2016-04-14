@@ -1,5 +1,4 @@
 #include <FS.h> //this needs to be first, or it all crashes and burns...
-#include "DebugSerial.h"
 #include "libraries/WiFiAsyncManager/WiFiAsyncManager.h"
 #include <Esp.h>
 #include "config.h"

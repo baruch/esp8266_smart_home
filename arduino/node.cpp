@@ -3,7 +3,6 @@
 #include "node_htu21d.h"
 #include "node_relaywbutton.h"
 #include "node_soilmoisture.h"
-#include "DebugSerial.h"
 
 static Node *node;
 

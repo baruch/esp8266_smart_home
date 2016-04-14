@@ -2,7 +2,6 @@
 #include <Arduino.h>
 #include "node_mqtt.h"
 #include <ESP8266WiFi.h>
-#include "DebugSerial.h"
 
 void print_str(const char *name, const char *val)
 {
@@ -53,7 +52,6 @@ void restart(void)
   delay(50);
 
   // Next we want to disconnect and let the disconnect propogate to the clients
-  iDebugSerial.disconnect();
   mqtt_disconnect();
   delay(50);
 

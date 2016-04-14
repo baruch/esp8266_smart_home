@@ -2,7 +2,6 @@
 #include "libraries/PubSubClient/PubSubClient.h"
 #include "WiFiClient.h"
 #include <ESP8266WiFi.h>
-#include "DebugSerial.h"
 #include "globals.h"
 #include "common.h"
 

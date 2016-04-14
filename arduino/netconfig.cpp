@@ -5,8 +5,6 @@
 #include "libraries/WiFiAsyncManager/WiFiAsyncManager.h"
 #include <WiFiUdp.h>
 
-#include "DebugSerial.h"
-
 static bool shouldSaveConfig;
 
 void config_load() {

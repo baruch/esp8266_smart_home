@@ -9,7 +9,7 @@ void config_load() {
   Config cfg(CONFIG_FILE);
 
   cfg.readFile();
-  debug.println("Config loaded");
+  debug.log("Config loaded");
   strcpy(static_ip, cfg.getValueStr("ip"));
   strcpy(static_gw, cfg.getValueStr("gw"));
   strcpy(static_nm, cfg.getValueStr("nm"));
@@ -25,7 +25,7 @@ void config_load() {
 
 void config_save(void)
 {
-  debug.println("saving config");
+  debug.log("saving config");
   Config cfg(CONFIG_FILE);
   cfg.setValueStr("ip", static_ip);
   cfg.setValueStr("gw", static_gw);
@@ -33,7 +33,7 @@ void config_save(void)
   cfg.setValueStr("dns", dns);
   cfg.setValueStr("desc", node_desc);
   cfg.writeFile();
-  debug.println("save done");
+  debug.log("save done");
 
   delay(1000);
   restart();

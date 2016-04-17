@@ -10,13 +10,13 @@
 
 void spiffs_mount() {
   if (!SPIFFS.begin()) {
-    debug.println("SPIFFs not initialized, reinitializing");
+    debug.log("SPIFFs not initialized, reinitializing");
     if (!SPIFFS.format()) {
-      debug.println("SPIFFs format failed.");
+      debug.log("SPIFFs format failed.");
       while (1);
     }
   }
-  debug.println("SPIFFS initialized");
+  debug.log("SPIFFS initialized");
 }
 
 void node_type_load(void) {
@@ -24,7 +24,7 @@ void node_type_load(void) {
   File f = SPIFFS.open(NODE_TYPE_FILENAME, "r");
   size_t size = f.size();
   if (size > sizeof(node_type)) {
-    debug.println("Trimming node type file");
+    debug.log("Trimming node type file");
     size = sizeof(node_type);
   }
   if (size > 0)
@@ -68,10 +68,10 @@ void setup() {
 
   Serial.begin(115200);
 
-  debug.println('*');
-  debug.println(VERSION);
-  debug.println(ESP.getResetInfo());
-  debug.println(ESP.getResetReason());
+  debug.log('*');
+  debug.log(VERSION);
+  debug.log(ESP.getResetInfo());
+  debug.log(ESP.getResetReason());
 
   spiffs_mount();
   node_type_load();
@@ -82,20 +82,20 @@ void setup() {
   mqtt_setup();
   unsigned long t2 = millis();
 
-  debug.println("Setup done in ", t2-t1, " millis");
+  debug.log("Setup done in ", t2-t1, " millis");
 }
 
 void read_configure_type(void)
 {
   int new_node_type = Serial.parseInt();
-  debug.println("Node type set to ", new_node_type);
+  debug.log("Node type set to ", new_node_type);
 
   if (node_type != new_node_type) {
-    debug.println("Node type changed, saving it");
+    debug.log("Node type changed, saving it");
     node_type = new_node_type;
     node_type_save();
   } else {
-    debug.println("Node type not changed");
+    debug.log("Node type not changed");
   }
 }
 
@@ -105,31 +105,31 @@ void read_serial_commands() {
     if (ch == 't') {
       read_configure_type();
     } else if (ch == 'T') {
-      debug.println("Node type config: ", node_type);
+      debug.log("Node type config: ", node_type);
     } else if (ch == 'f') {
-      debug.println("Clearing Config");
+      debug.log("Clearing Config");
       WiFi.persistent(true);
       WiFi.disconnect(true);
       SPIFFS.remove(CONFIG_FILE);
-      debug.println("Clearing done");
+      debug.log("Clearing done");
       restart();
     } else if (ch == 'r') {
-      debug.println("Reset");
+      debug.log("Reset");
       restart();
     } else if (ch == 'u') {
       check_upgrade();
     } else if (ch == 'p') {
       char buf[1024];
       File f = SPIFFS.open(CONFIG_FILE, "r");
-      debug.println("File size is ", f.size());
+      debug.log("File size is ", f.size());
       if (f.size()) {
         size_t len = f.read((uint8_t*)buf, sizeof(buf));
         f.close();
-        debug.println("FILE START");
+        debug.log("FILE START");
         print_hexdump(buf, len);
-        debug.println("FILE END");
+        debug.log("FILE END");
       } else {
-        debug.println("Empty or non-existent file");
+        debug.log("Empty or non-existent file");
       }
     }
 

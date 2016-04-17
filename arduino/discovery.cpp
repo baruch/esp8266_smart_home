@@ -76,7 +76,7 @@ static bool discover_send_pkt()
   IPAddress broadcast_ip = ~WiFi.subnetMask() | WiFi.gatewayIP();
   res = udp.beginPacket(broadcast_ip, DISCOVER_PORT);
   if (res != 1) {
-    debug.println("Failed to prepare udp packet for send");
+    debug.log("Failed to prepare udp packet for send");
     return false;
   }
 
@@ -92,7 +92,7 @@ static bool discover_send_pkt()
 
   res = udp.endPacket();
   if (res != 1) {
-    debug.println("Failed to send udp discover packet");
+    debug.log("Failed to send udp discover packet");
     return false;
   }
 
@@ -111,26 +111,26 @@ static bool parse_packet(const char *reply, int reply_len)
   int new_mqtt_port;
 
   if (reply[0] != 'R') {
-    debug.println("Invalid reply header, got ", (int)reply[0]);
+    debug.log("Invalid reply header, got ", (int)reply[0]);
     return false;
   }
   int cur_pos = 1;
 
   int ret = extract_ip(reply, reply_len, 1, new_mqtt_server);
   if (ret < 0) {
-    debug.println("Invalid MQTT IP");
+    debug.log("Invalid MQTT IP");
     return false;
   }
-  debug.println("MQTT IP: '", new_mqtt_server, '\'');
+  debug.log("MQTT IP: '", new_mqtt_server, '\'');
   cur_pos += ret;
 
   if (reply[cur_pos] != 2) {
-    debug.println("Invalid port length");
+    debug.log("Invalid port length");
     return false;
   }
 
   new_mqtt_port = reply[7] | (reply[8] << 8);
-  debug.println("MQTT Port: ", new_mqtt_port);
+  debug.log("MQTT Port: ", new_mqtt_port);
   cur_pos += 3;
 
   if (reply_len <= cur_pos)
@@ -138,45 +138,45 @@ static bool parse_packet(const char *reply, int reply_len)
 
   ret = extract_str(reply, reply_len, cur_pos, new_desc, sizeof(new_desc));
   if (ret < 0) {
-    debug.println("Bad desc");
+    debug.log("Bad desc");
     return false;
   }
   cur_pos += ret;
 
   ret = extract_ip(reply, reply_len, cur_pos, new_ip);
   if (ret < 0) {
-    debug.println("Bad IP");
+    debug.log("Bad IP");
     return false;
   }
   cur_pos += ret;
 
   ret  = extract_ip(reply, reply_len, cur_pos, new_gw);
   if (ret < 0) {
-    debug.println("Bad GW");
+    debug.log("Bad GW");
     return false;
   }
   cur_pos += ret;
 
   ret  = extract_ip(reply, reply_len, cur_pos, new_nm);
   if (ret < 0) {
-    debug.println("Bad NM");
+    debug.log("Bad NM");
     return false;
   }
   cur_pos += ret;
 
   ret  = extract_ip(reply, reply_len, cur_pos, new_dns);
   if (ret < 0) {
-    debug.println("Bad DNS");
+    debug.log("Bad DNS");
     return false;
   }
   cur_pos += ret;
 
   ret = extract_str(reply, reply_len, cur_pos, new_node_type, sizeof(new_node_type));
   if (ret < 0) {
-    debug.println("Bad Node type");
+    debug.log("Bad Node type");
     return false;
   }
-  debug.println("New config done");
+  debug.log("New config done");
 
   if (strcmp(new_mqtt_server, mqtt_server) != 0 || new_mqtt_port != mqtt_port) {
     memcpy(mqtt_server, new_mqtt_server, sizeof(mqtt_server));
@@ -190,7 +190,7 @@ static bool parse_packet(const char *reply, int reply_len)
       strcmp(new_nm, static_nm) != 0 ||
       strcmp(new_dns, dns) != 0)
   {
-    debug.println("Reconfigure");
+    debug.log("Reconfigure");
     strcpy(node_desc, new_desc);
     strcpy(static_ip, new_ip);
     strcpy(static_gw, new_gw);
@@ -217,14 +217,14 @@ static bool check_reply() {
 
   if (res > 0) {
     res = udp.read(reply, sizeof(reply));
-    debug.println("Packet:");
+    debug.log("Packet:");
     print_hexdump(reply, res);
 
     if (res >= 9 && parse_packet(reply, res)) {
-      debug.println("Discovery done");
+      debug.log("Discovery done");
       return true;
     } else {
-      debug.println("Failed to parse packet");
+      debug.log("Failed to parse packet");
     }
   }
 
@@ -252,14 +252,14 @@ void discover_poll(void)
         }
       } else if (TIME_PASSED(next_reply)) {
         // Reply timed out
-        debug.println("Packet receipt timed out");
+        debug.log("Packet receipt timed out");
         next_reply = 0;
         next_discovery = millis() + 10 * 1000; // If we fail, try again in 10 seconds
         udp.stop();
       }
     } else if (TIME_PASSED(next_discovery)) {
       if (discover_send_pkt()) {
-        debug.println("Packet sent");
+        debug.log("Packet sent");
         next_reply = millis() + 250;
         if (next_reply == 0)
           next_reply = 1;

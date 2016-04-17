@@ -16,7 +16,7 @@ unsigned NodeHTU21D::loop(void)
   float temp = htu21d.readTemperature();
   mqtt_publish_float("temperature", temp);
 
-  debug.println("Temperature:", temp, " Humidity: ", humd, '%');
+  debug.log("Temperature:", temp, " Humidity: ", humd, '%');
 
   return DEFAULT_DEEP_SLEEP_TIME;
 }

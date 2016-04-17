@@ -74,7 +74,7 @@ void ConfigPortal::stop(void)
 
 void ConfigPortal::begin(void)
 {
-  debug.println(F("Configuring access point... "));
+  debug.log(F("Configuring access point... "));
 
   WiFi.softAP(WiFi.hostname().c_str());
 
@@ -84,7 +84,7 @@ void ConfigPortal::begin(void)
   m_web = new ESP8266WebServer(80);
   m_is_done = false;
 
-  debug.println(F("AP IP address: "), WiFi.softAPIP());
+  debug.log(F("AP IP address: "), WiFi.softAPIP());
 
   /* Setup the DNS server redirecting all the domains to the apIP */
   m_dns->setErrorReplyCode(DNSReplyCode::NoError);
@@ -96,7 +96,7 @@ void ConfigPortal::begin(void)
   m_web->onNotFound (std::bind(&ConfigPortal::handle_not_found, this));
   m_web->begin(); // Web server start
 
-  debug.println(F("HTTP server started"));
+  debug.log(F("HTTP server started"));
 }
 
 void ConfigPortal::loop(void)
@@ -139,7 +139,7 @@ void ConfigPortal::handle_root(void)
                                 cssid = WiFi.SSID(indices[i]);
                                 for (int j = i + 1; j < n; j++) {
                                         if(cssid == WiFi.SSID(indices[j])){
-                                                debug.println("DUP AP: " + WiFi.SSID(indices[j]));
+                                                debug.log("DUP AP: " + WiFi.SSID(indices[j]));
                                                 indices[j] = -1; // set dup aps to index -1
                                         }
                                 }
@@ -179,7 +179,7 @@ bool ConfigPortal::valid_wifi_params(void)
 {
         m_ssid = m_web->arg("s");
         if (m_ssid.length() == 0) {
-                debug.println("SSID not provided");
+                debug.log("SSID not provided");
                 return false;
         }
 
@@ -190,12 +190,12 @@ bool ConfigPortal::valid_wifi_params(void)
         bool gw_valid = m_gw.fromString(m_web->arg("gw"));
         m_dns_ip.fromString(m_web->arg("dns"));
 
-        debug.println(F("network "), m_ip, '/', m_nm, '/', m_gw, " dns ", m_dns_ip);
-        debug.println(F("wifi "), m_ssid, ' ', m_pass);
+        debug.log(F("network "), m_ip, '/', m_nm, '/', m_gw, " dns ", m_dns_ip);
+        debug.log(F("wifi "), m_ssid, ' ', m_pass);
 
         if ((ip_valid || nm_valid || gw_valid) && (!ip_valid || !nm_valid || !gw_valid)) {
                 // The entire triplet must be valid IP addresses
-                debug.println(F("Static IP address incomplete"));
+                debug.log(F("Static IP address incomplete"));
                 m_ip = m_nm = m_gw = INADDR_NONE;
                 return false;
         }
@@ -208,19 +208,19 @@ bool ConfigPortal::valid_wifi_params(void)
 /** Handle the WLAN save form and redirect to WLAN config page again */
 void ConfigPortal::handle_wifi_save()
 {
-        debug.println(F("WiFi save"));
+        debug.log(F("WiFi save"));
         bool valid = valid_wifi_params();
         String page = FPSTR(HTTP_HEAD);
 
         if (valid) {
                 //SAVE/connect here
-                debug.println(F("Credentials Saved"));
+                debug.log(F("Credentials Saved"));
                 page.replace("{v}", "Credentials Saved");
                 page += FPSTR(HTTP_HEAD_END);
                 page += FPSTR(HTTP_SAVED);
                 m_is_done = true;
         } else {
-                debug.println(F("Validation failed"));
+                debug.log(F("Validation failed"));
                 page.replace("{v}", "Validation failed");
                 page += FPSTR(HTTP_HEAD_END);
                 page += FPSTR(HTTP_VALIDATION_FAILED);
@@ -235,7 +235,7 @@ void ConfigPortal::handle_wifi_save()
         delay(10);
         m_web->client().stop(); // Stop is needed because we sent no content length
 
-        debug.println(F("Sent wifi save page"));
+        debug.log(F("Sent wifi save page"));
 }
 
 /** Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */

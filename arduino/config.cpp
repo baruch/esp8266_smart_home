@@ -42,14 +42,14 @@ bool Config::readFile() {
 
   // If file doesn't exist we are done
   if (!SPIFFS.exists(_filename)) {
-    debug.println("Config file ", _filename, "doesn't exist");
+    debug.log("Config file ", _filename, "doesn't exist");
     return false;
   }
 
   File configFile = SPIFFS.open(_filename, "r");
   ch = configFile.read();
   if (ch != 'C') {
-    debug.println("Config Error: Invalid header, got ", (int)ch);
+    debug.log("Config Error: Invalid header, got ", (int)ch);
     res = false;
   }
 
@@ -58,7 +58,7 @@ bool Config::readFile() {
     uint8_t l = configFile.read();
 
     if (l == 0 || l > 31) {
-      debug.println("Config Error: Invalid length ", l);
+      debug.log("Config Error: Invalid length ", l);
       res = false;
       break;
     }
@@ -76,7 +76,7 @@ bool Config::readFile() {
           configFile.read((uint8_t*)&val, sizeof(int));
           setValueInt(key, val);
         } else {
-          debug.println("Config error: integer type not of sizeof(int), got ", l);
+          debug.log("Config error: integer type not of sizeof(int), got ", l);
           res = false;
         }
         break;
@@ -84,7 +84,7 @@ bool Config::readFile() {
         {
           char value[64];
           if (l > sizeof(value) - 1) {
-            debug.println("Config error: string is too long at ", l);
+            debug.log("Config error: string is too long at ", l);
             res = false;
           } else {
             configFile.read((uint8_t*)value, l);
@@ -94,7 +94,7 @@ bool Config::readFile() {
         }
         break;
       default:
-        debug.println("Config Error: Unknown field type ", (int)t);
+        debug.log("Config Error: Unknown field type ", (int)t);
         res = false;
         break;
     }
@@ -192,7 +192,7 @@ int Config::allocate_entry(const char *key, ConfigType ctype) {
     }
     // No free entry found
     if (i == NUM_CONFIG_ENTRIES) {
-      debug.println("BUG: Failed to find empty space in config");
+      debug.log("BUG: Failed to find empty space in config");
       return -1;
     }
   }

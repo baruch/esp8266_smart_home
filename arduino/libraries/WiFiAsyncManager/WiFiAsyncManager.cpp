@@ -40,17 +40,17 @@ void WiFiAsyncManager::config_wifi(const char *ssid, const char *pass, const IPA
                 m_is_static_ip = false;
         }
 
-        //debug.println("Wifi configured=", m_is_wifi_configured, " static=", m_is_static_ip);
+        //debug.log("Wifi configured=", m_is_wifi_configured, " static=", m_is_static_ip);
 
         WiFi.begin(ssid, pass);
-        debug.println("wifi started");
+        debug.log("wifi started");
 }
 
 void WiFiAsyncManager::loop(void)
 {
         wl_status_t new_status = WiFi.status();
         if (new_status != m_last_status) {
-                debug.println("Wifi status changed from ", m_last_status, " to ", new_status);
+                debug.log("Wifi status changed from ", m_last_status, " to ", new_status);
 
                 if (m_last_status == WL_CONNECTED) {
                         // This will restart reconnection immediately
@@ -58,7 +58,7 @@ void WiFiAsyncManager::loop(void)
                 }
 
                 if (new_status == WL_CONNECTED) {
-                        debug.println("IP ", WiFi.localIP(), " Netmask ", WiFi.subnetMask(), " Gateway ", WiFi.gatewayIP());
+                        debug.log("IP ", WiFi.localIP(), " Netmask ", WiFi.subnetMask(), " Gateway ", WiFi.gatewayIP());
                 }
                 m_last_status = new_status;
         }
@@ -71,7 +71,7 @@ void WiFiAsyncManager::loop(void)
                 unsigned long now = millis();
                 if (now - m_last_reconnect_time > RECONNECT_TIME) {
                         WiFi.reconnect();
-                        debug.println("Attempting to reconnect to wifi");
+                        debug.log("Attempting to reconnect to wifi");
                         m_last_reconnect_time = now;
                 }
         } else {
@@ -81,10 +81,10 @@ void WiFiAsyncManager::loop(void)
                         if (m_config_test_end_time == 0) {
                                 if (m_portal->is_done()) {
                                         // We actually just got the configuration, now we need to test it and retry if unsuccessful
-                                        debug.println(F("Portal configuration done, now testing it"));
+                                        debug.log(F("Portal configuration done, now testing it"));
                                         WiFi.persistent(false);
-                                        debug.println(F("network "), m_portal->m_ip, '/', m_portal->m_nm, '/', m_portal->m_gw, " dns ", m_portal->m_dns_ip);
-                                        debug.println(F("wifi "), m_portal->m_ssid.c_str(), ' ', m_portal->m_pass.c_str());
+                                        debug.log(F("network "), m_portal->m_ip, '/', m_portal->m_nm, '/', m_portal->m_gw, " dns ", m_portal->m_dns_ip);
+                                        debug.log(F("wifi "), m_portal->m_ssid.c_str(), ' ', m_portal->m_pass.c_str());
                                         //delay(2000);
                                         //m_portal->stop();
                                         //WiFiClient::stopAll();
@@ -93,15 +93,15 @@ void WiFiAsyncManager::loop(void)
                                         WiFi.enableSTA(true);
                                         delay(100);
                                         config_wifi(m_portal->m_ssid.c_str(), m_portal->m_pass.c_str(), m_portal->m_ip, m_portal->m_gw, m_portal->m_nm, m_portal->m_dns_ip);
-                                        debug.println("configured wifi");
-                                        debug.println("portal reset");
+                                        debug.log("configured wifi");
+                                        debug.log("portal reset");
                                         m_config_test_end_time = millis() + 30*1000;
                                         WiFi.persistent(true);
-                                        debug.println("all done");
+                                        debug.log("all done");
                                 }
                         } else {
                                 if (new_status == WL_CONNECTED) {
-                                        debug.println(F("WiFi configured and connected"));
+                                        debug.log(F("WiFi configured and connected"));
                                         // We configured everything and are running now
                                         WiFi.persistent(true);
                                         WiFi.disconnect();
@@ -114,7 +114,7 @@ void WiFiAsyncManager::loop(void)
                                         m_is_config_changed = true;
                                         m_last_reconnect_time = 0;
                                 } else if (millis() > m_config_test_end_time) {
-                                        debug.println("WiFi configuration timed out");
+                                        debug.log("WiFi configuration timed out");
                                         WiFi.enableSTA(false);
                                         WiFi.enableAP(true);
                                         m_config_test_end_time = 0;

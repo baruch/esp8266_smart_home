@@ -61,12 +61,12 @@ void NodeRelayWithButton::set_state(int state)
   digitalWrite(BUTTON_RELAY, state);
   relay_state = state;
   state_update();
-  debug.println("state change ", state);
+  debug.log("state change ", state);
 }
 
 void NodeRelayWithButton::toggle_state(void)
 {
-  debug.println("Toggle state");
+  debug.log("Toggle state");
   set_state(1 - relay_state);
 }
 

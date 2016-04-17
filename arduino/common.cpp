@@ -5,7 +5,7 @@
 
 void print_str(const char *name, const char *val)
 {
-  debug.println(name, ": \"", val, '"');
+  debug.log(name, ": \"", val, '"');
 }
 
 static void print_hexdump_line(const char *buf, size_t buf_len)
@@ -61,7 +61,7 @@ void restart(void)
 
 void deep_sleep(unsigned seconds)
 {
-  debug.println("Going to sleep for ", seconds, " seconds");
+  debug.log("Going to sleep for ", seconds, " seconds");
   delay(1);
   mqtt_loop();
   delay(1);

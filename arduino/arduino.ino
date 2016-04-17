@@ -66,6 +66,8 @@ void setup() {
   node_desc[0] = 0;
   build_name();
 
+  debug.begin();
+  debug.set_log_server("192.168.2.226");
   Serial.begin(115200);
 
   debug.log('*');

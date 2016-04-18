@@ -4,7 +4,7 @@
 #include "common.h"
 #include "libraries/ADS1115/ADS1115.h"
 
-class NodeSoilMoisture : public Node {
+class NodeSoilMoisture : public NodeSensor {
   public:
     void setup(void);
     unsigned loop(void);

@@ -28,17 +28,15 @@ void deep_sleep(unsigned seconds);
 
 class Node {
   public:
-    Node() : m_loop_only_if_connected(false) {}
     virtual void setup(void) {}
     virtual unsigned loop(void) {
       return 0;
     }
     virtual void mqtt_connected_event(void) {}
-    bool loop_only_if_connected(void) {
-      return m_loop_only_if_connected;
-    }
+    virtual bool is_battery_powered() { return false; }
+};
 
-  protected:
-    bool m_loop_only_if_connected;
+class NodeSensor : public Node {
+  bool is_battery_powered() { return true; }
 };
 #endif

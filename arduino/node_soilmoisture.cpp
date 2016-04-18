@@ -6,8 +6,6 @@
 
 void NodeSoilMoisture::setup(void)
 {
-  m_loop_only_if_connected = true;
-
   m_ads1115.begin();
   m_ads1115.set_comp_queue(ADS1115_COMP_QUEUE_DISABLE);
   m_ads1115.set_mode(ADS1115_MODE_SINGLE_SHOT);
@@ -38,6 +36,9 @@ float NodeSoilMoisture::read_value(enum ads1115_mux mux)
 
 unsigned NodeSoilMoisture::loop(void)
 {
+  if (!mqtt_connected())
+    return 0;
+
   // We read the battery through a 2:1 voltage divider so upscale it in the ADC
   m_ads1115.set_pga(ADS1115_PGA_TWO);
   float bat = read_value(ADS1115_MUX_GND_AIN0)*2.0;

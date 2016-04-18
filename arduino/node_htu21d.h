@@ -4,7 +4,7 @@
 #include "common.h"
 #include "libraries/HTU21D/SparkFunHTU21D.h"
 
-class NodeHTU21D : public Node {
+class NodeHTU21D : public NodeSensor {
   public:
     void setup(void);
     unsigned loop(void);

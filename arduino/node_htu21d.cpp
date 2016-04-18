@@ -4,12 +4,14 @@
 
 void NodeHTU21D::setup(void)
 {
-  m_loop_only_if_connected = true;
   htu21d.begin();
 }
 
 unsigned NodeHTU21D::loop(void)
 {
+  if (!mqtt_connected())
+    return 0;
+
   float humd = htu21d.readHumidity();
   mqtt_publish_float("humidity", humd);
 

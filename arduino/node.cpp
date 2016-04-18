@@ -22,11 +22,11 @@ void node_setup(void)
 
 unsigned node_loop(void)
 {
-  unsigned ret = 0;
-  if (node && (node->loop_only_if_connected() == false || mqtt_connected())) {
-    ret = node->loop();
+  if (node) {
+    return node->loop();
+  } else {
+    return 0;
   }
-  return ret;
 }
 
 void node_mqtt_connected(void)
@@ -37,10 +37,5 @@ void node_mqtt_connected(void)
 
 bool node_is_powered(void)
 {
-  // For now shortcut with using loop_only_if_connected() since they are the same for all current nodes
-  if (node && node->loop_only_if_connected() == false)
-    return true;
-
-  return false;
+  return node && node->is_battery_powered();
 }
-

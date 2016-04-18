@@ -50,7 +50,10 @@ void restart(void)
 
   // Next we want to disconnect and let the disconnect propogate to the clients
   mqtt_disconnect();
-  delay(50);
+  debug.log("Restarting"); // Also tries to flush any remaining data
+  delay(25);
+  WiFiClient::stopAll();
+  delay(25);
 
   // Now we reset
   ESP.restart();

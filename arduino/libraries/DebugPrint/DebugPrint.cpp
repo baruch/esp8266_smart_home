@@ -9,20 +9,19 @@ void DebugPrint::begin(void)
 {
         buf_start = 0;
         buf_end = 0;
-        server_name[0] = 0;
+        server_ip = INADDR_NONE;
 }
 
-void DebugPrint::set_log_server(const char *server)
+void DebugPrint::set_log_server(IPAddress server)
 {
         // If we set the same value, do nothing
-        if (strcmp(server_name, server) == 0)
+        if (server == server_ip)
                 return;
 
         if (client.connected())
                 client.stop();
 
-        strncpy(server_name, server, sizeof(server_name));
-        server_name[sizeof(server_name)-1] = 0;
+        server_ip = server;
 
         reconnect();
 }
@@ -31,8 +30,8 @@ bool DebugPrint::reconnect(void)
 {
         bool connected = client.connected();
 
-        if (!connected && server_name[0]) {
-                connected = client.connect(server_name, LOG_PORT);
+        if (!connected && server_ip) {
+                connected = client.connect(server_ip, LOG_PORT);
         }
         return connected;
 }

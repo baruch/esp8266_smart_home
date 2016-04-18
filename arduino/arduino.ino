@@ -67,7 +67,7 @@ void setup() {
   build_name();
 
   debug.begin();
-  debug.set_log_server("192.168.2.226");
+  debug.set_log_server(IPAddress(192, 168, 2, 226));
   Serial.begin(115200);
 
   debug.log('*');

@@ -101,14 +101,14 @@ public:
 	};
 
 	virtual size_t write(uint8_t ch);
-	void set_log_server(const char *server);
+	void set_log_server(IPAddress server);
 
 private:
 	uint8_t buf[2048];
 	uint16_t buf_start;
 	uint16_t buf_end;
 
-	char server_name[32];
+	IPAddress server_ip;
 	WiFiClient client;
 
 	bool reconnect(void);

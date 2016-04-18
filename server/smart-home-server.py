@@ -2,7 +2,10 @@
 
 import discovery
 import ota
+import log_server
+
 import time
+import datetime
 import threading
 import time
 import sys
@@ -68,6 +71,7 @@ class NodeList:
         self._index_by_node = {}
         self.lock = threading.Lock()
         self.load_db()
+        self._log = open('nodes.log', 'a', 4096)
 
     def load_db(self):
         try:
@@ -137,6 +141,13 @@ class NodeList:
         mqtt_publish(node_id, "upgrade", ota_file.get_version())
         return True
 
+    def log(self, ip, data):
+        ts = datetime.datetime.now().isoformat(' ')
+
+        for line in data.splitlines():
+            self._log.write('%s %s %s\n' % (ip, ts, line))
+        self._log.flush()
+
 class OTAFile:
     def __init__(self, otaname):
         self._otaname = otaname
@@ -197,6 +208,7 @@ def main():
     mqtt_run()
     discovery.start(server_ip, 1883, node_list)
     ota.start(node_list, otafile)
+    log_server.start(node_list)
     while 1:
         time.sleep(1)
 

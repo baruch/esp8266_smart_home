@@ -47,6 +47,21 @@ static int extract_ip(const char *buf, int buf_len, int start, char *ip_str)
   return 5;
 }
 
+static int extract_ip2(const char *buf, int buf_len, int start, IPAddress &ip_out)
+{
+  if (buf_len < start)
+    return -1;
+
+  if (buf[start] != 4) // It's an IP, it is always four characters
+    return -1;
+
+  if (buf_len < start + 5 - 1) // Ensure we have all data
+    return -1;
+
+  ip_out = IPAddress(buf[start+1], buf[start+2], buf[start+3], buf[start+4]);
+  return 5;
+}
+
 static int extract_str(const char *buf, int buf_len, int start, char *out, int max_len)
 {
   int str_len;
@@ -108,6 +123,7 @@ static bool parse_packet(const char *reply, int reply_len)
   char new_dns[16];
   char new_node_type[10];
   char new_mqtt_server[40];
+  IPAddress new_log_server_ip;
   int new_mqtt_port;
 
   if (reply[0] != 'R') {
@@ -176,7 +192,20 @@ static bool parse_packet(const char *reply, int reply_len)
     debug.log("Bad Node type");
     return false;
   }
+  cur_pos += ret;
+
+  ret = extract_ip2(reply, reply_len, cur_pos, new_log_server_ip);
+  if (ret < 0) {
+    debug.log("No log server IP");
+  }
+  cur_pos += ret;
+
   debug.log("New config done");
+
+  if (new_log_server_ip) {
+    debug.log("Log server IP ", new_log_server_ip);
+    debug.set_log_server(new_log_server_ip);
+  }
 
   if (strcmp(new_mqtt_server, mqtt_server) != 0 || new_mqtt_port != mqtt_port) {
     memcpy(mqtt_server, new_mqtt_server, sizeof(mqtt_server));

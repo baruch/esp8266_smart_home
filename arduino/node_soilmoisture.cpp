@@ -55,5 +55,5 @@ unsigned NodeSoilMoisture::loop(void)
 
   debug.log("Battery: ", bat, " Moisture: ", moisture_analog, " Digital: ", moisture_digital);
 
-  return DEFAULT_DEEP_SLEEP_TIME;
+  return DEFAULT_DEEP_SLEEP_TIME*2;
 }

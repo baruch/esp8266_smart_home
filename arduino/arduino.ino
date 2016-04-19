@@ -9,6 +9,7 @@
 #include "node_mqtt.h"
 //#include <GDBStub.h>
 
+ADC_MODE(ADC_VCC);
 
 void spiffs_mount() {
   if (!SPIFFS.begin()) {

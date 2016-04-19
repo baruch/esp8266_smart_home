@@ -153,6 +153,6 @@ void loop() {
 
   if (node_is_powered() && millis() > 10*1000) {
     debug.log("Timed out connecting to wifi and we are battery powered, going to sleep");
-    deep_sleep(15*60);
+    deep_sleep(DEFAULT_DEEP_SLEEP_TIME);
   }
 }

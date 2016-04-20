@@ -14,8 +14,8 @@ static void mqtt_relay_state_changed(const char *payload, int payload_len)
 {
   int state;
 
-  if (payload_len == 0) {
-    debug.log("Zero length payload for relay state changed");
+  if (payload_len != 1) {
+    debug.log("Requiring a single byte payload, got ", payload_len);
     return;
   } else if (payload[0] == '0') {
     debug.log("Got zero for relay state");

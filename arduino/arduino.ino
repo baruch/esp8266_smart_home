@@ -148,6 +148,9 @@ void loop() {
 
   unsigned sleep_interval = node_loop();
   if (sleep_interval) {
+    mqtt_loop();
+    delay(1);
+    mqtt_loop();
     deep_sleep(sleep_interval);
   }
 

@@ -273,7 +273,6 @@ void discover_poll(void)
         udp.stop();
         if (first_successful_discovery) {
           first_successful_discovery = false;
-          check_upgrade();
         }
       } else if (TIME_PASSED(next_reply)) {
         // Reply timed out
@@ -297,4 +296,3 @@ void discovery_now(void)
 {
   next_discovery = millis();
 }
-

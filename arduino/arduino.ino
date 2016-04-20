@@ -77,13 +77,13 @@ void setup() {
   debug.log(ESP.getResetInfo());
   debug.log(ESP.getResetReason());
 
+  mqtt_setup(); // MQTT need to be setup early so other parts can subscribe
   spiffs_mount();
   node_type_load();
   node_setup();
 
   config_load();
   net_config_setup();
-  mqtt_setup();
   unsigned long t2 = millis();
 
   debug.log("Setup done in ", t2-t1, " millis");

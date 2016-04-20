@@ -6,11 +6,19 @@
 #include "common.h"
 
 #define MQTT_RECONNECT_TIMEOUT 2000
+#define MQTT_TOPIC_LEN 40
+#define NUM_MQTT_SUBS 5
 
 static WiFiClient mqtt_client;
 static PubSubClient mqtt(mqtt_client);
-static char mqtt_upgrade_topic[40];
+static char mqtt_upgrade_topic[MQTT_TOPIC_LEN];
 static unsigned long next_reconnect = 0;
+
+static struct {
+  char topic[MQTT_TOPIC_LEN];
+  void (*callback)(const char *payload, int payload_len);
+} subscription[NUM_MQTT_SUBS];
+
 
 static void mqtt_callback(char* topic, byte* payload, int len) {
   debug.log("Message arrived [", topic, ']');
@@ -24,6 +32,14 @@ static void mqtt_callback(char* topic, byte* payload, int len) {
       check_upgrade();
     } else {
       debug.log("Asking to upgrade to our version, not doing anything");
+    }
+    return;
+  }
+
+  for (int i = 0; i < NUM_MQTT_SUBS; i++) {
+    if (strcmp(subscription[i].topic, topic) == 0) {
+      subscription[i].callback((const char *)payload, len);
+      return;
     }
   }
 }
@@ -43,6 +59,9 @@ const char * mqtt_tmp_topic(const char *name)
 }
 
 void mqtt_setup() {
+  debug.log("MQTT setup");
+  for (int i = 0; i < NUM_MQTT_SUBS; i++)
+    subscription[i].callback = 0;
   mqtt_topic(mqtt_upgrade_topic, sizeof(mqtt_upgrade_topic), "upgrade");
   mqtt.setCallback(mqtt_callback);
 }
@@ -97,6 +116,14 @@ void mqtt_loop(void)
 
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);
+      for (int i = 0; i < NUM_MQTT_SUBS; i++) {
+        if (subscription[i].callback) {
+          debug.log("Subscribing for idx ", i, " topic ", subscription[i].topic);
+          mqtt.subscribe(subscription[i].topic);
+        } else {
+          debug.log("subscription idx ", i, " is empty");
+        }
+      }
       node_mqtt_connected();
     }
   }
@@ -119,3 +146,33 @@ void mqtt_publish_bool(const char *name, bool val)
   mqtt_publish_str(name, val ? "1" : "0");
 }
 
+void mqtt_subscribe(const char *name, void (*mqtt_cb)(const char *payload, int payload_len))
+{
+  int i;
+  debug.log("Asking to subscribe for ", name);
+  for (i = 0; i < NUM_MQTT_SUBS; i++) {
+    if (subscription[i].callback == 0) {
+      // Empty slot
+      debug.log("Empty slot found in index ", i);
+      break;
+    }
+  }
+  if (i == NUM_MQTT_SUBS) {
+    debug.log("BUG: Cannot allocate subscription slot");
+    return;
+  }
+
+  debug.log("Subscribed in index ", i, " cb ", (long)mqtt_cb);
+  const char *topic = mqtt_tmp_topic(name);
+  strncpy(subscription[i].topic, topic, sizeof(subscription[i].topic)-1);
+  subscription[i].topic[sizeof(subscription[i].topic)-1] = 0;
+
+  subscription[i].callback = mqtt_cb;
+
+  if (mqtt.connected()) {
+    mqtt.subscribe(subscription[i].topic);
+    debug.log("Already connected to mqtt, subscribing now");
+  } else {
+    debug.log("Not yet connected to mqtt, will subscribe later");
+  }
+}

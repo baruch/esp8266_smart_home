@@ -8,6 +8,29 @@
 
 #define DEBOUNCE_COUNT_MAX 15
 
+static NodeRelayWithButton *node;
+
+static void mqtt_relay_state_changed(const char *payload, int payload_len)
+{
+  int state;
+
+  if (payload_len == 0) {
+    debug.log("Zero length payload for relay state changed");
+    return;
+  } else if (payload[0] == '0') {
+    debug.log("Got zero for relay state");
+    state = 0;
+  } else if (payload[0] == '1') {
+    debug.log("Got one for relay state");
+    state = 1;
+  } else {
+    debug.log("Got unknown value for relay state: ", payload);
+    return;
+  }
+
+  node->set_state(state);
+}
+
 void NodeRelayWithButton::setup(void)
 {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -16,6 +39,8 @@ void NodeRelayWithButton::setup(void)
 
   debounce_count = DEBOUNCE_COUNT_MAX;
   last_sample_millis = millis();
+  node = this;
+  mqtt_subscribe("relay_state", mqtt_relay_state_changed);
 }
 
 unsigned NodeRelayWithButton::loop(void)
@@ -58,6 +83,10 @@ void NodeRelayWithButton::state_update(void)
 
 void NodeRelayWithButton::set_state(int state)
 {
+  if (state == relay_state) {
+    debug.log("Request to change to the current state, ignoring");
+    return;
+  }
   digitalWrite(BUTTON_RELAY, state);
   relay_state = state;
   state_update();
@@ -69,4 +98,3 @@ void NodeRelayWithButton::toggle_state(void)
   debug.log("Toggle state");
   set_state(1 - relay_state);
 }
-

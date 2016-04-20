@@ -28,7 +28,7 @@ static void mqtt_callback(char* topic, byte* payload, int len) {
   Serial.println();
 
   if (strcmp(topic, mqtt_upgrade_topic) == 0) {
-    if (strncmp((const char*)payload, VERSION, len) != 0) {
+    if (strlen(VERSION) != len || strncmp((const char*)payload, VERSION, len) != 0) {
       check_upgrade();
     } else {
       debug.log("Asking to upgrade to our version, not doing anything");

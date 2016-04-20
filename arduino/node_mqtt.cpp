@@ -44,8 +44,22 @@ const char * mqtt_tmp_topic(const char *name)
 
 void mqtt_setup() {
   mqtt_topic(mqtt_upgrade_topic, sizeof(mqtt_upgrade_topic), "upgrade");
-  mqtt.setServer(mqtt_server, mqtt_port);
   mqtt.setCallback(mqtt_callback);
+}
+
+void mqtt_update_server(const char *new_mqtt_server, int new_mqtt_port)
+{
+  if (strcmp(new_mqtt_server, mqtt_server) != 0 || new_mqtt_port != mqtt_port) {
+    strncpy(mqtt_server, new_mqtt_server, sizeof(mqtt_server)-1);
+    mqtt_server[sizeof(mqtt_server)-1] = 0;
+
+    mqtt_port = new_mqtt_port;
+
+    mqtt.setServer(mqtt_server, mqtt_port);
+    debug.log("MQTT server updated to ", new_mqtt_server, ':', new_mqtt_port);
+    next_reconnect = 0;
+    mqtt_disconnect();
+  }
 }
 
 void mqtt_disconnect(void)

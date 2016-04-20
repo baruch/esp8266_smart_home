@@ -207,11 +207,7 @@ static bool parse_packet(const char *reply, int reply_len)
     debug.set_log_server(new_log_server_ip);
   }
 
-  if (strcmp(new_mqtt_server, mqtt_server) != 0 || new_mqtt_port != mqtt_port) {
-    memcpy(mqtt_server, new_mqtt_server, sizeof(mqtt_server));
-    mqtt_port = new_mqtt_port;
-    mqtt_setup();
-  }
+  mqtt_update_server(new_mqtt_server, new_mqtt_port);
 
   if (strcmp(new_desc, node_desc) != 0 ||
       strcmp(new_ip, static_ip) != 0 ||

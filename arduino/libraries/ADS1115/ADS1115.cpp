@@ -64,7 +64,7 @@ uint8_t ADS1115::trigger_sample()
 
 bool ADS1115::is_sample_in_progress()
 {
-        return (read_register(ADS1115_REGISTER_CONFIG) & SAMPLE_BIT) != 0;
+        return (read_register(ADS1115_REGISTER_CONFIG) & SAMPLE_BIT) == 0;
 }
 
 uint16_t ADS1115::read_sample()

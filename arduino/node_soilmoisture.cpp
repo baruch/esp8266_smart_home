@@ -10,28 +10,17 @@ void NodeSoilMoisture::setup(void)
   m_ads1115.set_comp_queue(ADS1115_COMP_QUEUE_DISABLE);
   m_ads1115.set_mode(ADS1115_MODE_SINGLE_SHOT);
   m_ads1115.set_pga(ADS1115_PGA_ONE);
+  m_state = STATE_INIT;
+  m_next_poll = 0;
 }
 
-float NodeSoilMoisture::read_value(enum ads1115_mux mux)
+bool NodeSoilMoisture::sample_read(float &pval)
 {
-  const int NUM_WAITS = 10;
-  m_ads1115.set_mux(mux);
+  if (m_ads1115.is_sample_in_progress())
+    return false;
 
-  m_ads1115.trigger_sample();
-
-  int i;
-  for (i = 0; i < NUM_WAITS; i++)
-  {
-    delay(3);
-    if (m_ads1115.is_sample_in_progress())
-      break;
-  }
-  if (i == NUM_WAITS)
-  {
-    debug.log("read timedout");
-    return 0xFFFF;
-  }
-  return m_ads1115.read_sample_float();
+  pval = m_ads1115.read_sample_float();
+  return true;
 }
 
 unsigned NodeSoilMoisture::loop(void)
@@ -39,21 +28,72 @@ unsigned NodeSoilMoisture::loop(void)
   if (!mqtt_connected())
     return 0;
 
-  // We read the battery through a 2:1 voltage divider so upscale it in the ADC
-  m_ads1115.set_pga(ADS1115_PGA_TWO);
-  float bat = read_value(ADS1115_MUX_GND_AIN0)*2.0;
-  mqtt_publish_float("battery", bat);
+  if (!TIME_PASSED(m_next_poll))
+    return 0;
 
-  // The other values are read without any filtering and have a max of 3.3v so no scaling
-  m_ads1115.set_pga(ADS1115_PGA_ONE);
+  m_next_poll = millis() + 3;
 
-  float moisture_analog = read_value(ADS1115_MUX_GND_AIN2);
-  mqtt_publish_float("moisture", moisture_analog);
+  uint8_t request;
+  switch (m_state) {
+    case STATE_INIT:
+      // Start reading the battery voltage
+      m_ads1115.set_pga(ADS1115_PGA_TWO);
+      m_ads1115.set_mux(ADS1115_MUX_GND_AIN0);
+      request = m_ads1115.trigger_sample();
+      if (request != 0) {
+        m_state = STATE_DONE;
+        debug.log("Failed to trigger request ", request);
+        return 0;
+      }
+      m_state = STATE_READ_BAT;
+      break;
 
-  float moisture_digital = read_value(ADS1115_MUX_GND_AIN3);
-  mqtt_publish_float("trigger", moisture_digital);
+    case STATE_READ_BAT:
+      if (sample_read(m_bat)) {
+        // Battery voltage read, initiate the moisture reading
+        m_ads1115.set_pga(ADS1115_PGA_ONE);
+        m_ads1115.set_mux(ADS1115_MUX_GND_AIN2);
+        request = m_ads1115.trigger_sample();
+        if (request != 0) {
+          m_state = STATE_DONE;
+          debug.log("Failed to trigger request ", request);
+          return 0;
+        }
 
-  debug.log("Battery: ", bat, " Moisture: ", moisture_analog, " Digital: ", moisture_digital);
+        // Send the battery voltage
+        m_bat *= 2.0;
+        mqtt_publish_float("battery", m_bat);
+        m_state = STATE_READ_MOISTURE;
+      }
+      break;
 
-  return DEFAULT_DEEP_SLEEP_TIME*2;
+    case STATE_READ_MOISTURE:
+      if (sample_read(m_moisture)) {
+        // Moisture voltage read, initiate the trigger reading
+        m_ads1115.set_mux(ADS1115_MUX_GND_AIN3);
+        request = m_ads1115.trigger_sample();
+        if (request != 0) {
+          m_state = STATE_DONE;
+          debug.log("Failed to trigger request ", request);
+          return 0;
+        }
+
+        // Send the moisture reading
+        mqtt_publish_float("moisture", m_moisture);
+        m_state = STATE_READ_TRIGGER;
+      }
+      break;
+
+    case STATE_READ_TRIGGER:
+      if (sample_read(m_trigger)) {
+        //  Trigger reading done, send it
+        mqtt_publish_float("trigger", m_trigger);
+        m_state = STATE_DONE;
+        debug.log("Battery: ", m_bat, " Moisture: ", m_moisture, " Digital: ", m_trigger);
+        return DEFAULT_DEEP_SLEEP_TIME*3;
+      }
+      break;
+  }
+
+  return 0;
 }

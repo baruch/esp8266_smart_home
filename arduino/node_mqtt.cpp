@@ -111,7 +111,7 @@ void mqtt_loop(void)
 
       // Once connected, publish an announcement...
       mqtt.publish(will_topic, "online", 1);
-      mqtt_publish_float("vdd", ESP.getVcc());
+      mqtt_publish_float("vdd", ESP.getVcc()/1024.0);
       mqtt_publish_str("bootreason", ESP.getResetInfo().c_str());
 
       // ... and resubscribe

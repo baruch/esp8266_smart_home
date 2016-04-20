@@ -120,8 +120,6 @@ void mqtt_loop(void)
         if (subscription[i].callback) {
           debug.log("Subscribing for idx ", i, " topic ", subscription[i].topic);
           mqtt.subscribe(subscription[i].topic);
-        } else {
-          debug.log("subscription idx ", i, " is empty");
         }
       }
       node_mqtt_connected();

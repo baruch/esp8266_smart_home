@@ -6,9 +6,9 @@
 #include "node_mqtt.h"
 
 #define DISCOVERY_CYCLES (60*60*1000) // an hour in msecs
-static long unsigned next_discovery;
+static long unsigned next_discovery = 0;
 static WiFiUDP udp;
-static unsigned long next_reply;
+static unsigned long next_reply = 0;
 static bool first_successful_discovery = true;
 
 int discover_set_buf(char *buf, int start, const uint8_t *src, int src_len)
@@ -86,6 +86,7 @@ static bool discover_send_pkt()
   int res;
   int pktlen;
 
+  debug.log("Sending discovery packet");
   udp.begin(DISCOVER_PORT);
 
   IPAddress broadcast_ip = ~WiFi.subnetMask() | WiFi.gatewayIP();
@@ -294,5 +295,5 @@ void discover_poll(void)
 
 void discovery_now(void)
 {
-  next_discovery = millis();
+  next_discovery = 0;
 }

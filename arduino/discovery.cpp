@@ -127,7 +127,7 @@ static bool parse_packet(const char *reply, int reply_len)
   cur_pos += ret;
 
   if (reply[cur_pos] != 2) {
-    debug.log("Invalid port length");
+    debug.log("Invalid port length ", (int)reply[cur_pos], " pos ", cur_pos);
     return false;
   }
 

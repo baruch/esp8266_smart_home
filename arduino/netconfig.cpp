@@ -16,11 +16,8 @@ void config_load() {
   dns.fromString(cfg.getValueStr("dns"));
   strcpy(node_desc, cfg.getValueStr("desc"));
 
-  print_str("IP", static_ip);
-  print_str("GW", static_gw);
-  print_str("NM", static_nm);
-  print_str("DNS", dns);
-  print_str("Node Desc", node_desc);
+  debug.log("IP: ", static_ip, " GW: ", static_gw, " NM: ", static_nm, " DNS: ", dns);
+  debug.log("Node Desc: ", node_desc);
 }
 
 void config_save(void)

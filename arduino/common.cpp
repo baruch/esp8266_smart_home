@@ -3,11 +3,6 @@
 #include "node_mqtt.h"
 #include <ESP8266WiFi.h>
 
-void print_str(const char *name, const char *val)
-{
-  debug.log(name, ": \"", val, '"');
-}
-
 static void print_hexdump_line(const char *buf, size_t buf_len)
 {
   size_t i;

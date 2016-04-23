@@ -13,6 +13,7 @@ void mqtt_loop(void);
 void mqtt_publish_float(const char *name, float val);
 void mqtt_publish_str(const char *name, const char *val);
 void mqtt_publish_bool(const char *name, bool val);
+void mqtt_publish_int(const char *name, int val);
 void mqtt_subscribe(const char *name, void (*mqtt_cb)(const char *payload, int payload_len));
 
 #endif

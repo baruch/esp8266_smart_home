@@ -144,6 +144,13 @@ void mqtt_publish_bool(const char *name, bool val)
   mqtt_publish_str(name, val ? "1" : "0");
 }
 
+void mqtt_publish_int(const char *name, int val)
+{
+  char msg[16];
+  itoa(val, msg, 10);
+  mqtt_publish_str(name, msg);
+}
+
 void mqtt_subscribe(const char *name, void (*mqtt_cb)(const char *payload, int payload_len))
 {
   int i;

@@ -43,6 +43,7 @@ unsigned NodeSoilMoisture::loop(void)
       if (request != 0) {
         m_state = STATE_DONE;
         debug.log("Failed to trigger request ", request);
+        mqtt_publish_int("i2c_state", request);
         return 0;
       }
       m_state = STATE_READ_BAT;
@@ -57,6 +58,7 @@ unsigned NodeSoilMoisture::loop(void)
         if (request != 0) {
           m_state = STATE_DONE;
           debug.log("Failed to trigger request ", request);
+          mqtt_publish_int("i2c_state", request);
           return 0;
         }
 
@@ -75,6 +77,7 @@ unsigned NodeSoilMoisture::loop(void)
         if (request != 0) {
           m_state = STATE_DONE;
           debug.log("Failed to trigger request ", request);
+          mqtt_publish_int("i2c_state", request);
           return 0;
         }
 
@@ -88,6 +91,7 @@ unsigned NodeSoilMoisture::loop(void)
       if (sample_read(m_trigger)) {
         //  Trigger reading done, send it
         mqtt_publish_float("trigger", m_trigger);
+        mqtt_publish_int("i2c_state", 0);
         m_state = STATE_DONE;
         debug.log("Battery: ", m_bat, " Moisture: ", m_moisture, " Digital: ", m_trigger);
         return DEFAULT_DEEP_SLEEP_TIME*3;

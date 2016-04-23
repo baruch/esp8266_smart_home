@@ -128,6 +128,7 @@ void mqtt_loop(void)
 
 void mqtt_publish_str(const char *name, const char *val)
 {
+  debug.log("mqtt publish ", name, ' ', val);
   mqtt.publish(mqtt_tmp_topic(name), val, 1);
 }
 

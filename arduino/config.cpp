@@ -186,6 +186,7 @@ int Config::getValueInt(const char *key) {
 int Config::allocate_entry(const char *key, ConfigType ctype) {
   int i = find_key(key);
   if (i == -1) {
+    // No pre-existing key found, allocate a new one
     for (i = 0; i < NUM_CONFIG_ENTRIES; i++) {
       if (types[i] == CONFIG_TYPE_UNKNOWN)
         break;
@@ -224,4 +225,3 @@ void Config::setValueStr(const char *key, const char *value) {
 
   values[i] = strdup(value);
 }
-

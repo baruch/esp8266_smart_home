@@ -66,11 +66,10 @@ void mqtt_setup() {
   mqtt.setCallback(mqtt_callback);
 }
 
-void mqtt_update_server(const char *new_mqtt_server, int new_mqtt_port)
+void mqtt_update_server(const IPAddress &new_mqtt_server, int new_mqtt_port)
 {
-  if (strcmp(new_mqtt_server, mqtt_server) != 0 || new_mqtt_port != mqtt_port) {
-    strncpy(mqtt_server, new_mqtt_server, sizeof(mqtt_server)-1);
-    mqtt_server[sizeof(mqtt_server)-1] = 0;
+  if (new_mqtt_server != mqtt_server || new_mqtt_port != mqtt_port) {
+    mqtt_server = new_mqtt_server;
 
     mqtt_port = new_mqtt_port;
 

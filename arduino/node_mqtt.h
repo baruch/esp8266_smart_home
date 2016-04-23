@@ -1,10 +1,12 @@
 #ifndef NODE_MQTT_H
 #define NODE_MQTT_H
 
+#include <IPAddress.h>
+
 void mqtt_topic(char *buf, int buf_len, const char *name);
 const char * mqtt_tmp_topic(const char *name);
 void mqtt_setup(void);
-void mqtt_update_server(const char *new_mqtt_server, int new_mqtt_port);
+void mqtt_update_server(const IPAddress& new_mqtt_server, int new_mqtt_port);
 void mqtt_disconnect(void);
 bool mqtt_connected(void);
 void mqtt_loop(void);

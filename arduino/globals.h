@@ -2,6 +2,7 @@
 #define GLOBALS_H
 
 #include <stdint.h>
+#include <IPAddress.h>
 
 #define VERSION "SHMVER-0.0.9"
 #define CONFIG_FILE "/config.ini"
@@ -14,11 +15,11 @@
 extern char node_name[20];
 extern int node_type;
 extern char node_desc[32];
-extern char mqtt_server[40];
+extern IPAddress mqtt_server;
 extern int mqtt_port;
-extern char static_ip[16];
-extern char static_nm[16];
-extern char static_gw[16];
-extern char dns[40];
+extern IPAddress static_ip;
+extern IPAddress static_nm;
+extern IPAddress static_gw;
+extern IPAddress dns;
 
 #endif

@@ -10,10 +10,10 @@ void config_load() {
 
   cfg.readFile();
   debug.log("Config loaded");
-  strcpy(static_ip, cfg.getValueStr("ip"));
-  strcpy(static_gw, cfg.getValueStr("gw"));
-  strcpy(static_nm, cfg.getValueStr("nm"));
-  strcpy(dns, cfg.getValueStr("dns"));
+  static_ip.fromString(cfg.getValueStr("ip"));
+  static_gw.fromString(cfg.getValueStr("gw"));
+  static_nm.fromString(cfg.getValueStr("nm"));
+  dns.fromString(cfg.getValueStr("dns"));
   strcpy(node_desc, cfg.getValueStr("desc"));
 
   print_str("IP", static_ip);
@@ -27,10 +27,10 @@ void config_save(void)
 {
   debug.log("saving config");
   Config cfg(CONFIG_FILE);
-  cfg.setValueStr("ip", static_ip);
-  cfg.setValueStr("gw", static_gw);
-  cfg.setValueStr("nm", static_nm);
-  cfg.setValueStr("dns", dns);
+  cfg.setValueStr("ip", static_ip.toString().c_str());
+  cfg.setValueStr("gw", static_gw.toString().c_str());
+  cfg.setValueStr("nm", static_nm.toString().c_str());
+  cfg.setValueStr("dns", dns.toString().c_str());
   cfg.setValueStr("desc", node_desc);
   cfg.writeFile();
   debug.log("save done");
@@ -40,23 +40,8 @@ void config_save(void)
 }
 
 void net_config_setup() {
-  IPAddress ip, gw, nm, dns_ip;
-  ip.fromString(static_ip);
-  gw.fromString(static_gw);
-  nm.fromString(static_nm);
-  dns_ip.fromString(dns);
-
-  wifi.begin(ip, gw, nm, dns_ip);
+  wifi.begin(static_ip, static_gw, static_nm, dns);
   discovery_now();
-}
-
-void ip_to_str(IPAddress &ip, char *buf, size_t buf_len)
-{
-  if (static_cast<uint32_t>(ip) != 0) {
-    ip.toString().toCharArray(buf, buf_len, 0);
-  } else {
-    buf[0] = 0;
-  }
 }
 
 void net_config_loop() {
@@ -64,19 +49,9 @@ void net_config_loop() {
 
   if (wifi.is_config_changed()) {
     //save the custom parameters to FS
-    IPAddress _ip, _gw, _sn, _dns;
-
-    wifi.get_static_ip(_ip, _gw, _sn, _dns);
-
-    ip_to_str(_ip, static_ip, sizeof(static_ip));
-    ip_to_str(_gw, static_gw, sizeof(static_gw));
-    ip_to_str(_sn, static_nm, sizeof(static_nm));
-    ip_to_str(_dns, dns, sizeof(dns));
-
+    wifi.get_static_ip(static_ip, static_gw, static_nm, dns);
     wifi.get_desc(node_desc, sizeof(node_desc));
-
     config_save();
     // config save will restart
   }
 }
-

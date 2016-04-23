@@ -32,22 +32,7 @@ int discover_set_int(char *buf, int start, int val)
   return discover_set_str(buf, start, out);
 }
 
-static int extract_ip(const char *buf, int buf_len, int start, char *ip_str)
-{
-  if (buf_len < start)
-    return -1;
-
-  if (buf[start] != 4) // It's an IP, it is always four characters
-    return -1;
-
-  if (buf_len < start + 5 - 1) // Ensure we have all data
-    return -1;
-
-  sprintf(ip_str, "%d.%d.%d.%d", buf[start + 1], buf[start + 2], buf[start + 3], buf[start + 4]);
-  return 5;
-}
-
-static int extract_ip2(const char *buf, int buf_len, int start, IPAddress &ip_out)
+static int extract_ip(const char *buf, int buf_len, int start, IPAddress &ip_out)
 {
   if (buf_len < start)
     return -1;
@@ -118,12 +103,12 @@ static bool discover_send_pkt()
 static bool parse_packet(const char *reply, int reply_len)
 {
   char new_desc[32];
-  char new_ip[16];
-  char new_gw[16];
-  char new_nm[16];
-  char new_dns[16];
+  IPAddress new_ip;
+  IPAddress new_gw;
+  IPAddress new_nm;
+  IPAddress new_dns;
   char new_node_type[10];
-  char new_mqtt_server[40];
+  IPAddress new_mqtt_server;
   IPAddress new_log_server_ip;
   int new_mqtt_port;
 
@@ -195,7 +180,7 @@ static bool parse_packet(const char *reply, int reply_len)
   }
   cur_pos += ret;
 
-  ret = extract_ip2(reply, reply_len, cur_pos, new_log_server_ip);
+  ret = extract_ip(reply, reply_len, cur_pos, new_log_server_ip);
   if (ret < 0) {
     debug.log("No log server IP");
   }
@@ -210,18 +195,19 @@ static bool parse_packet(const char *reply, int reply_len)
 
   mqtt_update_server(new_mqtt_server, new_mqtt_port);
 
-  if (strcmp(new_desc, node_desc) != 0 ||
-      strcmp(new_ip, static_ip) != 0 ||
-      strcmp(new_gw, static_gw) != 0 ||
-      strcmp(new_nm, static_nm) != 0 ||
-      strcmp(new_dns, dns) != 0)
+  debug.log("desc '", node_desc, "' '", new_desc, '\'');
+  if (/*strcmp(new_desc, node_desc) != 0 ||*/
+      new_ip != static_ip ||
+      new_gw != static_gw ||
+      new_nm != static_nm ||
+      new_dns != dns)
   {
     debug.log("Reconfigure");
     strcpy(node_desc, new_desc);
-    strcpy(static_ip, new_ip);
-    strcpy(static_gw, new_gw);
-    strcpy(static_nm, new_nm);
-    strcpy(dns, new_dns);
+    static_ip = new_ip;
+    static_gw = new_gw;
+    static_nm = new_nm;
+    dns = new_dns;
 
     config_save();
   }

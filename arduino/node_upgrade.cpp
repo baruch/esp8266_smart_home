@@ -15,7 +15,7 @@ void check_upgrade() {
   ESPhttpUpdate.onStart(upgrade_starting);
 #endif
   debug.log("Checking for upgrade");
-  t_httpUpdate_return ret = ESPhttpUpdate.update(mqtt_server, UPGRADE_PORT, UPGRADE_PATH, VERSION);
+  t_httpUpdate_return ret = ESPhttpUpdate.update(mqtt_server.toString(), UPGRADE_PORT, UPGRADE_PATH, VERSION);
 
   switch (ret) {
     case HTTP_UPDATE_FAILED:

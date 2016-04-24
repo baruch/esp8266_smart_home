@@ -24,8 +24,8 @@ class LogHandler(SocketServer.BaseRequestHandler):
 
 class LogServer(SocketServer.ThreadingTCPServer):
     def __init__(self, address, handler, node_list):
-        SocketServer.ThreadingTCPServer.__init__(self, address, handler)
         self.allow_reuse_address = True
+        SocketServer.ThreadingTCPServer.__init__(self, address, handler)
         self.node_list = node_list
 
 def start(node_list):

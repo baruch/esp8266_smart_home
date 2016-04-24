@@ -4,6 +4,7 @@
 #include "common.h"
 #include "globals.h"
 #include "node_mqtt.h"
+#include "cached_vars.h"
 
 #define DISCOVERY_CYCLES (60*60*1000) // an hour in msecs
 static long unsigned next_discovery = 0;
@@ -191,6 +192,7 @@ static bool parse_packet(const char *reply, int reply_len)
   if (new_log_server_ip) {
     debug.log("Log server IP ", new_log_server_ip);
     debug.set_log_server(new_log_server_ip);
+    cache.set_log_server(new_log_server_ip);
   }
 
   mqtt_update_server(new_mqtt_server, new_mqtt_port);
@@ -233,6 +235,7 @@ static bool check_reply() {
 
     if (res >= 9 && parse_packet(reply, res)) {
       debug.log("Discovery done");
+      cache.save();
       return true;
     } else {
       debug.log("Failed to parse packet");

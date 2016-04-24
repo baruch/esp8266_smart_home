@@ -1,5 +1,6 @@
 #include "DebugPrint.h"
 #include <Arduino.h>
+#include <ESP8266WiFi.h>
 
 #define LOG_PORT 24321
 
@@ -12,10 +13,10 @@ void DebugPrint::begin(void)
         server_ip = INADDR_NONE;
 }
 
-void DebugPrint::set_log_server(IPAddress server)
+void DebugPrint::set_log_server(IPAddress const &server)
 {
         // If we set the same value, do nothing
-        if (server == server_ip)
+        if (server == server_ip || server == INADDR_NONE)
                 return;
 
         if (client.connected())
@@ -28,6 +29,9 @@ void DebugPrint::set_log_server(IPAddress server)
 
 bool DebugPrint::reconnect(void)
 {
+        if (!WiFi.isConnected())
+          return false;
+
         bool connected = client.connected();
 
         if (!connected && server_ip) {

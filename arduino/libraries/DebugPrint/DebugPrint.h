@@ -101,7 +101,7 @@ public:
 	};
 
 	virtual size_t write(uint8_t ch);
-	void set_log_server(IPAddress server);
+	void set_log_server(IPAddress const &server);
 
 private:
 	uint8_t buf[2048];

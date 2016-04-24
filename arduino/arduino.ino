@@ -83,6 +83,7 @@ void setup() {
   node_type_load();
   config_load();
   cache.load();
+  debug.set_log_server(cache.get_log_server());
 
   // Setup the node
   mqtt_setup(); // MQTT need to be setup early so other parts can subscribe

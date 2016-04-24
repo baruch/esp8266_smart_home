@@ -195,7 +195,6 @@ static bool parse_packet(const char *reply, int reply_len)
 
   mqtt_update_server(new_mqtt_server, new_mqtt_port);
 
-  debug.log("desc '", node_desc, "' '", new_desc, '\'');
   if (strcmp(new_desc, node_desc) != 0 ||
       new_ip != static_ip ||
       new_gw != static_gw ||

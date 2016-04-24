@@ -60,6 +60,7 @@ void restart(void)
 void deep_sleep(unsigned seconds)
 {
   debug.log("Going to sleep for ", seconds, " seconds");
+
   delay(1);
   mqtt_loop();
   delay(1);
@@ -67,4 +68,3 @@ void deep_sleep(unsigned seconds)
   delay(1);
   ESP.deepSleep(seconds * 1000 * 1000);
 }
-

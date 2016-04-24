@@ -141,13 +141,17 @@ void read_serial_commands() {
 }
 
 void loop() {
+  static unsigned sleep_interval = 0;
+
   read_serial_commands();
   net_config_loop();
   discover_poll();
   mqtt_loop();
 
-  unsigned sleep_interval = node_loop();
-  if (sleep_interval) {
+  if (!sleep_interval)
+    sleep_interval = node_loop();
+
+  if (sleep_interval && !first_successful_discovery) {
     mqtt_loop();
     delay(1);
     mqtt_loop();

@@ -20,4 +20,6 @@ extern IPAddress static_nm;
 extern IPAddress static_gw;
 extern IPAddress dns;
 
+extern bool first_successful_discovery;
+
 #endif

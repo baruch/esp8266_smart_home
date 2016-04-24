@@ -9,7 +9,7 @@
 static long unsigned next_discovery = 0;
 static WiFiUDP udp;
 static unsigned long next_reply = 0;
-static bool first_successful_discovery = true;
+bool first_successful_discovery = true;
 
 int discover_set_buf(char *buf, int start, const uint8_t *src, int src_len)
 {

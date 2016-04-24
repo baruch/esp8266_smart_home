@@ -141,11 +141,18 @@ class NodeList:
         mqtt_publish(node_id, "upgrade", ota_file.get_version())
         return True
 
+    def node_id_from_ip(self, ip):
+        node = self.get_node_by_ip(ip)
+        if node is None:
+            return 'Unknown(%s)' % ip
+
+        return node['node_id']
+
     def log(self, ip, data):
         ts = datetime.datetime.now().isoformat(' ')
 
         for line in data.splitlines():
-            self._log.write('%s %s %s\n' % (ip, ts, line))
+            self._log.write('%s %s %s\n' % (self.node_id_from_ip(ip), ts, line))
         self._log.flush()
 
 class OTAFile:

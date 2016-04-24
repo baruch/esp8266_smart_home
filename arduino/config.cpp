@@ -42,7 +42,7 @@ bool Config::readFile() {
 
   // If file doesn't exist we are done
   if (!SPIFFS.exists(_filename)) {
-    debug.log("Config file ", _filename, "doesn't exist");
+    debug.log("Config file ", _filename, " doesn't exist");
     return false;
   }
 

@@ -7,6 +7,7 @@
 #include "common.h"
 #include "globals.h"
 #include "node_mqtt.h"
+#include "cached_vars.h"
 //#include <GDBStub.h>
 
 ADC_MODE(ADC_VCC);
@@ -77,12 +78,15 @@ void setup() {
   debug.log(ESP.getResetInfo());
   debug.log(ESP.getResetReason());
 
-  mqtt_setup(); // MQTT need to be setup early so other parts can subscribe
+  // Load data from filesystem
   spiffs_mount();
   node_type_load();
-  node_setup();
-
   config_load();
+  cache.load();
+
+  // Setup the node
+  mqtt_setup(); // MQTT need to be setup early so other parts can subscribe
+  node_setup();
   net_config_setup();
   unsigned long t2 = millis();
 

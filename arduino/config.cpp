@@ -175,6 +175,16 @@ const char *Config::getValueStr(const char *key) {
   return (const char *)values[i];
 }
 
+IPAddress Config::getValueIP(const char *key) {
+  int i = find_key(key);
+  if (i == -1 || values[i] == NULL)
+    return INADDR_NONE;
+
+  IPAddress ip;
+  ip.fromString( (const char *)values[i] );
+  return ip;
+}
+
 int Config::getValueInt(const char *key) {
   int i = find_key(key);
   if (i == -1)
@@ -224,4 +234,12 @@ void Config::setValueStr(const char *key, const char *value) {
     return;
 
   values[i] = strdup(value);
+}
+
+void Config::setValueIP(const char *key, IPAddress ip)
+{
+  int i = allocate_entry(key, CONFIG_TYPE_STRING);
+  if (i == -1)
+    return;
+  values[i] = strdup(ip.toString().c_str());
 }

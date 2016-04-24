@@ -1,6 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <IPAddress.h>
+
 #define NUM_CONFIG_ENTRIES 10
 
 typedef enum ConfigType {
@@ -27,9 +29,11 @@ class Config {
     bool keyExists(const char *key);
     const char *getValueStr(const char *key);
     int getValueInt(const char *key);
+    IPAddress getValueIP(const char *key);
 
     void setValueStr(const char *key, const char *value);
     void setValueInt(const char *key, int value);
+    void setValueIP(const char *key, IPAddress ip);
 
   private:
     int find_key(const char *key);

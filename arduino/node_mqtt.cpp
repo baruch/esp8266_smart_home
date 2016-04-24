@@ -60,7 +60,7 @@ const char * mqtt_tmp_topic(const char *name)
 }
 
 void mqtt_setup() {
-  debug.log("MQTT setup");
+  debug.log("MQTT setup ", cache.get_mqtt_server(), ':', cache.get_mqtt_port());
   for (int i = 0; i < NUM_MQTT_SUBS; i++)
     subscription[i].callback = 0;
   mqtt_topic(mqtt_upgrade_topic, sizeof(mqtt_upgrade_topic), "upgrade");
@@ -72,7 +72,7 @@ void mqtt_update_server(const IPAddress &new_mqtt_server, int new_mqtt_port)
 {
   if (cache.set_mqtt_server(new_mqtt_server) || cache.set_mqtt_port(new_mqtt_port))
   {
-
+    cache.save(); // If we are here, something changed and we want to save
     mqtt.setServer(cache.get_mqtt_server(), cache.get_mqtt_port());
     debug.log("MQTT server updated to ", new_mqtt_server, ':', new_mqtt_port);
     next_reconnect = 0;
@@ -102,7 +102,8 @@ void mqtt_loop(void)
     return;
   }
 
-  if (cache.get_mqtt_server() && TIME_PASSED(next_reconnect)) {
+  if (cache.get_mqtt_server() && cache.get_mqtt_port() && TIME_PASSED(next_reconnect)) {
+    mqtt.setServer(cache.get_mqtt_server(), cache.get_mqtt_port());
     next_reconnect = millis() + MQTT_RECONNECT_TIMEOUT;
     const char *will_topic = mqtt_tmp_topic("online");
     if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {

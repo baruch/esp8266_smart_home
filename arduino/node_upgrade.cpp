@@ -2,6 +2,7 @@
 #include "common.h"
 #include "node_mqtt.h"
 #include "globals.h"
+#include "cached_vars.h"
 
 #if defined(HTTP_UPDATE_START_CALLBACK)
 void upgrade_starting(void) {
@@ -15,7 +16,7 @@ void check_upgrade() {
   ESPhttpUpdate.onStart(upgrade_starting);
 #endif
   debug.log("Checking for upgrade");
-  t_httpUpdate_return ret = ESPhttpUpdate.update(mqtt_server.toString(), UPGRADE_PORT, UPGRADE_PATH, VERSION);
+  t_httpUpdate_return ret = ESPhttpUpdate.update(IPAddress(cache.get_mqtt_server()).toString(), UPGRADE_PORT, UPGRADE_PATH, VERSION);
 
   switch (ret) {
     case HTTP_UPDATE_FAILED:
@@ -35,4 +36,3 @@ void check_upgrade() {
       break;
   }
 }
-

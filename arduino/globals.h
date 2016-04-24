@@ -15,8 +15,6 @@
 extern char node_name[20];
 extern int node_type;
 extern char node_desc[32];
-extern IPAddress mqtt_server;
-extern int mqtt_port;
 extern IPAddress static_ip;
 extern IPAddress static_nm;
 extern IPAddress static_gw;

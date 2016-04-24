@@ -4,6 +4,7 @@
 #include <ESP8266WiFi.h>
 #include "globals.h"
 #include "common.h"
+#include "cached_vars.h"
 
 #define MQTT_RECONNECT_TIMEOUT 2000
 #define MQTT_TOPIC_LEN 40
@@ -64,16 +65,15 @@ void mqtt_setup() {
     subscription[i].callback = 0;
   mqtt_topic(mqtt_upgrade_topic, sizeof(mqtt_upgrade_topic), "upgrade");
   mqtt.setCallback(mqtt_callback);
+  mqtt.setServer(cache.get_mqtt_server(), cache.get_mqtt_port());
 }
 
 void mqtt_update_server(const IPAddress &new_mqtt_server, int new_mqtt_port)
 {
-  if (new_mqtt_server != mqtt_server || new_mqtt_port != mqtt_port) {
-    mqtt_server = new_mqtt_server;
+  if (cache.set_mqtt_server(new_mqtt_server) || cache.set_mqtt_port(new_mqtt_port))
+  {
 
-    mqtt_port = new_mqtt_port;
-
-    mqtt.setServer(mqtt_server, mqtt_port);
+    mqtt.setServer(cache.get_mqtt_server(), cache.get_mqtt_port());
     debug.log("MQTT server updated to ", new_mqtt_server, ':', new_mqtt_port);
     next_reconnect = 0;
     mqtt_disconnect();
@@ -102,7 +102,7 @@ void mqtt_loop(void)
     return;
   }
 
-  if (mqtt_server && TIME_PASSED(next_reconnect)) {
+  if (cache.get_mqtt_server() && TIME_PASSED(next_reconnect)) {
     next_reconnect = millis() + MQTT_RECONNECT_TIMEOUT;
     const char *will_topic = mqtt_tmp_topic("online");
     if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {

@@ -102,7 +102,7 @@ void mqtt_loop(void)
     return;
   }
 
-  if (TIME_PASSED(next_reconnect)) {
+  if (mqtt_server && TIME_PASSED(next_reconnect)) {
     next_reconnect = millis() + MQTT_RECONNECT_TIMEOUT;
     const char *will_topic = mqtt_tmp_topic("online");
     if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {

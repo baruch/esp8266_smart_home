@@ -47,6 +47,7 @@ void restart(void)
   mqtt_disconnect();
   debug.log("Restarting"); // Also tries to flush any remaining data
   delay(25);
+  debug.stop();
   WiFiClient::stopAll();
   delay(25);
 
@@ -64,6 +65,7 @@ void deep_sleep(unsigned seconds)
   delay(1);
   mqtt_loop();
   delay(1);
+  debug.stop();
   WiFiClient::stopAll();
   delay(1);
   ESP.deepSleep(seconds * 1000 * 1000);

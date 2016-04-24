@@ -13,13 +13,20 @@ void DebugPrint::begin(void)
         server_ip = INADDR_NONE;
 }
 
+void DebugPrint::stop(void)
+{
+  debug.log("Disconnecting");
+  delay(0);
+  client.abort();
+}
+
 void DebugPrint::set_log_server(IPAddress const &server)
 {
         // If we set the same value, do nothing
         if (server == server_ip || server == INADDR_NONE)
                 return;
 
-        if (client.connected())
+        if (client.connected() || client.connecting())
                 client.stop();
 
         server_ip = server;
@@ -34,7 +41,7 @@ bool DebugPrint::reconnect(void)
 
         bool connected = client.connected();
 
-        if (!connected && server_ip) {
+        if (!connected && server_ip && !client.connecting()) {
                 connected = client.connect(server_ip, LOG_PORT);
         }
         return connected;
@@ -48,20 +55,20 @@ size_t DebugPrint::write(uint8_t ch)
 
         size_t ret = Serial.write(ch);
         if (ch == '\n') {
-                // Discard any data sent to us, we have no use for it
-                client.flush();
-
                 // End of line, try to send to server
-                if (!client.connected() && !reconnect())
+                if (!reconnect())
                         return ret;
+
+                if (!client.canSend())
+                  return ret;
 
                 // We are connected
                 if (buf_end < buf_start) {
-                        client.write(buf+buf_start, sizeof(buf) - buf_start);
+                        client.write((const char *)buf+buf_start, sizeof(buf) - buf_start);
                         buf_start = 0;
                 }
                 if (buf_start != buf_end) {
-                        client.write(buf+buf_start, buf_end-buf_start);
+                        client.write((const char *)buf+buf_start, buf_end-buf_start);
                         buf_start = buf_end;
                 }
         }

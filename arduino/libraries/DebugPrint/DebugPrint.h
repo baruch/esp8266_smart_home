@@ -2,7 +2,8 @@
 #define DEBUG_PRINT_H
 
 #include <Print.h>
-#include <WiFiClient.h>
+#include <Arduino.h>
+#include "../ESPAsyncTCP/ESPAsyncTCP.h"
 
 class DebugPrint : public Print {
 public:
@@ -102,6 +103,7 @@ public:
 
 	virtual size_t write(uint8_t ch);
 	void set_log_server(IPAddress const &server);
+	void stop(void);
 
 private:
 	uint8_t buf[2048];
@@ -109,7 +111,7 @@ private:
 	uint16_t buf_end;
 
 	IPAddress server_ip;
-	WiFiClient client;
+	AsyncClient client;
 
 	bool reconnect(void);
 };

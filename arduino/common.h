@@ -28,6 +28,11 @@ void deep_sleep(unsigned seconds);
 class Node {
   public:
     virtual void setup(void) {}
+
+    // This loop is for the type (Sensor or Actuator)
+    virtual void loop_for_type(void) {}
+
+    // This loop is for the specific node
     virtual unsigned loop(void) {
       return 0;
     }
@@ -38,4 +43,14 @@ class Node {
 class NodeSensor : public Node {
   bool is_battery_powered() { return true; }
 };
+
+class NodeActuator : public Node {
+  public:
+    void loop_for_type(void);
+
+  private:
+    int32_t m_last_rssi;
+    unsigned long m_next_rssi_poll;
+};
+
 #endif

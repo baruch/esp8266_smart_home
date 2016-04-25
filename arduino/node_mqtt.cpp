@@ -112,6 +112,7 @@ void mqtt_loop(void)
       // Once connected, publish an announcement...
       mqtt_publish_float("vdd", ESP.getVcc()/1024.0);
       mqtt_publish_str("bootreason", ESP.getResetInfo().c_str());
+      mqtt_publish_int("rssi", WiFi.RSSI());
 
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);

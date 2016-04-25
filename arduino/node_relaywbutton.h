@@ -8,7 +8,7 @@
    It also listens to mqtt to toggle the state remotely.
 */
 
-class NodeRelayWithButton : public Node {
+class NodeRelayWithButton : public NodeActuator {
   public:
     void setup(void);
     unsigned loop(void);

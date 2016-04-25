@@ -3,6 +3,10 @@
 #include "node_htu21d.h"
 #include "node_relaywbutton.h"
 #include "node_soilmoisture.h"
+#include <ESP8266WiFi.h>
+
+#define RSSI_DIFF 4
+#define RSSI_POLL_INTERVAL 60000
 
 static Node *node;
 
@@ -23,6 +27,7 @@ void node_setup(void)
 unsigned node_loop(void)
 {
   if (node) {
+    node->loop_for_type();
     return node->loop();
   } else {
     return 0;
@@ -38,4 +43,17 @@ void node_mqtt_connected(void)
 bool node_is_powered(void)
 {
   return node && node->is_battery_powered();
+}
+
+void NodeActuator::loop_for_type(void)
+{
+  if (TIME_PASSED(m_next_rssi_poll)) {
+    m_next_rssi_poll = millis() + RSSI_POLL_INTERVAL;
+
+    int32_t rssi = WiFi.RSSI();
+    if (m_last_rssi > rssi + RSSI_DIFF || m_last_rssi < rssi - RSSI_DIFF) {
+      mqtt_publish_int("rssi", rssi);
+      m_last_rssi = rssi;
+    }
+  }
 }

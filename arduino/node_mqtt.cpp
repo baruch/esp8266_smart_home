@@ -110,7 +110,6 @@ void mqtt_loop(void)
       debug.log("MQTT connected");
 
       // Once connected, publish an announcement...
-      mqtt.publish(will_topic, "online", 1);
       mqtt_publish_float("vdd", ESP.getVcc()/1024.0);
       mqtt_publish_str("bootreason", ESP.getResetInfo().c_str());
 
@@ -123,6 +122,7 @@ void mqtt_loop(void)
         }
       }
       node_mqtt_connected();
+      mqtt.publish(will_topic, "online", 1);
     }
   }
 }

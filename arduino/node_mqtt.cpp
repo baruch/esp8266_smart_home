@@ -109,6 +109,9 @@ void mqtt_loop(void)
     if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {
       debug.log("MQTT connected");
 
+      // Because we are using a tmp topic this must be first
+      mqtt.publish(will_topic, "online", 1);
+
       // Once connected, publish an announcement...
       mqtt_publish_float("vdd", ESP.getVcc()/1024.0);
       mqtt_publish_str("bootreason", ESP.getResetInfo().c_str());
@@ -123,7 +126,6 @@ void mqtt_loop(void)
         }
       }
       node_mqtt_connected();
-      mqtt.publish(will_topic, "online", 1);
     }
   }
 }

@@ -40,38 +40,73 @@ void HTU21D::begin(void)
   Wire.begin();
 }
 
+uint8_t HTU21D::trigger_read_temp(void)
+{
+  Wire.beginTransmission(HTDU21D_ADDRESS);
+  Wire.write(TRIGGER_TEMP_MEASURE_NOHOLD);
+  return Wire.endTransmission();
+}
+
+uint8_t HTU21D::trigger_read_humidity(void)
+{
+  Wire.beginTransmission(HTDU21D_ADDRESS);
+  Wire.write(TRIGGER_HUMD_MEASURE_NOHOLD);
+  return Wire.endTransmission();
+}
+
+bool HTU21D::try_read_value(uint16_t &value, uint8_t &cksum)
+{
+  if (Wire.requestFrom(HTDU21D_ADDRESS, 3) != 3)
+    return false;
+
+	value = Wire.read();
+  value <<= 8;
+	value |= Wire.read();
+	cksum = Wire.read();
+  return true;
+}
+
+float HTU21D::translate_humidity(uint16_t value)
+{
+  //Given the raw humidity data, calculate the actual relative humidity
+  float f = value / 65536.0; //2^16 = 65536
+  f = -6 + (125 * f); //From page 14
+  return f;
+}
+
+float HTU21D::translate_temp(uint16_t value)
+{
+	//Given the raw temperature data, calculate the actual temperature
+	float f = value / 65536.0; //2^16 = 65536
+	f = -46.85 + (175.72 * f); //From page 14
+  return f;
+}
+
+
 #define MAX_WAIT 100
 #define DELAY_INTERVAL 10
 #define MAX_COUNTER (MAX_WAIT/DELAY_INTERVAL)
-float HTU21D::read_value(byte cmd)
+float HTU21D::read_value(void)
 {
-	//Request a humidity reading
-	Wire.beginTransmission(HTDU21D_ADDRESS);
-	Wire.write(cmd); //Measure value (prefer no hold!)
-	Wire.endTransmission();
+  uint16_t raw_value;
+  uint8_t cksum;
 
-	//Hang out while measurement is taken. datasheet says 50ms, practice may call for more
-        byte num_read;
-        byte counter;
-        for (counter = 0, num_read = 0; counter < MAX_COUNTER && num_read != 3; counter++) {
-	        delay(DELAY_INTERVAL);
+  //Hang out while measurement is taken. datasheet says 50ms, practice may call for more
+  byte counter;
+  for (counter = 0; counter < MAX_COUNTER; counter++)
+  {
+    delay(DELAY_INTERVAL);
 
-                //Comes back in three bytes, data(MSB) / data(LSB) / Checksum
-                num_read = Wire.requestFrom(HTDU21D_ADDRESS, 3);
-        }
+    if (try_read_value(raw_value, cksum))
+      break;
+  }
 
-        if (counter == MAX_COUNTER) return 0; //Error out
+  if (counter == MAX_COUNTER) return 0; //Error out
 
-	byte msb, lsb, checksum;
-	msb = Wire.read();
-	lsb = Wire.read();
-	checksum = Wire.read();
+	if (check_crc(raw_value, cksum) != 0)
+    return(1); //Error out
 
-	unsigned int raw_value = ((unsigned int) msb << 8) | (unsigned int) lsb;
-
-	if(check_crc(raw_value, checksum) != 0) return(1); //Error out
-
-        return raw_value & 0xFFFC; // Zero out the status bits
+  return raw_value & 0xFFFC; // Zero out the status bits
 }
 
 //Read the humidity
@@ -81,15 +116,14 @@ float HTU21D::read_value(byte cmd)
 //Returns 999 if CRC is wrong
 float HTU21D::readHumidity(void)
 {
-        unsigned int rawHumidity = read_value(TRIGGER_HUMD_MEASURE_NOHOLD);
-        if (rawHumidity < 2)
-                return 998 + rawHumidity;
-	
-	//Given the raw humidity data, calculate the actual relative humidity
-	float tempRH = rawHumidity / (float)65536; //2^16 = 65536
-	float rh = -6 + (125 * tempRH); //From page 14
-	
-	return(rh);
+  if (!trigger_read_humidity())
+    return 997;
+
+  uint16_t rawHumidity = read_value();
+  if (rawHumidity < 2)
+    return 998 + rawHumidity;
+
+	return translate_humidity(rawHumidity);
 }
 
 //Read the temperature
@@ -99,15 +133,14 @@ float HTU21D::readHumidity(void)
 //Returns 999 if CRC is wrong
 float HTU21D::readTemperature(void)
 {
-        unsigned int rawTemperature = read_value(TRIGGER_TEMP_MEASURE_NOHOLD);
-        if (rawTemperature < 2)
-                return 998 + rawTemperature;
+  if (!trigger_read_temp())
+    return 997;
 
-	//Given the raw temperature data, calculate the actual temperature
-	float tempTemperature = rawTemperature / (float)65536; //2^16 = 65536
-	float realTemperature = (float)(-46.85 + (175.72 * tempTemperature)); //From page 14
+  uint16_t rawTemperature = read_value();
+  if (rawTemperature < 2)
+    return 998 + rawTemperature;
 
-	return(realTemperature);  
+	return translate_temp(rawTemperature);
 }
 
 //Set sensor resolution
@@ -164,7 +197,7 @@ void HTU21D::writeUserRegister(byte val)
 //POLYNOMIAL = 0x0131 = x^8 + x^5 + x^4 + 1 : http://en.wikipedia.org/wiki/Computation_of_cyclic_redundancy_checks
 #define SHIFTED_DIVISOR 0x988000 //This is the 0x0131 polynomial shifted to farthest left of three bytes
 
-byte HTU21D::check_crc(uint16_t message_from_sensor, uint8_t check_value_from_sensor)
+bool HTU21D::check_crc(uint16_t message_from_sensor, uint8_t check_value_from_sensor)
 {
   //Test cases from datasheet:
   //message = 0xDC, checkvalue is 0x79
@@ -190,6 +223,6 @@ byte HTU21D::check_crc(uint16_t message_from_sensor, uint8_t check_value_from_se
     divsor >>= 1; //Rotate the divsor max 16 times so that we have 8 bits left of a remainder
   }
 
-  return (byte)remainder;
+  return remainder == 0;
 }
 

@@ -44,21 +44,28 @@ public:
   HTU21D();
 
   //Public Functions
-  void begin();
-  float readHumidity(void);
-  float readTemperature(void);
-  void setResolution(byte resBits);
+  static void begin();
 
-  byte readUserRegister(void);
-  void writeUserRegister(byte val);
+  // Non-blocking functions
+  static uint8_t trigger_read_temp(void);
+  static uint8_t trigger_read_humidity(void);
+  static bool try_read_value(uint16_t &value, uint8_t &cksum);
+  static bool check_crc(uint16_t value, uint8_t cksum);
+  static float translate_humidity(uint16_t value);
+  static float translate_temp(uint16_t value);
 
-  //Public Variables
+  // Blocking functions
+  static float readHumidity(void);
+  static float readTemperature(void);
+  static void setResolution(byte resBits);
+
+  static byte readUserRegister(void);
+  static void writeUserRegister(byte val);
 
 private:
   //Private Functions
 
-  byte check_crc(uint16_t message_from_sensor, uint8_t check_value_from_sensor);
-  float read_value(byte cmd);
+  static float read_value(void);
 
   //Private Variables
 

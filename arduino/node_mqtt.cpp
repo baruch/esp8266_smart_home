@@ -105,12 +105,10 @@ void mqtt_loop(void)
   if (cache.get_mqtt_server() && cache.get_mqtt_port() && TIME_PASSED(next_reconnect)) {
     mqtt.setServer(cache.get_mqtt_server(), cache.get_mqtt_port());
     next_reconnect = millis() + MQTT_RECONNECT_TIMEOUT;
-    const char *will_topic = mqtt_tmp_topic("online");
+    char will_topic[MQTT_TOPIC_LEN];
+    mqtt_topic(will_topic, sizeof(will_topic), "online");
     if (mqtt.connect(node_name, will_topic, 0, 1, "offline")) {
       debug.log("MQTT connected");
-
-      // Because we are using a tmp topic this must be first
-      mqtt.publish(will_topic, "online", 1);
 
       // Once connected, publish an announcement...
       mqtt_publish_float("vdd", ESP.getVcc()/1024.0);
@@ -126,6 +124,7 @@ void mqtt_loop(void)
         }
       }
       node_mqtt_connected();
+      mqtt.publish(will_topic, "online", 1);
     }
   }
 }

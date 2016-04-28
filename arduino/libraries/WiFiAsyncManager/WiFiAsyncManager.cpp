@@ -145,3 +145,13 @@ void WiFiAsyncManager::get_static_ip(IPAddress &ip, IPAddress &gw, IPAddress &nm
                 ip = gw = nm = dns = INADDR_NONE;
         }
 }
+
+void WiFiAsyncManager::get_desc(char *desc, size_t desc_size)
+{
+        if (m_portal) {
+                strncpy(desc, m_portal->m_desc.c_str(), desc_size);
+                desc[desc_size-1] = 0;
+        } else {
+                desc[0] = 0;
+        }
+}

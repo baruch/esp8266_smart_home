@@ -11,7 +11,7 @@ class WiFiAsyncManager {
 		void loop(void);
 
 		void get_static_ip(IPAddress &ip, IPAddress &gw, IPAddress &nm, IPAddress &dns);
-		void get_desc(char *desc, size_t desc_size) { memset(desc, 0, desc_size); } //TODO: really provide it
+		void get_desc(char *desc, size_t desc_size);
 		
 		bool is_config_changed(void) { return m_is_config_changed; }
 		void config_saved(void) { m_is_config_changed = false; }

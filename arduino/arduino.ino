@@ -10,7 +10,9 @@
 #include "cached_vars.h"
 //#include <GDBStub.h>
 
+extern "C" {
 ADC_MODE(ADC_VCC);
+}
 
 void spiffs_mount() {
   if (!SPIFFS.begin()) {

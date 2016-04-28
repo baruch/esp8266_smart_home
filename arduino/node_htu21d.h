@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "libraries/HTU21D/SparkFunHTU21D.h"
-#include "CooperativeThread.h"
+#include "libraries/CooperativeThread/CooperativeThread.h"
 
 class NodeHTU21D : public NodeSensor, CoopThread {
   public:

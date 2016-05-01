@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "node_mqtt.h"
 #include "cached_vars.h"
+#include "rtc_store.h"
 //#include <GDBStub.h>
 
 extern "C" {
@@ -79,6 +80,9 @@ void setup() {
   debug.log(VERSION);
   debug.log(ESP.getResetInfo());
   debug.log(ESP.getResetReason());
+
+  // Load info from RTC mem (retained during deep sleep but not over reset)
+  rtc_store_load(&rtc_store);
 
   // Load data from filesystem
   spiffs_mount();
@@ -162,11 +166,13 @@ void loop() {
     mqtt_loop();
     delay(1);
     mqtt_loop();
+    rtc_store_event_connected();
     deep_sleep(sleep_interval);
   }
 
   if (node_is_powered() && WiFi.SSID() && millis() > 20*1000) {
     debug.log("Timed out connecting to wifi and we are battery powered, going to sleep");
+    rtc_store_event_connection_failed();
     deep_sleep(DEFAULT_DEEP_SLEEP_TIME);
   }
 }

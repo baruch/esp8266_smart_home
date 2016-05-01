@@ -1,6 +1,7 @@
 #include "common.h"
 #include <Arduino.h>
 #include "node_mqtt.h"
+#include "rtc_store.h"
 #include <ESP8266WiFi.h>
 
 static void print_hexdump_line(const char *buf, size_t buf_len)
@@ -61,6 +62,7 @@ void restart(void)
 void deep_sleep(unsigned seconds)
 {
   debug.log("Going to sleep for ", seconds, " seconds");
+  rtc_store_save(&rtc_store);
 
   delay(1);
   mqtt_loop();

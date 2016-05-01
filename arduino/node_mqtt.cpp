@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "common.h"
 #include "cached_vars.h"
+#include "rtc_store.h"
 
 #define MQTT_RECONNECT_TIMEOUT 2000
 #define MQTT_TOPIC_LEN 40
@@ -114,6 +115,8 @@ void mqtt_loop(void)
       mqtt_publish_float("vdd", ESP.getVcc()/1024.0);
       mqtt_publish_str("bootreason", ESP.getResetInfo().c_str());
       mqtt_publish_int("rssi", WiFi.RSSI());
+      mqtt_publish_int("connect_fail_num", rtc_store.num_connect_fails);
+      mqtt_publish_int("connect_fail_rssi", rtc_store.last_rssi);
 
       // ... and resubscribe
       mqtt.subscribe(mqtt_upgrade_topic);

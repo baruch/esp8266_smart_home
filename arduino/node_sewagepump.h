@@ -44,9 +44,17 @@ class NodeSewagePump : public NodeActuator {
     void mqtt_pump_off_time(char *data);
     void mqtt_pump_on_min_current(char *data);
 
+    // Inputs
     int m_pump_on_trigger_time;
     int m_pump_off_time;
     int m_pump_on_min_current;
+
+    // Outputs
+    bool m_pump_on;
+    bool m_pump_switched_off;
+    bool m_input_power;
+    int m_pump_current;
+    int m_distance;
 };
 
 #endif

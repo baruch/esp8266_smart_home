@@ -155,15 +155,18 @@ void loop() {
   discover_poll();
   mqtt_loop();
 
-  if (!sleep_interval)
+  if (!sleep_interval) {
+    // node loop not done yet
     sleep_interval = node_loop();
-
-  if (sleep_interval && !first_successful_discovery) {
-    mqtt_loop();
-    delay(1);
-    mqtt_loop();
-    rtc_store_event_connected();
-    deep_sleep(sleep_interval);
+  } else {
+    // node loop done, we wait for discovery so we know that the mqtt upgrade is done too
+    if (!first_successful_discovery) {
+      mqtt_loop();
+      delay(1);
+      mqtt_loop();
+      rtc_store_event_connected();
+      deep_sleep(sleep_interval);
+    }
   }
 
   if (node_is_powered() && WiFi.SSID() && millis() > 20*1000) {

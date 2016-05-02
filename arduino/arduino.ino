@@ -11,10 +11,6 @@
 #include "rtc_store.h"
 //#include <GDBStub.h>
 
-extern "C" {
-ADC_MODE(ADC_VCC);
-}
-
 void spiffs_mount() {
   if (!SPIFFS.begin()) {
     debug.log("SPIFFs not initialized, reinitializing");

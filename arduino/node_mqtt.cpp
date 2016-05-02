@@ -112,7 +112,6 @@ void mqtt_loop(void)
       debug.log("MQTT connected");
 
       // Once connected, publish an announcement...
-      mqtt_publish_float("vdd", ESP.getVcc()/1024.0);
       mqtt_publish_str("bootreason", ESP.getResetInfo().c_str());
       mqtt_publish_int("rssi", WiFi.RSSI());
       mqtt_publish_int("connect_fail_num", rtc_store.num_connect_fails);

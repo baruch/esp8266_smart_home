@@ -3,6 +3,7 @@
 #include "node_htu21d.h"
 #include "node_relaywbutton.h"
 #include "node_soilmoisture.h"
+#include "node_sewagepump.h"
 #include <ESP8266WiFi.h>
 
 #define RSSI_DIFF 4
@@ -17,6 +18,7 @@ void node_setup(void)
     case 1: node = new NodeHTU21D(); break;
     case 2: node = new NodeRelayWithButton(); break;
     case 3: node = new NodeSoilMoisture(); break;
+    case 4: node = new NodeSewagePump(); break;
     default: debug.log("Unknown node type ", node_type); break;
   }
 

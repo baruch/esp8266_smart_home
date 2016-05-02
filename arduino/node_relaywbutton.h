@@ -19,6 +19,7 @@ class NodeRelayWithButton : public NodeActuator {
     void toggle_state(void);
   private:
     void button_pressed(void);
+    void mqtt_relay_state(char *data);
 
     int relay_state;
     unsigned long debounce_count;

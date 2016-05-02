@@ -15,6 +15,8 @@
  *
  * Accessories:
  * - ADS1115 I2C ADC on pins 0 (SCL) & 2 (SDA), comparator output on pin 12
+ *   - A0/A1 is the current sensor, differential
+ *   - A2 is the power input
  * - Button + Led for reset to default on pin 4
  * - Relay Normally Closed on pin 5
  * - SR04 sensor echo on pin 13

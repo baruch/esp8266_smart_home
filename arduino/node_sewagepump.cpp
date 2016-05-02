@@ -34,6 +34,10 @@ void NodeSewagePump::setup(void)
 
 unsigned NodeSewagePump::loop(void)
 {
+  if (measure_current() || measure_distance() || measure_input_power()) {
+    // data updated, send an mqtt update on all variables
+    mqtt_connected_event();
+  }
   return 0;
 }
 
@@ -62,4 +66,19 @@ void NodeSewagePump::mqtt_pump_on_min_current(char *data)
 {
   if (str2int(data, m_pump_on_min_current))
     debug.log("Pump ON minimum current is now ", m_pump_on_min_current);
+}
+
+bool NodeSewagePump::measure_current(void)
+{
+  return false;
+}
+
+bool NodeSewagePump::measure_input_power(void)
+{
+  return false;
+}
+
+bool NodeSewagePump::measure_distance(void)
+{
+  return false;
 }

@@ -3,25 +3,25 @@
 
 #include "common.h"
 #include "libraries/ADS1115/ADS1115.h"
+#include "libraries/CooperativeThread/CooperativeThread.h"
 
-class NodeSoilMoisture : public NodeSensor {
+class NodeSoilMoisture : public NodeSensor, CoopThread {
   public:
     void setup(void);
     unsigned loop(void);
+
+  protected:
+    virtual void user_thread(void);
+
   private:
-    bool sample_read(float &pval);
+    void wait_for_read(float &pval);
+    void error(uint8_t i2c_state);
+
     ADS1115 m_ads1115;
-    unsigned long m_next_poll;
     float m_bat;
     float m_moisture;
     float m_trigger;
-    enum {
-      STATE_INIT,
-      STATE_READ_BAT,
-      STATE_READ_MOISTURE,
-      STATE_READ_TRIGGER,
-      STATE_DONE,
-    } m_state;
+    unsigned long m_deep_sleep;
 };
 
 #endif

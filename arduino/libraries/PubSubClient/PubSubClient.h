@@ -10,7 +10,6 @@
 #include <Arduino.h>
 #include "IPAddress.h"
 #include "Client.h"
-#include "Stream.h"
 
 #define MQTT_VERSION_3_1      3
 #define MQTT_VERSION_3_1_1    4
@@ -73,12 +72,8 @@
 #define MQTTQOS1        (1 << 1)
 #define MQTTQOS2        (2 << 1)
 
-#ifdef ESP8266
 #include <functional>
 #define MQTT_CALLBACK_SIGNATURE std::function<void(char*, uint8_t*, unsigned int)> callback
-#else
-#define MQTT_CALLBACK_SIGNATURE void (*callback)(char*, uint8_t*, unsigned int)
-#endif
 
 class PubSubClient {
 private:
@@ -95,32 +90,13 @@ private:
    boolean write(uint8_t header, uint8_t* buf, uint16_t length);
    uint16_t writeString(const char* string, uint8_t* buf, uint16_t pos);
    IPAddress ip;
-   const char* domain;
    uint16_t port;
-   Stream* stream;
    int _state;
 public:
-   PubSubClient();
    PubSubClient(Client& client);
-   PubSubClient(IPAddress, uint16_t, Client& client);
-   PubSubClient(IPAddress, uint16_t, Client& client, Stream&);
-   PubSubClient(IPAddress, uint16_t, MQTT_CALLBACK_SIGNATURE,Client& client);
-   PubSubClient(IPAddress, uint16_t, MQTT_CALLBACK_SIGNATURE,Client& client, Stream&);
-   PubSubClient(uint8_t *, uint16_t, Client& client);
-   PubSubClient(uint8_t *, uint16_t, Client& client, Stream&);
-   PubSubClient(uint8_t *, uint16_t, MQTT_CALLBACK_SIGNATURE,Client& client);
-   PubSubClient(uint8_t *, uint16_t, MQTT_CALLBACK_SIGNATURE,Client& client, Stream&);
-   PubSubClient(const char*, uint16_t, Client& client);
-   PubSubClient(const char*, uint16_t, Client& client, Stream&);
-   PubSubClient(const char*, uint16_t, MQTT_CALLBACK_SIGNATURE,Client& client);
-   PubSubClient(const char*, uint16_t, MQTT_CALLBACK_SIGNATURE,Client& client, Stream&);
 
    PubSubClient& setServer(IPAddress ip, uint16_t port);
-   PubSubClient& setServer(uint8_t * ip, uint16_t port);
-   PubSubClient& setServer(const char * domain, uint16_t port);
    PubSubClient& setCallback(MQTT_CALLBACK_SIGNATURE);
-   PubSubClient& setClient(Client& client);
-   PubSubClient& setStream(Stream& stream);
 
    boolean connect(const char* id);
    boolean connect(const char* id, const char* user, const char* pass);
@@ -133,8 +109,6 @@ public:
    boolean publish(const char* topic, const uint8_t * payload, unsigned int plength, boolean retained);
    boolean publish_P(const char* topic, const uint8_t * payload, unsigned int plength, boolean retained);
    boolean subscribe(const char* topic);
-   boolean subscribe(const char* topic, uint8_t qos);
-   boolean unsubscribe(const char* topic);
    boolean loop();
    boolean connected();
    int state();

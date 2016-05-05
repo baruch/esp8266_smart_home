@@ -2,6 +2,12 @@
 #include "node_mqtt.h"
 #include "node_sewagepump.h"
 #include <Arduino.h>
+#include <Wire.h>
+
+#define DISTANCE_TRIGGER_PIN 14
+#define DISTANCE_DATA_PIN 13
+#define BUTTON_PIN 4
+#define RELAY_PIN 5
 
 static bool str2int(const char *data, int& value)
 {
@@ -17,6 +23,14 @@ static bool str2int(const char *data, int& value)
 
 void NodeSewagePump::setup(void)
 {
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, 0); // Relay is Normally Closed so this should keep the pump online by default
+  pinMode(DISTANCE_TRIGGER_PIN, OUTPUT);
+  pinMode(DISTANCE_DATA_PIN, INPUT);
+  Wire.begin(0, 2); // Configure I2C on alternate port
+  m_adc.begin();
+
   m_pump_on_trigger_time = 30; // 30 minutes
   m_pump_off_time = 30; // 30 minutes
   m_pump_on_min_current = 500; // 500mA
@@ -43,6 +57,7 @@ unsigned NodeSewagePump::loop(void)
 
 void NodeSewagePump::mqtt_connected_event(void)
 {
+  mqtt_publish_int("i2c_state", 0);
   mqtt_publish_bool("pump_on", m_pump_on);
   mqtt_publish_bool("pump_switched_off", m_pump_switched_off);
   mqtt_publish_bool("input_power", m_input_power);
@@ -75,10 +90,42 @@ bool NodeSewagePump::measure_current(void)
 
 bool NodeSewagePump::measure_input_power(void)
 {
+  m_adc.set_mux(ADS1115_MUX_GND_AIN2);
+  m_adc.set_pga(ADS1115_PGA_ONE);
+
+  uint8_t i2c_state = m_adc.trigger_sample();
+  if (i2c_state != 0) {
+    mqtt_publish_int("i2c_state", i2c_state);
+    return false;
+  }
+
+  while (!m_adc.is_sample_in_progress())
+    delay(1);
+
+  float input_power_raw = m_adc.read_sample_float();
+  bool input_power = input_power_raw > 0.5;
+  if (input_power != m_input_power) {
+    debug.log("Input power changed from ", m_input_power, " to ", input_power);
+    m_input_power = input_power;
+    return true;
+  }
+
   return false;
 }
 
 bool NodeSewagePump::measure_distance(void)
 {
+  digitalWrite(DISTANCE_TRIGGER_PIN, HIGH);
+  delay(10);
+  digitalWrite(DISTANCE_TRIGGER_PIN, LOW);
+
+  long duration = pulseIn(DISTANCE_TRIGGER_PIN, HIGH, 10000);
+  float distance = (duration / 2 ) / 29.1;
+  int idistance = distance;
+  if (abs(idistance - m_distance) > 2) {
+    debug.log("Distance changed from ", m_distance, " to ", idistance);
+    m_distance = idistance;
+    return true;
+  }
   return false;
 }

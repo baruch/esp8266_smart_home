@@ -9,7 +9,8 @@
 
 #include <Arduino.h>
 #include "IPAddress.h"
-#include "Client.h"
+#include "../ESPAsyncTCP/ESPAsyncTCP.h"
+#include "../CooperativeThread/CooperativeThread.h"
 
 #define MQTT_VERSION_3_1      3
 #define MQTT_VERSION_3_1_1    4
@@ -35,22 +36,20 @@
 #define MQTT_SOCKET_TIMEOUT 15
 #endif
 
-// MQTT_MAX_TRANSFER_SIZE : limit how much data is passed to the network client
-//  in each write call. Needed for the Arduino Wifi Shield. Leave undefined to
-//  pass the entire MQTT packet in each write call.
-//#define MQTT_MAX_TRANSFER_SIZE 80
-
 // Possible values for client.state()
-#define MQTT_CONNECTION_TIMEOUT     -4
-#define MQTT_CONNECTION_LOST        -3
-#define MQTT_CONNECT_FAILED         -2
-#define MQTT_DISCONNECTED           -1
-#define MQTT_CONNECTED               0
-#define MQTT_CONNECT_BAD_PROTOCOL    1
-#define MQTT_CONNECT_BAD_CLIENT_ID   2
-#define MQTT_CONNECT_UNAVAILABLE     3
-#define MQTT_CONNECT_BAD_CREDENTIALS 4
-#define MQTT_CONNECT_UNAUTHORIZED    5
+typedef enum mqtt_state {
+  MQTT_CONNECTION_TIMEOUT,
+  MQTT_CONNECTION_LOST,
+  MQTT_CONNECT_FAILED,
+  MQTT_DISCONNECTED,
+  MQTT_CONNECTING,
+  MQTT_CONNECTED,
+  MQTT_CONNECT_BAD_PROTOCOL,
+  MQTT_CONNECT_BAD_CLIENT_ID,
+  MQTT_CONNECT_UNAVAILABLE,
+  MQTT_CONNECT_BAD_CREDENTIALS,
+  MQTT_CONNECT_UNAUTHORIZED,
+} mqtt_state_e;
 
 #define MQTTCONNECT     1 << 4  // Client request to connect to Server
 #define MQTTCONNACK     2 << 4  // Connect Acknowledgment
@@ -71,15 +70,37 @@
 #define MQTTQOS0        (0 << 1)
 #define MQTTQOS1        (1 << 1)
 #define MQTTQOS2        (2 << 1)
+#define MQTTMASK        (3 << 1)
 
 #include <functional>
 #define MQTT_CALLBACK_SIGNATURE std::function<void(char*, uint8_t*, unsigned int)> callback
 
-class PubSubClient {
+class MQTTPacketBuffer {
 private:
-   Client* _client;
-   uint8_t buffer[MQTT_MAX_PACKET_SIZE];
-   uint16_t nextMsgId;
+        uint8_t m_buffer[1460];
+        uint16_t start_pos;
+        uint16_t len;
+        uint8_t header_len;
+public:
+        MQTTPacketBuffer() : start_pos(0), len(0) {}
+        
+        bool startPacket(uint8_t cmd, uint16_t data_len = MQTT_MAX_PACKET_SIZE);
+        void writeHeader(void);
+        bool opcodePacket(uint8_t cmd) { if (!startPacket(cmd, 0)) { return false; } else { writeHeader(); return true; }}
+        
+        void writeString(const char* string);
+        void writeByte(uint8_t data) { m_buffer[len++] = data; }
+
+        uint8_t* buffer(void) { return m_buffer; }
+        uint16_t length(void) { return len; }
+        void clear(void) { len = start_pos = 0; }
+};
+
+class PubSubClient : public CoopThread {
+private:
+   AsyncClient* _client;
+   uint8_t buffer_in[MQTT_MAX_PACKET_SIZE];
+   MQTTPacketBuffer buffer_out;
    unsigned long lastOutActivity;
    unsigned long lastInActivity;
    bool pingOutstanding;
@@ -87,31 +108,48 @@ private:
    uint16_t readPacket(uint8_t*);
    boolean readByte(uint8_t * result);
    boolean readByte(uint8_t * result, uint16_t * index);
-   boolean write(uint8_t header, uint8_t* buf, uint16_t length);
-   uint16_t writeString(const char* string, uint8_t* buf, uint16_t pos);
+   bool sendConnectMessage(void);
    IPAddress ip;
    uint16_t port;
+   String willTopic;
+   bool willRetain;
+   String willMessage;
+   String id;
+   String user;
+   String pass;
    int _state;
+   uint16_t nextMsgId;
+
+   void onConnect(void *arg, AsyncClient *client);
+   void onDisconnect(void *arg, AsyncClient *client);
+   void onAck(void *arg, AsyncClient *client, size_t len, uint32_t time);
+   void onError(void *, AsyncClient *client, int8_t error);
+   void onData(void *, AsyncClient *client, void *data, size_t len);
+   void onTimeout(void *, AsyncClient *client, uint32_t time);
+
+   bool sendData(void);
+   void sendPing(void);
+   void tryToReceivePacket(void);
+   bool waitForConnectReply(void);
+
 public:
-   PubSubClient(Client& client);
+   PubSubClient(AsyncClient* client);
+   void user_thread(void);
 
    PubSubClient& setServer(IPAddress ip, uint16_t port);
    PubSubClient& setCallback(MQTT_CALLBACK_SIGNATURE);
+   PubSubClient& setUser(const char *user, const char *pass);
+   PubSubClient& setWill(const char *willTopic, bool willRetain, const char *willMessage);
+   PubSubClient& setId(const char *id);
 
-   boolean connect(const char* id);
-   boolean connect(const char* id, const char* user, const char* pass);
-   boolean connect(const char* id, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage);
-   boolean connect(const char* id, const char* user, const char* pass, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage);
+   boolean connect(void);
    void disconnect();
-   boolean publish(const char* topic, const char* payload);
-   boolean publish(const char* topic, const char* payload, boolean retained);
-   boolean publish(const char* topic, const uint8_t * payload, unsigned int plength);
-   boolean publish(const char* topic, const uint8_t * payload, unsigned int plength, boolean retained);
-   boolean publish_P(const char* topic, const uint8_t * payload, unsigned int plength, boolean retained);
-   boolean subscribe(const char* topic);
-   boolean loop();
    boolean connected();
    int state();
+
+   boolean publish(const char* topic, const char* payload, boolean retained = false) { publish(topic, (const uint8_t*)payload, strlen(payload), retained); }
+   boolean publish(const char* topic, const uint8_t * payload, unsigned int plength, boolean retained = false);
+   boolean subscribe(const char* topic);
 };
 
 

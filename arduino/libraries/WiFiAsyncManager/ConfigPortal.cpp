@@ -228,7 +228,7 @@ void ConfigPortal::handle_wifi_save()
                 page.replace("{v}", "Validation failed");
                 page += FPSTR(HTTP_HEAD_END);
                 page += FPSTR(HTTP_VALIDATION_FAILED);
-                
+
                 m_is_done = false;
                 m_ssid = m_pass = "";
                 m_ip = m_nm = m_gw = m_dns_ip = INADDR_NONE;

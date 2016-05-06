@@ -79,7 +79,10 @@ void NodeHTU21D::user_thread(void)
   float temp = htu21d.translate_temp(value);
   mqtt_publish_float("temperature", temp);
 
-  debug.log("Temperature:", temp, " Humidity: ", humd, '%');
+  float bat = analogRead(0) * 4.2 / 1024.0;
+  mqtt_publish_float("battery", bat);
+
+  debug.log("Temperature:", temp, " Humidity: ", humd, "%% bat ", bat);
 
   m_deep_sleep = DEFAULT_DEEP_SLEEP_TIME;
 }

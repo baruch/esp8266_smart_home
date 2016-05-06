@@ -166,7 +166,7 @@ void loop() {
     deep_sleep(sleep_interval);
   }
 
-  if (node_is_powered() && WiFi.SSID() && millis() > 20*1000) {
+  if (node_is_powered() && WiFi.SSID().length() != 0 && millis() > 20*1000) {
     debug.log("Timed out connecting to wifi and we are battery powered, going to sleep");
     rtc_store_event_connection_failed();
     deep_sleep(DEFAULT_DEEP_SLEEP_TIME);

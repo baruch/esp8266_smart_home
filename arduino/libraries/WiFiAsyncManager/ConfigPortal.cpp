@@ -74,9 +74,13 @@ void ConfigPortal::stop(void)
 
 void ConfigPortal::begin(void)
 {
-  debug.log(F("Configuring access point... "));
+  String name("SHM");
+  name += String(ESP.getChipId());
 
-  WiFi.softAP(WiFi.hostname().c_str());
+  debug.log(F("Configuring access point... "), name);
+
+  WiFi.softAP(name.c_str());
+  WiFi.enableAP(true);
 
   delay(500); // Without delay I've seen the IP address blank
 

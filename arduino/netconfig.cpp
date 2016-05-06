@@ -16,6 +16,7 @@ void config_load() {
   dns.fromString(cfg.getValueStr("dns"));
   strcpy(node_desc, cfg.getValueStr("desc"));
 
+  debug.log("SSID: ", WiFi.SSID(), " pw: ", WiFi.psk());
   debug.log("IP: ", static_ip, " GW: ", static_gw, " NM: ", static_nm, " DNS: ", dns);
   debug.log("Node Desc: ", node_desc);
 }

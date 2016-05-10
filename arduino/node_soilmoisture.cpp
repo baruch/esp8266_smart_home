@@ -10,94 +10,80 @@ void NodeSoilMoisture::setup(void)
   m_ads1115.set_comp_queue(ADS1115_COMP_QUEUE_DISABLE);
   m_ads1115.set_mode(ADS1115_MODE_SINGLE_SHOT);
   m_ads1115.set_pga(ADS1115_PGA_ONE);
-  m_state = STATE_INIT;
-  m_next_poll = 0;
+  m_deep_sleep = 0;
 }
 
-bool NodeSoilMoisture::sample_read(float &pval)
+float NodeSoilMoisture::sample_read(void)
 {
-  if (m_ads1115.is_sample_in_progress())
-    return false;
+  while (m_ads1115.is_sample_in_progress()) {
+    thread_sleep(3);
+  }
 
-  pval = m_ads1115.read_sample_float();
-  return true;
+  return m_ads1115.read_sample_float();
 }
 
 unsigned NodeSoilMoisture::loop(void)
 {
-  if (!mqtt_connected())
-    return 0;
+  if (m_deep_sleep)
+    return m_deep_sleep;
 
-  if (!TIME_PASSED(m_next_poll))
-    return 0;
+  thread_run();
+  return m_deep_sleep;
+}
 
-  m_next_poll = millis() + 3;
+void NodeSoilMoisture::i2c_error(uint8_t request)
+{
+  debug.log("Failed to trigger request ", request);
+  mqtt_publish_int("i2c_state", request);
+  m_deep_sleep = DEFAULT_DEEP_SLEEP_TIME*3;
+}
 
+void NodeSoilMoisture::user_thread(void)
+{
   uint8_t request;
-  switch (m_state) {
-    case STATE_INIT:
-      // Start reading the battery voltage
-      m_ads1115.set_pga(ADS1115_PGA_TWO);
-      m_ads1115.set_mux(ADS1115_MUX_GND_AIN0);
-      request = m_ads1115.trigger_sample();
-      if (request != 0) {
-        m_state = STATE_DONE;
-        debug.log("Failed to trigger request ", request);
-        mqtt_publish_int("i2c_state", request);
-        return 0;
-      }
-      m_state = STATE_READ_BAT;
-      break;
 
-    case STATE_READ_BAT:
-      if (sample_read(m_bat)) {
-        // Battery voltage read, initiate the moisture reading
-        m_ads1115.set_pga(ADS1115_PGA_ONE);
-        m_ads1115.set_mux(ADS1115_MUX_GND_AIN2);
-        request = m_ads1115.trigger_sample();
-        if (request != 0) {
-          m_state = STATE_DONE;
-          debug.log("Failed to trigger request ", request);
-          mqtt_publish_int("i2c_state", request);
-          return 0;
-        }
-
-        // Send the battery voltage
-        m_bat *= 2.0;
-        mqtt_publish_float("battery", m_bat);
-        m_state = STATE_READ_MOISTURE;
-      }
-      break;
-
-    case STATE_READ_MOISTURE:
-      if (sample_read(m_moisture)) {
-        // Moisture voltage read, initiate the trigger reading
-        m_ads1115.set_mux(ADS1115_MUX_GND_AIN3);
-        request = m_ads1115.trigger_sample();
-        if (request != 0) {
-          m_state = STATE_DONE;
-          debug.log("Failed to trigger request ", request);
-          mqtt_publish_int("i2c_state", request);
-          return 0;
-        }
-
-        // Send the moisture reading
-        mqtt_publish_float("moisture", m_moisture);
-        m_state = STATE_READ_TRIGGER;
-      }
-      break;
-
-    case STATE_READ_TRIGGER:
-      if (sample_read(m_trigger)) {
-        //  Trigger reading done, send it
-        mqtt_publish_float("trigger", m_trigger);
-        mqtt_publish_int("i2c_state", 0);
-        m_state = STATE_DONE;
-        debug.log("Battery: ", m_bat, " Moisture: ", m_moisture, " Digital: ", m_trigger);
-        return DEFAULT_DEEP_SLEEP_TIME*3;
-      }
-      break;
+  // Start reading the battery voltage
+  m_ads1115.set_pga(ADS1115_PGA_TWO);
+  m_ads1115.set_mux(ADS1115_MUX_GND_AIN0);
+  request = m_ads1115.trigger_sample();
+  if (request != 0) {
+    i2c_error(request);
+    return;
   }
 
-  return 0;
+  m_bat = sample_read();
+  m_bat *= 2.0;
+
+  // Battery voltage read, initiate the moisture reading
+  m_ads1115.set_pga(ADS1115_PGA_ONE);
+  m_ads1115.set_mux(ADS1115_MUX_GND_AIN2);
+  request = m_ads1115.trigger_sample();
+  if (request != 0) {
+    i2c_error(request);
+    return;
+  }
+
+  m_moisture = sample_read();
+
+  // Moisture voltage read, initiate the trigger reading
+  m_ads1115.set_mux(ADS1115_MUX_GND_AIN3);
+  request = m_ads1115.trigger_sample();
+  if (request != 0) {
+    i2c_error(request);
+    return;
+  }
+
+  m_trigger = sample_read();
+
+  debug.log("Battery: ", m_bat, " Moisture: ", m_moisture, " Digital: ", m_trigger);
+
+  while (!mqtt_connected())
+    thread_sleep(5);
+
+  mqtt_publish_float("battery", m_bat);
+  mqtt_publish_float("moisture", m_moisture);
+  mqtt_publish_float("trigger", m_trigger);
+  mqtt_publish_int("i2c_state", 0);
+
+  m_deep_sleep = DEFAULT_DEEP_SLEEP_TIME*3;
 }

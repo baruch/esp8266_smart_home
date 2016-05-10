@@ -99,7 +99,9 @@ public:
 class PubSubClient : public CoopThread {
 private:
    AsyncClient* _client;
-   uint8_t buffer_in[MQTT_MAX_PACKET_SIZE];
+   uint8_t buffer_in[1460];
+   unsigned buffer_in_len;
+
    MQTTPacketBuffer buffer_out;
    unsigned long lastOutActivity;
    unsigned long lastInActivity;
@@ -131,6 +133,9 @@ private:
    void sendPing(void);
    void tryToReceivePacket(void);
    bool waitForConnectReply(void);
+
+   bool available(void) { return buffer_in_len > 0; }
+   void consume(uint16_t len);
 
 public:
    PubSubClient(AsyncClient* client);

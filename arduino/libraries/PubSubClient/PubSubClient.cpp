@@ -34,11 +34,32 @@ void MQTTPacketBuffer::writeHeader(void)
   }
 }
 
+void MQTTPacketBuffer::writeString(const char *string)
+{
+  uint16_t start = len;
+
+  len += 2; // Leave space for the string length
+
+  // Copy string and count the size
+  while (*string) {
+    m_buffer[len] = *string;
+    len++;
+    string++;
+  }
+
+  // Calculate string length and write it down at the start
+  uint16_t slen = len - start - 2;
+  m_buffer[start] = slen >> 8;
+  m_buffer[start+1] = slen & 0xFF;
+}
+
+
 PubSubClient::PubSubClient(AsyncClient* client) {
     this->_state = MQTT_DISCONNECTED;
     this->_client = client;
     client->onConnect(std::bind(&PubSubClient::onConnect, this, std::placeholders::_1, std::placeholders::_2), NULL);
     nextMsgId = 1;
+    buffer_in_len = 0;
 }
 
 boolean PubSubClient::connect(void) {
@@ -103,7 +124,7 @@ bool PubSubClient::sendConnectMessage(void)
 
 bool PubSubClient::waitForConnectReply(void)
 {
-  while (!_client->available()) {
+  while (!available()) {
     unsigned long t = millis();
     if (t-lastInActivity >= ((int32_t) MQTT_SOCKET_TIMEOUT*1000UL)) {
       _state = MQTT_CONNECTION_TIMEOUT;
@@ -117,82 +138,65 @@ bool PubSubClient::waitForConnectReply(void)
   uint16_t len = readPacket(&llen);
 
   if (len == 4) {
-    if (buffer[3] == 0) {
+    if (buffer_in[3] == 0) {
       lastInActivity = millis();
       pingOutstanding = false;
       _state = MQTT_CONNECTED;
+      consume(len);
       return true;
     } else {
-      _state = buffer[3]; // Better translate this, it doesnt match the new enum
+      _state = buffer_in[3]; // Better translate this, it doesnt match the new enum
     }
   }
   _client->stop();
   _state = MQTT_CONNECT_FAILED;
+  buffer_in_len = 0;
   return false;
 }
 
-// reads a byte into result
-boolean PubSubClient::readByte(uint8_t * result) {
-   uint32_t previousMillis = millis();
-   while(!_client->available()) {
-     uint32_t currentMillis = millis();
-     if(currentMillis - previousMillis >= ((int32_t) MQTT_SOCKET_TIMEOUT * 1000)){
-       return false;
-     }
-   }
-   *result = _client->read();
-   return true;
-}
-
-// reads a byte into result[*index] and increments index
-boolean PubSubClient::readByte(uint8_t * result, uint16_t * index){
-  uint16_t current_index = *index;
-  uint8_t * write_address = &(result[current_index]);
-  if(readByte(write_address)){
-    *index = current_index + 1;
-    return true;
+void PubSubClient::consume(uint16_t len)
+{
+  if (buffer_in_len == len) {
+    buffer_in_len = 0;
+    return;
   }
-  return false;
+
+  memmove(buffer_in, buffer_in + len, buffer_in_len - len);
+  buffer_in_len -= len;
 }
 
+/* We are making sure here we have a full packet */
 uint16_t PubSubClient::readPacket(uint8_t* lengthLength) {
-    uint16_t len = 0;
-    if (!readByte(buffer, &len))
-      return 0;
-    bool isPublish = (buffer[0]&0xF0) == MQTTPUBLISH;
+    uint16_t offset = 1;
+    bool isPublish;
     uint32_t multiplier = 1;
     uint16_t length = 0;
     uint8_t digit = 0;
     uint8_t start = 0;
 
+    isPublish = (buffer_in[0]&0xF0) == MQTTPUBLISH;
+    if (buffer_in_len < 2) // Not even having the fixed header
+      return 0;
+
     do {
-        if(!readByte(&digit)) return 0;
-        buffer[len++] = digit;
+        if (buffer_in_len <= offset || buffer_in_len < offset + length)
+          return 0; // Can't read the full data length
+
+        digit = buffer_in[offset++];
         length += (digit & 127) * multiplier;
         multiplier *= 128;
     } while ((digit & 128) != 0);
-    *lengthLength = len-1;
+    *lengthLength = offset-1;
 
-    if (isPublish) {
-        // Read in topic length to calculate bytes to skip over for Stream writing
-        if(!readByte(buffer, &len)) return 0;
-        if(!readByte(buffer, &len)) return 0;
-        start = 2;
+    if (buffer_in_len < offset + length)
+      return 0; // Not a full packet yet
+
+    if (length > MQTT_MAX_PACKET_SIZE) {
+      _client->abort();
+      return 0;
     }
 
-    for (uint16_t i = start;i<length;i++) {
-        if(!readByte(&digit)) return 0;
-        if (len < MQTT_MAX_PACKET_SIZE) {
-            buffer[len] = digit;
-        }
-        len++;
-    }
-
-    if (len > MQTT_MAX_PACKET_SIZE) {
-        len = 0; // This will cause the packet to be ignored.
-    }
-
-    return len;
+    return length;
 }
 
 void PubSubClient::user_thread() {
@@ -259,13 +263,14 @@ void PubSubClient::sendPing(void)
 
 void PubSubClient::tryToReceivePacket(void)
 {
-  if (!_client->available())
+  if (!available())
     return;
 
   uint8_t llen;
   uint16_t len = readPacket(&llen);
   uint8_t *payload;
   uint16_t payload_len;
+  bool has_msgid = false;
 
   if (len == 0)
     return;
@@ -292,28 +297,37 @@ void PubSubClient::tryToReceivePacket(void)
   if (!callback)
     return;
 
-  uint16_t tl = (buffer_in[llen+1]<<8)+buffer_in[llen+2];
+  uint16_t offset = llen + 3;
+  uint16_t tl = (buffer_in[llen+1]<<8) | buffer_in[llen+2];
   char topic[tl+1];
-  for (uint16_t i=0;i<tl;i++) {
-    topic[i] = buffer_in[llen+3+i];
-  }
+  memcpy(topic, buffer_in + offset, tl);
   topic[tl] = 0;
-  payload = buffer_in+llen+3+tl;
-  payload_len = len - llen -3 - tl;
+  offset += tl;
 
-  // msgId only present for QOS>0
   if ((buffer_in[0]&MQTTMASK) == MQTTQOS1) {
+    // msgId only present for QOS>0
+    has_msgid = true;
+    offset += 2;
+  }
+
+  payload = buffer_in + offset;
+  payload_len = len - offset;
+
+  callback(topic, payload, payload_len);
+
+  if (has_msgid) {
     payload += 2;
     payload_len -= 2;
 
     // Send an ack for a QoS 1 message
-    buffer_out.startPacket(MQTTPUBACK, 2);
-    buffer_out.writeByte(buffer_in[llen+3+tl]);
-    buffer_out.writeByte(buffer_in[llen+3+tl+1]);
-    buffer_out.writeHeader();
+    if (buffer_out.startPacket(MQTTPUBACK, 2)) {
+      buffer_out.writeByte(buffer_in[llen+3+tl]);
+      buffer_out.writeByte(buffer_in[llen+3+tl+1]);
+      buffer_out.writeHeader();
+    }
   }
 
-  callback(topic, payload, payload_len);
+  consume(len);
 }
 
 boolean PubSubClient::publish(const char* topic, const uint8_t* payload, unsigned int plength, boolean retained) {
@@ -428,6 +442,13 @@ void PubSubClient::onError(void *, AsyncClient *client, int8_t error)
 
 void PubSubClient::onData(void *, AsyncClient *client, void *data, size_t len)
 {
+  if (len + buffer_in_len > sizeof(buffer_in)) {
+    _client->abort();
+    return;
+  }
+
+  memcpy(buffer_in + buffer_in_len, data, len);
+  buffer_in_len += len;
 }
 
 void PubSubClient::onTimeout(void *, AsyncClient *client, uint32_t time)

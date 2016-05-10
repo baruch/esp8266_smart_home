@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <IPAddress.h>
+#include "libraries/Semaphore/Semaphore.h"
 
 #define VERSION "SHMVER-0.0.10"
 #define CONFIG_FILE "/config.ini"
@@ -19,7 +20,6 @@ extern IPAddress static_ip;
 extern IPAddress static_nm;
 extern IPAddress static_gw;
 extern IPAddress dns;
-
-extern bool first_successful_discovery;
+extern Semaphore sleep_lock;
 
 #endif

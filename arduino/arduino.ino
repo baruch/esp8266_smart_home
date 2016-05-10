@@ -158,7 +158,10 @@ void loop() {
   if (!sleep_interval)
     sleep_interval = node_loop();
 
-  if (sleep_interval && !first_successful_discovery) {
+  if (sleep_lock.locked())
+    return;
+
+  if (sleep_interval) {
     mqtt_loop();
     delay(1);
     mqtt_loop();
@@ -166,7 +169,7 @@ void loop() {
     deep_sleep(sleep_interval);
   }
 
-  if (node_is_powered() && WiFi.SSID().length() != 0 && millis() > 20*1000) {
+  if (node_is_powered() && millis() > 20*1000) {
     debug.log("Timed out connecting to wifi and we are battery powered, going to sleep");
     rtc_store_event_connection_failed();
     deep_sleep(DEFAULT_DEEP_SLEEP_TIME);

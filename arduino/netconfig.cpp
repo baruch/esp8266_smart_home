@@ -40,6 +40,11 @@ void config_save(void)
 void net_config_setup() {
   wifi.begin(static_ip, static_gw, static_nm, dns);
   discovery_now();
+
+  if( WiFi.SSID().length() == 0) {
+    sleep_lock.lock_take();
+    // We have no network configuration, do not go to sleep, this lock will release on reboot
+  }
 }
 
 void net_config_loop() {

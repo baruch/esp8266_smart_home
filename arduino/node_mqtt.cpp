@@ -15,6 +15,7 @@ static WiFiClient mqtt_client;
 static PubSubClient mqtt(mqtt_client);
 static char mqtt_upgrade_topic[MQTT_TOPIC_LEN];
 static unsigned long next_reconnect = 0;
+static SemKeep mqtt_lock(sleep_lock);
 
 static struct {
   char topic[MQTT_TOPIC_LEN];
@@ -32,6 +33,8 @@ static void mqtt_callback(char* topic, byte* payload, int len) {
   if (strcmp(topic, mqtt_upgrade_topic) == 0) {
     if (strlen(VERSION) != len || strncmp((const char*)payload, VERSION, len) != 0) {
       check_upgrade();
+      // Only after we got an upgrade chance we should go to sleep
+      mqtt_lock.release();
     } else {
       debug.log("Asking to upgrade to our version, not doing anything");
     }
@@ -67,6 +70,7 @@ void mqtt_setup() {
   mqtt_topic(mqtt_upgrade_topic, sizeof(mqtt_upgrade_topic), "upgrade");
   mqtt.setCallback(mqtt_callback);
   mqtt.setServer(cache.get_mqtt_server(), cache.get_mqtt_port());
+  mqtt_lock.take();
 }
 
 void mqtt_update_server(const IPAddress &new_mqtt_server, int new_mqtt_port)

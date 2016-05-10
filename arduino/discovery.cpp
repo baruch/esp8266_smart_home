@@ -10,7 +10,7 @@
 static long unsigned next_discovery = 0;
 static WiFiUDP udp;
 static unsigned long next_reply = 0;
-bool first_successful_discovery = true;
+static SemKeep discovery_lock(sleep_lock);
 
 int discover_set_buf(char *buf, int start, const uint8_t *src, int src_len)
 {
@@ -236,6 +236,7 @@ static bool check_reply() {
     if (res >= 9 && parse_packet(reply, res)) {
       debug.log("Discovery done");
       cache.save();
+      discovery_lock.release();
       return true;
     } else {
       debug.log("Failed to parse packet");
@@ -260,9 +261,6 @@ void discover_poll(void)
         next_reply = 0;
         next_discovery = millis() + DISCOVERY_CYCLES;
         udp.stop();
-        if (first_successful_discovery) {
-          first_successful_discovery = false;
-        }
       } else if (TIME_PASSED(next_reply)) {
         // Reply timed out
         debug.log("Packet receipt timed out");
@@ -283,5 +281,6 @@ void discover_poll(void)
 
 void discovery_now(void)
 {
+  discovery_lock.take();
   next_discovery = 0;
 }

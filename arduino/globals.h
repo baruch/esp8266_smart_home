@@ -5,7 +5,7 @@
 #include <IPAddress.h>
 #include "libraries/Semaphore/Semaphore.h"
 
-#define VERSION "SHMVER-0.0.10"
+#define VERSION "SHMVER-0.0.11"
 #define CONFIG_FILE "/config.ini"
 #define NODE_TYPE_FILENAME "/nodetype.bin"
 #define UPGRADE_PORT 24320

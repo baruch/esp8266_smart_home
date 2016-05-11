@@ -33,11 +33,11 @@ static void mqtt_callback(char* topic, byte* payload, int len) {
   if (strcmp(topic, mqtt_upgrade_topic) == 0) {
     if (strlen(VERSION) != len || strncmp((const char*)payload, VERSION, len) != 0) {
       check_upgrade();
-      // Only after we got an upgrade chance we should go to sleep
-      mqtt_lock.release();
     } else {
       debug.log("Asking to upgrade to our version, not doing anything");
     }
+    // Only after we got an upgrade chance we should go to sleep
+    mqtt_lock.release();
     return;
   }
 

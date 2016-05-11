@@ -109,6 +109,7 @@ private:
 	uint8_t buf[2048];
 	uint16_t buf_start;
 	uint16_t buf_end;
+	unsigned long last_connect_time;
 
 	IPAddress server_ip;
 	AsyncClient client;

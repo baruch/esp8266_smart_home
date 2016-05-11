@@ -11,6 +11,7 @@ void DebugPrint::begin(void)
         buf_start = 0;
         buf_end = 0;
         server_ip = INADDR_NONE;
+        last_connect_time = 0;
 }
 
 void DebugPrint::stop(void)
@@ -26,8 +27,12 @@ void DebugPrint::set_log_server(IPAddress const &server)
         if (server == server_ip || server == INADDR_NONE)
                 return;
 
-        if (client.connected() || client.connecting())
-                client.stop();
+        debug.log("Setting a new log server");
+        if (client.connected() || client.connecting()) {
+          debug.log("disconnecting from old log server");
+          client.stop();
+          last_connect_time = 0;
+        }
 
         server_ip = server;
 
@@ -41,8 +46,12 @@ bool DebugPrint::reconnect(void)
 
         bool connected = client.connected();
 
-        if (!connected && server_ip && !client.connecting()) {
-                connected = client.connect(server_ip, LOG_PORT);
+        if (!connected && server_ip) {
+          unsigned long now = millis();
+          if (last_connect_time == 0 || now - last_connect_time > 1000) {
+            client.connect(server_ip, LOG_PORT);
+            last_connect_time = now;
+          }
         }
         return connected;
 }

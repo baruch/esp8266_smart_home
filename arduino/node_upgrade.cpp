@@ -8,6 +8,7 @@
 void upgrade_starting(void) {
   debug.log("Upgrade starting");
   mqtt_publish_str("online", "upgrading");
+  delay(10);
 }
 #endif
 
@@ -16,6 +17,7 @@ void check_upgrade() {
   ESPhttpUpdate.onStart(upgrade_starting);
 #endif
   debug.log("Checking for upgrade");
+  delay(10);
   t_httpUpdate_return ret = ESPhttpUpdate.update(IPAddress(cache.get_mqtt_server()).toString(), UPGRADE_PORT, UPGRADE_PATH, VERSION);
 
   switch (ret) {

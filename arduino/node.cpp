@@ -20,8 +20,12 @@ void node_setup(void)
     default: debug.log("Unknown node type ", node_type); break;
   }
 
-  if (node)
+  if (node) {
     node->setup();
+    if (!node->is_battery_powered()) {
+      sleep_lock.lock_take(); // We never go to sleep in an actuator
+    }
+  }
 }
 
 unsigned node_loop(void)

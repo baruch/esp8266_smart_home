@@ -1,5 +1,7 @@
 # ESP8266 based Smart Home System
 
+[![Build Status](https://travis-ci.org/baruch/esp8266_smart_home.svg?branch=master)](https://travis-ci.org/baruch/esp8266_smart_home)
+
 ## The goal
 Make fully automated OTA for ESP8266 under NodeMCU.
 

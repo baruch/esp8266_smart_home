@@ -25,6 +25,18 @@ bool node_is_powered(void);
 void restart();
 void deep_sleep(unsigned seconds);
 
+/* Sleeping logic */
+typedef enum {
+  SLEEP_RES_NO,
+  SLEEP_RES_YES,
+  SLEEP_RES_TIMEOUT,
+} sleep_res_t;
+
+sleep_res_t should_sleep(uint32_t sleep_usec);
+void sleep_postpone(unsigned long msec);
+void sleep_lock(void);
+void sleep_init(void);
+
 class Node {
   public:
     virtual void setup(void) {}

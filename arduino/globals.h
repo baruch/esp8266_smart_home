@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <IPAddress.h>
-#include "libraries/Semaphore/Semaphore.h"
 
 #define CONFIG_FILE "/config.ini"
 #define NODE_TYPE_FILENAME "/nodetype.bin"
@@ -20,6 +19,5 @@ extern IPAddress static_ip;
 extern IPAddress static_nm;
 extern IPAddress static_gw;
 extern IPAddress dns;
-extern Semaphore sleep_lock;
 
 #endif

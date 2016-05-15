@@ -23,7 +23,7 @@ void node_setup(void)
   if (node) {
     node->setup();
     if (!node->is_battery_powered()) {
-      sleep_lock.lock_take(); // We never go to sleep in an actuator
+      sleep_lock();
     }
   }
 }

@@ -65,6 +65,7 @@ void build_name() {
 
 void setup() {
   unsigned long t1 = millis();
+  sleep_init();
   node_type = 0;
   node_desc[0] = 0;
   build_name();
@@ -158,20 +159,20 @@ void loop() {
   if (!sleep_interval)
     sleep_interval = node_loop();
 
-  if (sleep_lock.locked())
-    return;
+  switch (should_sleep(sleep_interval)) {
+    case SLEEP_RES_NO: break;
+    case SLEEP_RES_YES:
+      mqtt_loop();
+      delay(1);
+      mqtt_loop();
+      rtc_store_event_connected();
+      deep_sleep(sleep_interval);
+      break;
 
-  if (sleep_interval) {
-    mqtt_loop();
-    delay(1);
-    mqtt_loop();
-    rtc_store_event_connected();
-    deep_sleep(sleep_interval);
-  }
-
-  if (node_is_powered() && millis() > 20*1000) {
-    debug.log("Timed out connecting to wifi and we are battery powered, going to sleep");
-    rtc_store_event_connection_failed();
-    deep_sleep(DEFAULT_DEEP_SLEEP_TIME);
+    case SLEEP_RES_TIMEOUT:
+      debug.log("Timed out connecting to wifi and we are battery powered, going to sleep");
+      rtc_store_event_connection_failed();
+      deep_sleep(DEFAULT_DEEP_SLEEP_TIME);
+      break;
   }
 }

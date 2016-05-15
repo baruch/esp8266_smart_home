@@ -42,7 +42,7 @@ void net_config_setup() {
   discovery_now();
 
   if( WiFi.SSID().length() == 0) {
-    sleep_lock.lock_take();
+    sleep_lock();
     // We have no network configuration, do not go to sleep, this lock will release on reboot
   }
 }

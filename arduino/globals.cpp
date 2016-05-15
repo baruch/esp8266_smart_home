@@ -10,4 +10,3 @@ IPAddress static_ip;
 IPAddress static_nm;
 IPAddress static_gw;
 IPAddress dns;
-Semaphore sleep_lock;

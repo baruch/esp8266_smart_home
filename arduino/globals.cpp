@@ -1,5 +1,8 @@
 #include "globals.h"
 
+#define VERSION_STR "SHMVER-0.0.12.3"
+
+char VERSION[] = VERSION_STR;
 char node_name[20];
 int node_type;
 char node_desc[32];

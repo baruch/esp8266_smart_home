@@ -19,7 +19,7 @@ void sleep_lock(void)
 void sleep_postpone(unsigned long msec)
 {
   unsigned long target = millis() + msec;
-  if (sleep_timeout >= target)
+  if (sleep_timeout < target) // Only allow reducing the overall time
     return;
   sleep_timeout = target;
 }

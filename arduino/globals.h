@@ -19,5 +19,6 @@ extern IPAddress static_ip;
 extern IPAddress static_nm;
 extern IPAddress static_gw;
 extern IPAddress dns;
+extern float battery;
 
 #endif

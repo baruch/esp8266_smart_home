@@ -51,6 +51,8 @@ void NodeHTU21D::user_thread(void)
   uint16_t value;
   uint8_t i2c_state;
 
+  battery = analogRead(0) * 4.2 / 1024.0;
+
   debug.log("Read humidity");
   i2c_state = htu21d.trigger_read_humidity();
   if (i2c_state) {
@@ -73,15 +75,14 @@ void NodeHTU21D::user_thread(void)
     return;
   float temp = htu21d.translate_temp(value);
 
-  float bat = analogRead(0) * 4.2 / 1024.0;
-  debug.log("Temperature:", temp, " Humidity: ", humd, "%% bat ", bat);
+  debug.log("Temperature:", temp, " Humidity: ", humd, "% bat ", battery);
 
   while (!mqtt_connected())
     thread_yield();
 
   mqtt_publish_float("temperature", temp);
   mqtt_publish_float("humidity", humd);
-  mqtt_publish_float("battery", bat);
+  mqtt_publish_float("battery", battery);
 
   m_deep_sleep = DEFAULT_DEEP_SLEEP_TIME;
 }

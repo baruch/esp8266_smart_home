@@ -53,6 +53,7 @@ void NodeSoilMoisture::user_thread(void)
 
   m_bat = sample_read();
   m_bat *= 2.0;
+  battery = m_bat;
 
   // Battery voltage read, initiate the moisture reading
   m_ads1115.set_pga(ADS1115_PGA_ONE);

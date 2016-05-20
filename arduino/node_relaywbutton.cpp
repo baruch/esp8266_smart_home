@@ -28,7 +28,7 @@ static void mqtt_relay_state_changed(const char *payload, int payload_len)
     return;
   }
 
-  node->set_state(state);
+  node->set_state_no_update(state);
 }
 
 void NodeRelayWithButton::setup(void)
@@ -81,16 +81,22 @@ void NodeRelayWithButton::state_update(void)
   mqtt_publish_bool("relay_state", relay_state);
 }
 
-void NodeRelayWithButton::set_state(int state)
+bool NodeRelayWithButton::set_state_no_update(int state)
 {
   if (state == relay_state) {
     debug.log("Request to change to the current state, ignoring");
-    return;
+    return false;
   }
   digitalWrite(BUTTON_RELAY, state);
   relay_state = state;
-  state_update();
   debug.log("state change ", state);
+  return true;
+}
+
+void NodeRelayWithButton::set_state(int state)
+{
+  if (set_state_no_update(state))
+    state_update();
 }
 
 void NodeRelayWithButton::toggle_state(void)

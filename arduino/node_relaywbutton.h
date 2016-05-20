@@ -15,6 +15,7 @@ class NodeRelayWithButton : public NodeActuator {
     void mqtt_connected_event(void);
     void state_update(void);
     void set_state(int state);
+    bool set_state_no_update(int state);
     void toggle_state(void);
   private:
     void button_pressed(void);

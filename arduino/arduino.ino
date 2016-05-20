@@ -68,6 +68,7 @@ void setup() {
   sleep_init();
   node_type = 0;
   node_desc[0] = 0;
+  battery = 0.0;
   build_name();
 
   debug.begin();
@@ -151,8 +152,10 @@ void read_serial_commands() {
 void loop() {
   static unsigned sleep_interval = 0;
 
-  if (battery > 0.1 && battery < 3.5)
+  if (battery > 0.3 && battery < 3.2) {
+    debug.log("Battery too low, going to sleep now! bat=", battery);
     deep_sleep(DEFAULT_DEEP_SLEEP_TIME*3);
+  }
 
   read_serial_commands();
   net_config_loop();

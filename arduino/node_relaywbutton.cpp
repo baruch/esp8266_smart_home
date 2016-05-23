@@ -11,6 +11,7 @@
 void NodeRelayWithButton::mqtt_relay_state(char *payload)
 {
   char ch;
+  int state;
 
   if (strlen(payload) != 1) {
     debug.log("Requiring a single byte payload, got ", strlen(payload));
@@ -35,7 +36,7 @@ void NodeRelayWithButton::mqtt_relay_state(char *payload)
       return;
   }
 
-  node->set_state_no_update(state);
+  set_state_no_update(state);
 }
 
 void NodeRelayWithButton::setup(void)

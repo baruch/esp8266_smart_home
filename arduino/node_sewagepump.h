@@ -65,6 +65,7 @@ class NodeSewagePump : public NodeActuator {
 
     // Misc
     ADS1115 m_adc;
+    int m_last_i2c_state;
 };
 
 #endif

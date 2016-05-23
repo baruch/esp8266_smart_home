@@ -40,6 +40,7 @@ void NodeSewagePump::setup(void)
   m_input_power = false;
   m_pump_current = 0;
   m_distance = 0;
+  m_last_i2c_state = -1;
 
   mqtt_subscribe("pump_on_trigger_time", std::bind(&NodeSewagePump::mqtt_pump_on_trigger_time, this, std::placeholders::_1));
   mqtt_subscribe("pump_off_time", std::bind(&NodeSewagePump::mqtt_pump_off_time, this, std::placeholders::_1));
@@ -94,10 +95,12 @@ bool NodeSewagePump::measure_input_power(void)
   m_adc.set_pga(ADS1115_PGA_ONE);
 
   uint8_t i2c_state = m_adc.trigger_sample();
-  if (i2c_state != 0) {
+  if (i2c_state != m_last_i2c_state) {
     mqtt_publish_int("i2c_state", i2c_state);
-    return false;
+    m_last_i2c_state = i2c_state;
   }
+  if (i2c_state != 0)
+    return false;
 
   while (!m_adc.is_sample_in_progress())
     delay(1);

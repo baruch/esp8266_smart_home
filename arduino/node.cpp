@@ -18,7 +18,7 @@ void node_setup(void)
     case 1: node = new NodeHTU21D(); break;
     case 2: node = new NodeRelayWithButton(); break;
     case 3: node = new NodeSoilMoisture(); break;
-    case 4: node = new NodeSewagePump(); break;
+    case 5: node = new NodeSewagePump(); break;
     default: debug.log("Unknown node type ", node_type); break;
   }
 

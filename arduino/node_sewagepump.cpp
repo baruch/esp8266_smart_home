@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+#include <ESP8266WiFi.h>
+
 #define DISTANCE_TRIGGER_PIN 14
 #define DISTANCE_DATA_PIN 13
 #define BUTTON_PIN 4
@@ -23,12 +25,16 @@ static bool str2int(const char *data, int& value)
 
 void NodeSewagePump::setup(void)
 {
+  WiFi.setOutputPower(20);
+
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, 0); // Relay is Normally Closed so this should keep the pump online by default
+  digitalWrite(RELAY_PIN, LOW); // Relay is Normally Closed so this should keep the pump online by default
   pinMode(DISTANCE_TRIGGER_PIN, OUTPUT);
+  digitalWrite(DISTANCE_TRIGGER_PIN, LOW);
   pinMode(DISTANCE_DATA_PIN, INPUT);
   Wire.begin(2, 0); // Configure I2C on alternate port
+
   m_adc.begin();
 
   m_pump_on_trigger_time = 30; // 30 minutes
@@ -122,10 +128,11 @@ bool NodeSewagePump::measure_distance(void)
   delay(10);
   digitalWrite(DISTANCE_TRIGGER_PIN, LOW);
 
-  long duration = pulseIn(DISTANCE_TRIGGER_PIN, HIGH, 10000);
-  float distance = (duration / 2 ) / 29.1;
+  long duration = pulseIn(DISTANCE_DATA_PIN, HIGH, 10000);
+  float distance = duration / 2.0  / 29.1;
   int idistance = distance;
-  if (abs(idistance - m_distance) > 2) {
+  if (abs(idistance - m_distance) > 10) {
+    debug.log("duration ", duration, " distance ", distance);
     debug.log("Distance changed from ", m_distance, " to ", idistance);
     m_distance = idistance;
     return true;

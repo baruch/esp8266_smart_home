@@ -28,7 +28,7 @@ void NodeSewagePump::setup(void)
   digitalWrite(RELAY_PIN, 0); // Relay is Normally Closed so this should keep the pump online by default
   pinMode(DISTANCE_TRIGGER_PIN, OUTPUT);
   pinMode(DISTANCE_DATA_PIN, INPUT);
-  Wire.begin(0, 2); // Configure I2C on alternate port
+  Wire.begin(2, 0); // Configure I2C on alternate port
   m_adc.begin();
 
   m_pump_on_trigger_time = 30; // 30 minutes
@@ -108,7 +108,7 @@ bool NodeSewagePump::measure_input_power(void)
   float input_power_raw = m_adc.read_sample_float();
   bool input_power = input_power_raw > 0.5;
   if (input_power != m_input_power) {
-    debug.log("Input power changed from ", m_input_power, " to ", input_power);
+    debug.log("Input power changed from ", m_input_power, " to ", input_power, " raw ", input_power_raw);
     m_input_power = input_power;
     return true;
   }

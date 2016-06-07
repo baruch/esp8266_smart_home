@@ -130,7 +130,6 @@ void mqtt_loop(void)
       mqtt.subscribe(mqtt_upgrade_topic);
       for (int i = 0; i < NUM_MQTT_SUBS; i++) {
         if (subscription[i].callback) {
-          debug.log("Subscribing for idx ", i, " topic ", subscription[i].topic);
           mqtt.subscribe(subscription[i].topic);
         }
       }
@@ -172,7 +171,6 @@ void mqtt_subscribe(const char *name, mqtt_callback_t mqtt_cb)
   for (i = 0; i < NUM_MQTT_SUBS; i++) {
     if (subscription[i].callback == 0) {
       // Empty slot
-      debug.log("Empty slot found in index ", i);
       break;
     }
   }
@@ -181,7 +179,6 @@ void mqtt_subscribe(const char *name, mqtt_callback_t mqtt_cb)
     return;
   }
 
-  debug.log("Subscribed in index ", i);
   const char *topic = mqtt_tmp_topic(name);
   strncpy(subscription[i].topic, topic, sizeof(subscription[i].topic)-1);
   subscription[i].topic[sizeof(subscription[i].topic)-1] = 0;
@@ -190,8 +187,5 @@ void mqtt_subscribe(const char *name, mqtt_callback_t mqtt_cb)
 
   if (mqtt.connected()) {
     mqtt.subscribe(subscription[i].topic);
-    debug.log("Already connected to mqtt, subscribing now");
-  } else {
-    debug.log("Not yet connected to mqtt, will subscribe later");
   }
 }

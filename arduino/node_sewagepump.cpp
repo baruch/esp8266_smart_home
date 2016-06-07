@@ -55,6 +55,13 @@ void NodeSewagePump::setup(void)
 
 unsigned NodeSewagePump::loop(void)
 {
+  static unsigned long m_last_sample_time = 0;
+  unsigned long now = millis();
+
+  if (now - m_last_sample_time < 5000)
+    return 0;
+  m_last_sample_time = now;
+
   if (measure_current() || measure_distance() || measure_input_power()) {
     // data updated, send an mqtt update on all variables
     mqtt_connected_event();

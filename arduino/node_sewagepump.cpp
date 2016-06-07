@@ -119,7 +119,7 @@ bool NodeSewagePump::measure_input_power(void)
     delay(1);
 
   float input_power_raw = m_adc.read_sample_float();
-  bool input_power = input_power_raw > 0.5;
+  bool input_power = input_power_raw > 2.0;
   if (input_power != m_input_power) {
     debug.log("Input power changed from ", m_input_power, " to ", input_power, " raw ", input_power_raw);
     m_input_power = input_power;

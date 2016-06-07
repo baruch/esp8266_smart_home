@@ -3,6 +3,7 @@
 #include "node_sewagepump.h"
 #include <Arduino.h>
 #include <Wire.h>
+#include <interrupts.h>
 
 #include <ESP8266WiFi.h>
 
@@ -45,6 +46,7 @@ void NodeSewagePump::setup(void)
   m_pump_switched_off = false;
   m_input_power = false;
   m_pump_current = 0;
+  m_distance_filter.reset();
   m_distance = 0;
   m_last_i2c_state = -1;
 
@@ -133,15 +135,22 @@ bool NodeSewagePump::measure_distance(void)
 {
   digitalWrite(DISTANCE_TRIGGER_PIN, HIGH);
   delay(10);
-  digitalWrite(DISTANCE_TRIGGER_PIN, LOW);
 
-  long duration = pulseIn(DISTANCE_DATA_PIN, HIGH, 10000);
+  long duration;
+  {
+    InterruptLock lock;
+    digitalWrite(DISTANCE_TRIGGER_PIN, LOW);
+
+    duration = pulseIn(DISTANCE_DATA_PIN, HIGH, 10000);
+  }
+
   float distance = duration / 2.0  / 29.1;
-  int idistance = distance;
-  if (abs(idistance - m_distance) > 10) {
-    debug.log("duration ", duration, " distance ", distance);
-    debug.log("Distance changed from ", m_distance, " to ", idistance);
-    m_distance = idistance;
+  m_distance_filter.input((int)distance);
+  debug.log("distance ", distance, " output ", m_distance_filter.output());
+
+  if (abs(m_distance - m_distance_filter.output()) >= 2) {
+    debug.log("Distance changed from ", m_distance, " to ", m_distance_filter.output());
+    m_distance = m_distance_filter.output();
     return true;
   }
   return false;

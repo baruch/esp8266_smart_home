@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "libraries/ADS1115/ADS1115.h"
+#include "filters.h"
 
 /*
  * This class represents a module that controls a sewage pump with the following actions:
@@ -62,6 +63,7 @@ class NodeSewagePump : public NodeActuator {
     bool m_input_power;
     int m_pump_current;
     int m_distance;
+    FilterMedian<int, 5> m_distance_filter;
 
     // Misc
     ADS1115 m_adc;

@@ -18,6 +18,7 @@ node_types = {
         1: 'Temperature/Humidity',
         2: 'Relay with Button',
         3: 'Soil Moisture',
+        5: 'Sewage Pump',
 }
 
 def node_type_str(node_type):

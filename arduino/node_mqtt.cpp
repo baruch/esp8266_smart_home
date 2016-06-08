@@ -1,7 +1,11 @@
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "node_mqtt.h"
 #include "libraries/PubSubClient/PubSubClient.h"
 #include "WiFiClient.h"
 #include <ESP8266WiFi.h>
+#include <WString.h>
 #include "globals.h"
 #include "common.h"
 #include "cached_vars.h"
@@ -18,7 +22,7 @@ static unsigned long next_reconnect = 0;
 
 static struct {
   char topic[MQTT_TOPIC_LEN];
-  void (*callback)(const char *payload, int payload_len);
+  mqtt_callback_t callback;
 } subscription[NUM_MQTT_SUBS];
 
 
@@ -41,9 +45,10 @@ static void mqtt_callback(char* topic, byte* payload, int len) {
     return;
   }
 
+  char *data = strndupa((char*)payload, len);
   for (int i = 0; i < NUM_MQTT_SUBS; i++) {
     if (strcmp(subscription[i].topic, topic) == 0) {
-      subscription[i].callback((const char *)payload, len);
+      subscription[i].callback(data);
       return;
     }
   }
@@ -125,7 +130,6 @@ void mqtt_loop(void)
       mqtt.subscribe(mqtt_upgrade_topic);
       for (int i = 0; i < NUM_MQTT_SUBS; i++) {
         if (subscription[i].callback) {
-          debug.log("Subscribing for idx ", i, " topic ", subscription[i].topic);
           mqtt.subscribe(subscription[i].topic);
         }
       }
@@ -160,14 +164,13 @@ void mqtt_publish_int(const char *name, int val)
   mqtt_publish_str(name, msg);
 }
 
-void mqtt_subscribe(const char *name, void (*mqtt_cb)(const char *payload, int payload_len))
+void mqtt_subscribe(const char *name, mqtt_callback_t mqtt_cb)
 {
   int i;
   debug.log("Asking to subscribe for ", name);
   for (i = 0; i < NUM_MQTT_SUBS; i++) {
     if (subscription[i].callback == 0) {
       // Empty slot
-      debug.log("Empty slot found in index ", i);
       break;
     }
   }
@@ -176,7 +179,6 @@ void mqtt_subscribe(const char *name, void (*mqtt_cb)(const char *payload, int p
     return;
   }
 
-  debug.log("Subscribed in index ", i, " cb ", (long)mqtt_cb);
   const char *topic = mqtt_tmp_topic(name);
   strncpy(subscription[i].topic, topic, sizeof(subscription[i].topic)-1);
   subscription[i].topic[sizeof(subscription[i].topic)-1] = 0;
@@ -185,8 +187,5 @@ void mqtt_subscribe(const char *name, void (*mqtt_cb)(const char *payload, int p
 
   if (mqtt.connected()) {
     mqtt.subscribe(subscription[i].topic);
-    debug.log("Already connected to mqtt, subscribing now");
-  } else {
-    debug.log("Not yet connected to mqtt, will subscribe later");
   }
 }

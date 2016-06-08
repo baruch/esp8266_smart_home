@@ -8,27 +8,35 @@
 
 #define DEBOUNCE_COUNT_MAX 15
 
-static NodeRelayWithButton *node;
-
-static void mqtt_relay_state_changed(const char *payload, int payload_len)
+void NodeRelayWithButton::mqtt_relay_state(char *payload)
 {
+  char ch;
   int state;
 
-  if (payload_len != 1) {
-    debug.log("Requiring a single byte payload, got ", payload_len);
-    return;
-  } else if (payload[0] == '0') {
-    debug.log("Got zero for relay state");
-    state = 0;
-  } else if (payload[0] == '1') {
-    debug.log("Got one for relay state");
-    state = 1;
-  } else {
-    debug.log("Got unknown value for relay state: ", payload);
+  if (strlen(payload) != 1) {
+    debug.log("Requiring a single byte payload, got ", strlen(payload));
     return;
   }
 
-  node->set_state_no_update(state);
+  ch = payload[0];
+
+  switch (ch) {
+    case '0':
+      debug.log("Got zero for relay state");
+      set_state(0);
+      break;
+
+    case '1':
+      debug.log("Got one for relay state");
+      set_state(1);
+      break;
+
+    default:
+      debug.log("Got unknown value for relay state: ", payload);
+      return;
+  }
+
+  set_state_no_update(state);
 }
 
 void NodeRelayWithButton::setup(void)
@@ -39,8 +47,7 @@ void NodeRelayWithButton::setup(void)
 
   debounce_count = DEBOUNCE_COUNT_MAX;
   last_sample_millis = millis();
-  node = this;
-  mqtt_subscribe("relay_state", mqtt_relay_state_changed);
+  mqtt_subscribe("relay_state", std::bind(&NodeRelayWithButton::mqtt_relay_state, this, std::placeholders::_1));
 }
 
 unsigned NodeRelayWithButton::loop(void)

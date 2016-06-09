@@ -30,7 +30,7 @@ void NodeSewagePump::setup(void)
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); // Relay is Normally Closed and active low (low means we close the relay)
+  digitalWrite(RELAY_PIN, HIGH); // Relay is Normally Closed and active low (low means we close the relay)
   pinMode(DISTANCE_TRIGGER_PIN, OUTPUT);
   digitalWrite(DISTANCE_TRIGGER_PIN, LOW);
   pinMode(DISTANCE_DATA_PIN, INPUT);

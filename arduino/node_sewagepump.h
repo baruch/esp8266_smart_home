@@ -30,12 +30,12 @@
  *   - <node>/pump_off_time (minutes)
  *   - <node>/pump_on_min_current (mA)
  * - Output:
- *   - <node>/pump_on (0/1)
- *   - <node>/pump_switched_off (0/1)
- *   - <node>/pump_current (integer mA)
- *   - <node>/input_power (0/1)
- *   - <node>/distance (int cm)
- *   - <node>/i2c_state (0 ok, non-zero i2c error)
+ *   - <node>/pump_on (0/1) -- Is the pump drawing current right now?
+ *   - <node>/pump_switched_off (0/1) -- Is the pump forcibly shut down? (relay open)
+ *   - <node>/pump_current (integer mA) -- Pump current draw
+ *   - <node>/input_power (0/1) -- Do we have wall input power or are we on battery?
+ *   - <node>/distance (int cm) -- water sensor distance measurement
+ *   - <node>/i2c_state (0 ok, non-zero i2c error) -- i2c error (hw error)
  */
 
 class NodeSewagePump : public NodeActuator {

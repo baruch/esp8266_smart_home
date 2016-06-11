@@ -23,12 +23,12 @@ void NodeRelayWithButton::mqtt_relay_state(char *payload)
   switch (ch) {
     case '0':
       debug.log("Got zero for relay state");
-      set_state(0);
+      state = 0;
       break;
 
     case '1':
       debug.log("Got one for relay state");
-      set_state(1);
+      state = 1;
       break;
 
     default:

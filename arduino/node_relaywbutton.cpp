@@ -2,11 +2,22 @@
 #include "node_mqtt.h"
 #include "node_relaywbutton.h"
 #include <Arduino.h>
+#include <Wire.h>
 
+#define ADS_ALERT_PIN 5
 #define BUTTON_PIN 12 // GPIO12
 #define RELAY_PIN 13 // GPIO13
 
 #define DEBOUNCE_COUNT_MAX 15
+
+// Current sensor is 1 for coil and 2 for ACS712
+#define CURRENT_SENSOR 1
+
+//#define TRACE_IP 192,168,2,226
+#ifdef TRACE_IP
+#include "libraries/UdpTrace/UdpTrace.h"
+static UdpTrace m_trace;
+#endif
 
 void NodeRelayWithButton::mqtt_relay_state(char *payload)
 {
@@ -44,10 +55,27 @@ void NodeRelayWithButton::setup(void)
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(RELAY_PIN, OUTPUT);
   set_state(1); // Default to output turned on
+  Wire.begin(2, 0);
+  m_adc.begin();
+  m_adc.set_data_rate(ADS1115_DATA_RATE_860_SPS);
+  m_adc.set_mode(ADS1115_MODE_CONTINUOUS);
+#if CURRENT_SENSOR == 1
+  m_adc.set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
+#else
+  m_adc.set_mux(ADS1115_MUX_GND_AIN3);
+#endif
+  m_adc.set_pga(ADS1115_PGA_ONE);
+  if (m_adc.trigger_sample() != 0) {
+    debug.log("ADS1115 unreachable on I2C");
+  }
 
   debounce_count = DEBOUNCE_COUNT_MAX;
   last_sample_millis = millis();
   mqtt_subscribe("relay_state", std::bind(&NodeRelayWithButton::mqtt_relay_state, this, std::placeholders::_1));
+
+#ifdef TRACE_IP
+  m_trace.begin(IPAddress(TRACE_IP), 9999);
+#endif
 }
 
 unsigned NodeRelayWithButton::loop(void)
@@ -68,6 +96,40 @@ unsigned NodeRelayWithButton::loop(void)
         }
       }
     }
+  }
+
+  if (relay_state == HIGH) {
+
+    if (now != m_current_sample_time) {
+      uint16_t rval = m_adc.read_sample();
+#ifdef TRACE_IP
+      m_trace.sample(now, rval);
+#endif
+      float val = m_adc.sample_to_float(rval);
+      #if CURRENT_SENSOR == 2
+      val -= 1.65;
+      #endif
+      m_current_sum += val*val;
+      m_current_samples++;
+      m_current_sample_time = now;
+
+      if (m_current_samples == 1000) { // Approx. 5 seconds
+        m_current = m_current_sum / m_current_samples;
+        #if CURRENT_SENSOR == 2
+        // 5A ACS712 has sensitivity valye of 185mV/A
+        m_current /= 0.185;
+        #endif
+        m_current = sqrt(m_current);
+        debug.log("current ", m_current);
+        m_current_sum = 0;
+        m_current_samples = 0;
+      }
+    }
+
+  } else {
+    m_current = 0;
+    m_current_sum = 0;
+    m_current_samples = 0;
   }
 
   return 0;

@@ -2,10 +2,23 @@
 #define NODE_POWERBUTTON_H
 
 #include "common.h"
+#include "libraries/ADS1115/ADS1115.h"
 
 /*
    This class represents a module with a button and a relay, when the button is pressed it toggles the relay state.
    It also listens to mqtt to toggle the state remotely.
+
+   GPIO	Purpose
+
+   0	   SCL
+   2	   SDA
+   5	   Alert ADS
+   12	   Button
+   13	   Relay active low
+
+   ADS1115: (For testing we have two current measurement devices)
+   Pins 1,2: Coil differential measurement
+   Pin  4: ACS712
 */
 
 class NodeRelayWithButton : public NodeActuator {
@@ -24,6 +37,12 @@ class NodeRelayWithButton : public NodeActuator {
     int relay_state;
     unsigned long debounce_count;
     unsigned long last_sample_millis;
+    ADS1115 m_adc;
+
+    float m_current;
+    float m_current_sum;
+    unsigned m_current_samples;
+    unsigned long m_current_sample_time;
 };
 
 #endif

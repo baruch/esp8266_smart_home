@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 #define BUTTON_PIN 12 // GPIO12
-#define BUTTON_RELAY 13 // GPIO13
+#define RELAY_PIN 13 // GPIO13
 
 #define DEBOUNCE_COUNT_MAX 15
 
@@ -42,7 +42,7 @@ void NodeRelayWithButton::mqtt_relay_state(char *payload)
 void NodeRelayWithButton::setup(void)
 {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-  pinMode(BUTTON_RELAY, OUTPUT);
+  pinMode(RELAY_PIN, OUTPUT);
   set_state(1); // Default to output turned on
 
   debounce_count = DEBOUNCE_COUNT_MAX;
@@ -94,7 +94,7 @@ bool NodeRelayWithButton::set_state_no_update(int state)
     debug.log("Request to change to the current state, ignoring");
     return false;
   }
-  digitalWrite(BUTTON_RELAY, state);
+  digitalWrite(RELAY_PIN, state);
   relay_state = state;
   debug.log("state change ", state);
   return true;

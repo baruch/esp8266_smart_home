@@ -85,7 +85,8 @@ public:
 	void begin();
 	uint8_t trigger_sample();
 	bool is_sample_in_progress();
-	uint16_t read_sample();
+	int16_t read_sample();
+	float sample_to_float(int16_t val);
 	float read_sample_float();
 
 	void set_comp_queue(enum ads1115_comp_queue val) { set_config(val, ADS1115_COMP_QUEUE_MASK); }

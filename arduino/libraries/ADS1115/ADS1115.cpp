@@ -11,6 +11,9 @@ enum ads1115_register {
 	ADS1115_REGISTER_HIGH_THRESH = 3,
 };
 
+#define FACTOR 32768.0
+static float ranges[] = { 6.144 / FACTOR, 4.096 / FACTOR, 2.048 / FACTOR, 1.024 / FACTOR, 0.512 / FACTOR, 0.256 / FACTOR};
+
 ADS1115::ADS1115(uint8_t address)
 {
         m_address = address;
@@ -67,14 +70,17 @@ bool ADS1115::is_sample_in_progress()
         return (read_register(ADS1115_REGISTER_CONFIG) & SAMPLE_BIT) == 0;
 }
 
-uint16_t ADS1115::read_sample()
+int16_t ADS1115::read_sample()
 {
         return read_register(ADS1115_REGISTER_CONVERSION);
 }
 
+float ADS1115::sample_to_float(int16_t val)
+{
+	return val * ranges[m_voltage_range];
+}
+
 float ADS1115::read_sample_float()
 {
-        static float ranges[] = { 6.144 / 32767.0, 4.096 / 32767.0, 2.048 / 32767.0, 1.024 / 32767.0, 0.512 / 32767.0, 0.256 / 32767.0};
-        float val = read_sample();
-        return val * ranges[m_voltage_range];
+	return sample_to_float(read_sample());
 }

@@ -54,7 +54,9 @@ void NodeRelayWithButton::setup(void)
 {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(RELAY_PIN, OUTPUT);
-  set_state(1); // Default to output turned on
+  digitalWrite(RELAY_PIN, HIGH);
+  relay_state = 1;
+
   Wire.begin(2, 0);
   m_adc.begin();
   m_adc.set_data_rate(ADS1115_DATA_RATE_860_SPS);

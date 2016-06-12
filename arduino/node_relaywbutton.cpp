@@ -122,7 +122,6 @@ unsigned NodeRelayWithButton::loop(void)
         m_current /= 0.185;
         #endif
         m_current = sqrt(m_current);
-        debug.log("current ", m_current);
         m_current_sum = 0;
         m_current_samples = 0;
       }
@@ -134,11 +133,17 @@ unsigned NodeRelayWithButton::loop(void)
     m_current_samples = 0;
   }
 
+  if (abs(m_last_reported_current - m_current) > 0.01) {
+    state_update();
+    debug.log("Current ", m_current);
+  }
+
   return 0;
 }
 
 void NodeRelayWithButton::button_pressed(void)
 {
+  debug.log("Button pressed");
   toggle_state();
 }
 
@@ -150,6 +155,8 @@ void NodeRelayWithButton::mqtt_connected_event(void)
 void NodeRelayWithButton::state_update(void)
 {
   mqtt_publish_bool("relay_state", relay_state);
+  mqtt_publish_float("current", m_current);
+  m_last_reported_current = m_current;
 }
 
 bool NodeRelayWithButton::set_state_no_update(int state)

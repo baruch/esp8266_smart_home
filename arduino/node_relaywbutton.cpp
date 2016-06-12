@@ -73,6 +73,7 @@ void NodeRelayWithButton::setup(void)
   m_current_sample_time = 0;
   m_current_samples = 0;
   m_current_sum = 0;
+  m_last_update = 0;
   debounce_count = DEBOUNCE_COUNT_MAX;
   last_sample_millis = millis();
   mqtt_subscribe("relay_config", std::bind(&NodeRelayWithButton::mqtt_relay_config, this, std::placeholders::_1));
@@ -157,6 +158,8 @@ unsigned NodeRelayWithButton::loop(void)
   check_button(now);
   check_current(now);
   check_relay_state();
+  if (now - m_last_update > 15*60*1000)
+    state_update();
   return 0;
 }
 
@@ -176,6 +179,7 @@ void NodeRelayWithButton::state_update(void)
   mqtt_publish_bool("relay_state", relay_state);
   mqtt_publish_float("current", m_current);
   m_last_reported_current = m_current;
+  m_last_update = millis();
 }
 
 void NodeRelayWithButton::check_relay_state(void)

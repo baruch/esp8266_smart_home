@@ -48,6 +48,8 @@ class NodeRelayWithButton : public NodeActuator {
     float m_current_sum;
     unsigned m_current_samples;
     unsigned long m_current_sample_time;
+
+    unsigned long m_last_update;
 };
 
 #endif

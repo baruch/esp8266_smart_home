@@ -32,17 +32,17 @@ void NodeRelayWithButton::mqtt_relay_config(char *payload)
 
   switch (ch) {
     case '0':
-      debug.log("Got zero for relay state");
+      debug.log("Got zero for relay config");
       set_relay_config(0);
       break;
 
     case '1':
-      debug.log("Got one for relay state");
+      debug.log("Got one for relay config");
       set_relay_config(1);
       break;
 
     default:
-      debug.log("Got unknown value for relay state: ", payload);
+      debug.log("Got unknown value for relay config: ", payload);
       return;
   }
 }

@@ -19,10 +19,9 @@
 static UdpTrace m_trace;
 #endif
 
-void NodeRelayWithButton::mqtt_relay_state(char *payload)
+void NodeRelayWithButton::mqtt_relay_config(char *payload)
 {
   char ch;
-  int state;
 
   if (strlen(payload) != 1) {
     debug.log("Requiring a single byte payload, got ", strlen(payload));
@@ -34,20 +33,18 @@ void NodeRelayWithButton::mqtt_relay_state(char *payload)
   switch (ch) {
     case '0':
       debug.log("Got zero for relay state");
-      state = 0;
+      set_relay_config(0);
       break;
 
     case '1':
       debug.log("Got one for relay state");
-      state = 1;
+      set_relay_config(1);
       break;
 
     default:
       debug.log("Got unknown value for relay state: ", payload);
       return;
   }
-
-  set_state_no_update(state);
 }
 
 void NodeRelayWithButton::setup(void)
@@ -71,9 +68,14 @@ void NodeRelayWithButton::setup(void)
     debug.log("ADS1115 unreachable on I2C");
   }
 
+  m_inst_current = 0;
+  m_current = 0;
+  m_current_sample_time = 0;
+  m_current_samples = 0;
+  m_current_sum = 0;
   debounce_count = DEBOUNCE_COUNT_MAX;
   last_sample_millis = millis();
-  mqtt_subscribe("relay_state", std::bind(&NodeRelayWithButton::mqtt_relay_state, this, std::placeholders::_1));
+  mqtt_subscribe("relay_config", std::bind(&NodeRelayWithButton::mqtt_relay_config, this, std::placeholders::_1));
 
 #ifdef TRACE_IP
   m_trace.begin(IPAddress(TRACE_IP), 9999);
@@ -110,6 +112,7 @@ void NodeRelayWithButton::check_current(unsigned long now)
       m_current = 0;
       m_current_sum = 0;
       m_current_samples = 0;
+      m_inst_current = 0;
       state_update();
     }
     return;
@@ -130,6 +133,7 @@ void NodeRelayWithButton::check_current(unsigned long now)
   val /= 0.185;
   val -= 1.65;
   #endif
+  m_inst_current = abs(val);
   m_current_sum += val*val;
   m_current_samples++;
 
@@ -152,13 +156,14 @@ unsigned NodeRelayWithButton::loop(void)
 
   check_button(now);
   check_current(now);
+  check_relay_state();
   return 0;
 }
 
 void NodeRelayWithButton::button_pressed(void)
 {
   debug.log("Button pressed");
-  toggle_state();
+  toggle_config();
 }
 
 void NodeRelayWithButton::mqtt_connected_event(void)
@@ -173,26 +178,31 @@ void NodeRelayWithButton::state_update(void)
   m_last_reported_current = m_current;
 }
 
-bool NodeRelayWithButton::set_state_no_update(int state)
+void NodeRelayWithButton::check_relay_state(void)
 {
-  if (state == relay_state) {
-    debug.log("Request to change to the current state, ignoring");
-    return false;
-  }
-  digitalWrite(RELAY_PIN, state);
-  relay_state = state;
-  debug.log("state change ", state);
-  return true;
+  if (relay_state == relay_config)
+    return;
+
+  // Only switch the relay when the current is low, this simulates a zero-crossing relay
+  // Hopefully it will increase the lifetime of the relay and the switched equipment
+  // NOTE: a real zero-crossing uses voltage but we don't measure that
+  if (m_inst_current > 0.1)
+    return;
+
+  digitalWrite(RELAY_PIN, relay_config);
+  relay_state = relay_config;
+  debug.log("state change ", relay_state);
 }
 
-void NodeRelayWithButton::set_state(int state)
+void NodeRelayWithButton::toggle_config(void)
 {
-  if (set_state_no_update(state))
-    state_update();
+  debug.log("Toggle relay config");
+  relay_config ^= 1;
+  mqtt_publish_bool("relay_config", relay_config);
 }
 
-void NodeRelayWithButton::toggle_state(void)
+void NodeRelayWithButton::set_relay_config(int state)
 {
-  debug.log("Toggle state");
-  set_state(1 - relay_state);
+  debug.log("Relay config set to ", state);
+  relay_config = state;
 }

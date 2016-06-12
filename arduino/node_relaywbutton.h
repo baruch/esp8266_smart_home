@@ -27,21 +27,23 @@ class NodeRelayWithButton : public NodeActuator {
     unsigned loop(void);
     void mqtt_connected_event(void);
     void state_update(void);
-    void set_state(int state);
-    bool set_state_no_update(int state);
-    void toggle_state(void);
+    void set_relay_config(int state);
+    void toggle_config(void);
   private:
     void button_pressed(void);
-    void mqtt_relay_state(char *data);
+    void mqtt_relay_config(char *data);
     void check_button(unsigned long now);
     void check_current(unsigned long now);
+    void check_relay_state(void);
 
     int relay_state;
+    int relay_config;
     unsigned long debounce_count;
     unsigned long last_sample_millis;
     ADS1115 m_adc;
 
     float m_current;
+    float m_inst_current; // instantenous current
     float m_last_reported_current;
     float m_current_sum;
     unsigned m_current_samples;

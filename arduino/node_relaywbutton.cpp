@@ -80,55 +80,62 @@ void NodeRelayWithButton::setup(void)
 #endif
 }
 
-unsigned NodeRelayWithButton::loop(void)
+void NodeRelayWithButton::check_button(unsigned long now)
 {
-  unsigned long now = millis();
-  if (now != last_sample_millis) {
-    last_sample_millis = now;
-    int state = digitalRead(BUTTON_PIN);
-    if (state) {
-      if (debounce_count < DEBOUNCE_COUNT_MAX) {
-        debounce_count++;
-      }
-    } else {
-      if (debounce_count > 0) {
-        debounce_count--;
-        if (debounce_count == 0) {
-          button_pressed();
-        }
+  // Read button state
+  if (now == last_sample_millis)
+    return;
+
+  last_sample_millis = now;
+  int state = digitalRead(BUTTON_PIN);
+  if (state) {
+    if (debounce_count < DEBOUNCE_COUNT_MAX) {
+      debounce_count++;
+    }
+  } else {
+    if (debounce_count > 0) {
+      debounce_count--;
+      if (debounce_count == 0) {
+        button_pressed();
       }
     }
   }
+}
 
-  if (relay_state == HIGH) {
-
-    if (now != m_current_sample_time) {
-      uint16_t rval = m_adc.read_sample();
-#ifdef TRACE_IP
-      m_trace.sample(now, rval);
-#endif
-      float val = m_adc.sample_to_float(rval);
-      #if CURRENT_SENSOR == 2
-      val -= 1.65;
-      #endif
-      m_current_sum += val*val;
-      m_current_samples++;
-      m_current_sample_time = now;
-
-      if (m_current_samples == 1000) { // Approx. 1 second
-        m_current = m_current_sum / m_current_samples;
-        #if CURRENT_SENSOR == 2
-        // 5A ACS712 has sensitivity value of 185mV/A
-        m_current /= 0.185;
-        #endif
-        m_current = sqrt(m_current);
-        m_current_sum = 0;
-        m_current_samples = 0;
-      }
+void NodeRelayWithButton::check_current(unsigned long now)
+{
+  // Read current if we are on
+  if (relay_state != 1) {
+    if (m_current > 0.00001) {
+      m_current = 0;
+      m_current_sum = 0;
+      m_current_samples = 0;
+      state_update();
     }
+    return;
+  }
 
-  } else {
-    m_current = 0;
+  // Read from i2c only once every msec, adc samples at 870sps
+  if (now == m_current_sample_time)
+    return;
+  m_current_sample_time = now;
+
+  uint16_t rval = m_adc.read_sample();
+#ifdef TRACE_IP
+  m_trace.sample(now, rval);
+#endif
+  float val = m_adc.sample_to_float(rval);
+  #if CURRENT_SENSOR == 2
+  // 5A ACS712 has sensitivity value of 185mV/A
+  val /= 0.185;
+  val -= 1.65;
+  #endif
+  m_current_sum += val*val;
+  m_current_samples++;
+
+  if (m_current_samples == 1000) { // Approx. 1 second
+    m_current = m_current_sum / m_current_samples;
+    m_current = sqrt(m_current);
     m_current_sum = 0;
     m_current_samples = 0;
   }
@@ -137,7 +144,14 @@ unsigned NodeRelayWithButton::loop(void)
     state_update();
     debug.log("Current ", m_current);
   }
+}
 
+unsigned NodeRelayWithButton::loop(void)
+{
+  unsigned long now = millis();
+
+  check_button(now);
+  check_current(now);
   return 0;
 }
 

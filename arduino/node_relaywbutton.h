@@ -33,6 +33,8 @@ class NodeRelayWithButton : public NodeActuator {
   private:
     void button_pressed(void);
     void mqtt_relay_state(char *data);
+    void check_button(unsigned long now);
+    void check_current(unsigned long now);
 
     int relay_state;
     unsigned long debounce_count;

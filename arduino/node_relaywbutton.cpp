@@ -52,7 +52,7 @@ void NodeRelayWithButton::setup(void)
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, HIGH);
-  relay_state = 1;
+  relay_config = relay_state = 1;
 
   Wire.begin(2, 0);
   m_adc.begin();

@@ -113,10 +113,10 @@ unsigned NodeRelayWithButton::loop(void)
       m_current_samples++;
       m_current_sample_time = now;
 
-      if (m_current_samples == 1000) { // Approx. 5 seconds
+      if (m_current_samples == 1000) { // Approx. 1 second
         m_current = m_current_sum / m_current_samples;
         #if CURRENT_SENSOR == 2
-        // 5A ACS712 has sensitivity valye of 185mV/A
+        // 5A ACS712 has sensitivity value of 185mV/A
         m_current /= 0.185;
         #endif
         m_current = sqrt(m_current);

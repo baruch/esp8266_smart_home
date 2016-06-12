@@ -33,6 +33,7 @@ void node_type_load(void) {
   if (size > 0)
     f.read((uint8_t*)&node_type, size);
   f.close();
+  debug.log("Node type is ", node_type);
 }
 
 void node_type_save(void) {

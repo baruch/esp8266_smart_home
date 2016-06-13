@@ -133,6 +133,8 @@ void NodeRelayWithButton::check_current(unsigned long now)
   // 5A ACS712 has sensitivity value of 185mV/A
   val /= 0.185;
   val -= 1.65;
+  #else // CURRENT_SENSOR == 1
+  val *= 5; // calculated factor from coil and resistor
   #endif
   m_inst_current = abs(val);
   m_current_sum += val*val;

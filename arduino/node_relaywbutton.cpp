@@ -63,7 +63,7 @@ void NodeRelayWithButton::setup(void)
 #else
   m_adc.set_mux(ADS1115_MUX_GND_AIN3);
 #endif
-  m_adc.set_pga(ADS1115_PGA_ONE);
+  m_adc.set_pga(ADS1115_PGA_TWO);
   if (m_adc.trigger_sample() != 0) {
     debug.log("ADS1115 unreachable on I2C");
   }

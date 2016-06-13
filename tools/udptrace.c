@@ -36,7 +36,6 @@ int main()
 
 		uint16_t id = buf[1] << 8 | buf[0];
 		
-		int offset = 2;
 		for (int offset = 2; offset + 3 <= ret; offset += 3) {
 			uint16_t rval = buf[offset+1] | (buf[offset+2]<<8);
 			int16_t rvali = rval;

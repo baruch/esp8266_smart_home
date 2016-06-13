@@ -39,7 +39,11 @@ int main()
 		for (int offset = 2; offset + 3 <= ret; offset += 3) {
 			uint16_t rval = buf[offset+1] | (buf[offset+2]<<8);
 			int16_t rvali = rval;
-			float val = rvali * 4.096 / 32768.0;
+#if 1
+			float val = rvali * (4.096 / 32768.0);
+#else
+			float val = rvali * (4.096 / 32768.0 / 0.185) - 1.65;
+#endif
 			printf("%04x %03d %6u %8f\n", id, buf[offset], rval, val);
 		}
 

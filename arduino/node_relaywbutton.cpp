@@ -126,6 +126,8 @@ void NodeRelayWithButton::check_current(unsigned long now)
 
   if (m_current_samples == 1000) { // Approx. 1 second
     m_current = 5.0*sqrt(m_current_sum / m_current_samples);
+    if (m_current < 0.005) // ADC noise, round down to 0 current
+      m_current = 0.0;
     m_current_sum = 0;
     m_current_samples = 0;
   }

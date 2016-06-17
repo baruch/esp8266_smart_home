@@ -43,7 +43,6 @@ class NodeRelayWithButton : public NodeActuator {
     ADS1115 m_adc;
 
     float m_current;
-    float m_inst_current; // instantenous current
     float m_last_reported_current;
     float m_current_sum;
     unsigned m_current_samples;

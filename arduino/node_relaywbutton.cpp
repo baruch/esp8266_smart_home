@@ -61,7 +61,6 @@ void NodeRelayWithButton::setup(void)
     debug.log("ADS1115 unreachable on I2C");
   }
 
-  m_inst_current = 0;
   m_current = 0;
   m_current_sample_time = 0;
   m_current_samples = 0;
@@ -106,7 +105,6 @@ void NodeRelayWithButton::check_current(unsigned long now)
       m_current = 0;
       m_current_sum = 0;
       m_current_samples = 0;
-      m_inst_current = 0;
       state_update();
     }
     return;
@@ -123,7 +121,6 @@ void NodeRelayWithButton::check_current(unsigned long now)
 #endif
   float val = m_adc.sample_to_float(rval);
   val *= 5; // calculated factor from coil and resistor
-  m_inst_current = abs(val);
   m_current_sum += val*val;
   m_current_samples++;
 
@@ -174,12 +171,6 @@ void NodeRelayWithButton::state_update(void)
 void NodeRelayWithButton::check_relay_state(void)
 {
   if (relay_state == relay_config)
-    return;
-
-  // Only switch the relay when the current is low, this simulates a zero-crossing relay
-  // Hopefully it will increase the lifetime of the relay and the switched equipment
-  // NOTE: a real zero-crossing uses voltage but we don't measure that
-  if (m_inst_current > 0.1)
     return;
 
   digitalWrite(RELAY_PIN, relay_config);

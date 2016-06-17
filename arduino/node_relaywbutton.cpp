@@ -102,10 +102,11 @@ void NodeRelayWithButton::check_current(unsigned long now)
   // Read current if we are on
   if (relay_state != 1) {
     if (m_current > 0.00001) {
+      debug.log("Relay turned off, report zero current");
       m_current = 0;
       m_current_sum = 0;
       m_current_samples = 0;
-      state_update();
+      m_last_update = 0;
     }
     return;
   }
@@ -131,8 +132,10 @@ void NodeRelayWithButton::check_current(unsigned long now)
     m_current_samples = 0;
   }
 
-  if (abs(m_last_reported_current - m_current) > 0.01) {
-    state_update();
+  float diff = abs(m_last_reported_current - m_current);
+  // Change current update frequency based on level of change and time passed
+  if (diff > 0.01 || (now - m_last_update >= 60000 && diff > 0.001)) {
+    m_last_update = 0;
     debug.log("Current ", m_current);
   }
 }
@@ -144,7 +147,8 @@ unsigned NodeRelayWithButton::loop(void)
   check_button(now);
   check_current(now);
   check_relay_state();
-  if (now - m_last_update > 15*60*1000)
+  // Update if requested or once per 15 minutes
+  if (m_last_update == 0 || now - m_last_update > 15*60*1000)
     state_update();
   return 0;
 }
@@ -157,7 +161,7 @@ void NodeRelayWithButton::button_pressed(void)
 
 void NodeRelayWithButton::mqtt_connected_event(void)
 {
-  state_update();
+  m_last_update = 0;
 }
 
 void NodeRelayWithButton::state_update(void)
@@ -176,6 +180,7 @@ void NodeRelayWithButton::check_relay_state(void)
   digitalWrite(RELAY_PIN, relay_config);
   relay_state = relay_config;
   debug.log("state change ", relay_state);
+  m_last_update = 0;
 }
 
 void NodeRelayWithButton::toggle_config(void)

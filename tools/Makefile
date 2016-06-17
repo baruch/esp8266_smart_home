@@ -1,2 +1,2 @@
 udptrace: udptrace.c
-	gcc -Wall -Werror -o $@ $^
+	gcc -Wall -Werror -o $@ $^ -lm

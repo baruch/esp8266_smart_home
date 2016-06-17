@@ -121,13 +121,11 @@ void NodeRelayWithButton::check_current(unsigned long now)
   m_trace.sample(now, rval);
 #endif
   float val = m_adc.sample_to_float(rval);
-  val *= 5; // calculated factor from coil and resistor
   m_current_sum += val*val;
   m_current_samples++;
 
   if (m_current_samples == 1000) { // Approx. 1 second
-    m_current = m_current_sum / m_current_samples;
-    m_current = sqrt(m_current);
+    m_current = 5.0*sqrt(m_current_sum / m_current_samples);
     m_current_sum = 0;
     m_current_samples = 0;
   }

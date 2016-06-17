@@ -10,9 +10,6 @@
 
 #define DEBOUNCE_COUNT_MAX 15
 
-// Current sensor is 1 for coil and 2 for ACS712
-#define CURRENT_SENSOR 1
-
 //#define TRACE_IP 192,168,2,226
 #ifdef TRACE_IP
 #include "libraries/UdpTrace/UdpTrace.h"
@@ -58,11 +55,7 @@ void NodeRelayWithButton::setup(void)
   m_adc.begin();
   m_adc.set_data_rate(ADS1115_DATA_RATE_860_SPS);
   m_adc.set_mode(ADS1115_MODE_CONTINUOUS);
-#if CURRENT_SENSOR == 1
   m_adc.set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
-#else
-  m_adc.set_mux(ADS1115_MUX_GND_AIN3);
-#endif
   m_adc.set_pga(ADS1115_PGA_TWO);
   if (m_adc.trigger_sample() != 0) {
     debug.log("ADS1115 unreachable on I2C");
@@ -129,13 +122,7 @@ void NodeRelayWithButton::check_current(unsigned long now)
   m_trace.sample(now, rval);
 #endif
   float val = m_adc.sample_to_float(rval);
-  #if CURRENT_SENSOR == 2
-  // 5A ACS712 has sensitivity value of 185mV/A
-  val /= 0.185;
-  val -= 1.65;
-  #else // CURRENT_SENSOR == 1
   val *= 5; // calculated factor from coil and resistor
-  #endif
   m_inst_current = abs(val);
   m_current_sum += val*val;
   m_current_samples++;

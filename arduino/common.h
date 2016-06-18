@@ -24,6 +24,7 @@ void node_mqtt_connected(void);
 bool node_is_powered(void);
 void restart();
 void deep_sleep(unsigned seconds);
+void battery_check(float bat);
 
 /* Sleeping logic */
 typedef enum {

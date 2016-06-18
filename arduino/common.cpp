@@ -72,3 +72,9 @@ void deep_sleep(unsigned seconds)
   delay(1);
   ESP.deepSleep(seconds * 1000 * 1000);
 }
+
+void battery_check(float battery)
+{
+  if (battery > 0.5 && battery < 3.7)
+    deep_sleep(15*60);
+}

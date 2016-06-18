@@ -69,7 +69,6 @@ void setup() {
   sleep_init();
   node_type = 0;
   node_desc[0] = 0;
-  battery = 0.0;
   build_name();
 
   debug.begin();

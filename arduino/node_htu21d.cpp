@@ -51,7 +51,8 @@ void NodeHTU21D::user_thread(void)
   uint16_t value;
   uint8_t i2c_state;
 
-  battery = analogRead(0) * 4.2 / 1024.0;
+  float battery = analogRead(0) * 4.2 / 1024.0;
+  battery_check(battery);
 
   debug.log("Read humidity");
   i2c_state = htu21d.trigger_read_humidity();

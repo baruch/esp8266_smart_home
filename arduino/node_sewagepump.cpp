@@ -11,6 +11,8 @@
 #define DISTANCE_DATA_PIN 13
 #define BUTTON_PIN 4
 #define RELAY_PIN 5
+#define ON_TIME 15  // minutes
+#define OFF_TIME 30  // minutes
 
 static bool str2int(const char *data, int& value)
 {
@@ -38,8 +40,8 @@ void NodeSewagePump::setup(void)
 
   m_adc.begin();
 
-  m_pump_on_trigger_time = 30; // 30 minutes
-  m_pump_off_time = 30; // 30 minutes
+  m_pump_on_trigger_time = ON_TIME * 60 * 1000; // minutes => millis
+  m_pump_off_time = OFF_TIME * 60 * 1000; // minutes => millis
   m_pump_on_min_current = 500; // 500mA
 
   m_pump_on = false;

@@ -60,6 +60,7 @@ unsigned NodeSewagePump::loop(void)
   static unsigned long m_last_sample_time = 0;
   unsigned long now = millis();
 
+  // Wait 5 sec. Run loop once in 5 sec.
   if (now - m_last_sample_time < 5000)
     return 0;
   m_last_sample_time = now;
@@ -106,6 +107,7 @@ void NodeSewagePump::mqtt_pump_on_min_current(char *data)
 bool NodeSewagePump::measure_current(void)
 {
   /*
+  // Set ADS to read current from coil
   m_adc.set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
   m_adc.set_pga(ADS1115_PGA_EIGHT);
   m_adc.set_data_rate(ADS1115_DATA_RATE_250_SPS);
@@ -143,6 +145,7 @@ bool NodeSewagePump::measure_input_power(void)
   m_adc.set_mode(ADS1115_MODE_SINGLE_SHOT);
   m_adc.set_data_rate(ADS1115_DATA_RATE_250_SPS);
 
+  // Trigger the measure
   uint8_t i2c_state = m_adc.trigger_sample();
   if (i2c_state != m_last_i2c_state) {
     mqtt_publish_int("i2c_state", i2c_state);

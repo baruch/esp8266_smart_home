@@ -34,7 +34,7 @@ void NodeSewagePump::setup(void)
   pinMode(DISTANCE_TRIGGER_PIN, OUTPUT);
   digitalWrite(DISTANCE_TRIGGER_PIN, LOW);
   pinMode(DISTANCE_DATA_PIN, INPUT);
-  Wire.begin(2, 0); // Configure I2C on alternate port
+  Wire.begin(12, 0); // Configure I2C IOs. SDA, SCL.
 
   m_adc.begin();
 

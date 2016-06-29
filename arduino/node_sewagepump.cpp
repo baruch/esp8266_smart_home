@@ -45,6 +45,7 @@ void NodeSewagePump::setup(void)
   m_pump_on = false;
   m_pump_switched_off = false;
   m_input_power = false;
+  m_alert_distance = false;
   m_pump_current = 0;
   m_distance_filter.reset();
   m_distance = 0;
@@ -82,6 +83,7 @@ void NodeSewagePump::mqtt_connected_event(void)
   mqtt_publish_bool("pump_on", m_pump_on);
   mqtt_publish_bool("pump_switched_off", m_pump_switched_off);
   mqtt_publish_bool("input_power", m_input_power);
+  mqtt_publish_bool("alert_distance", m_alert_distance);
   mqtt_publish_int("pump_current", m_pump_current);
   mqtt_publish_int("distance", m_distance);
 }
@@ -187,6 +189,8 @@ bool NodeSewagePump::measure_distance(void)
   if (abs(m_distance - m_distance_filter.output()) >= 2) {
     debug.log("Distance changed from ", m_distance, " to ", m_distance_filter.output());
     m_distance = m_distance_filter.output();
+    // alert when water closer than 25 cm. Hysteresis of 2cm to remove the alert
+    m_alert_distance = (m_alert_distance) ? m_distance > 27 : m_distance < 25;
     return true;
   }
   return false;

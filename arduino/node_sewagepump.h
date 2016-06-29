@@ -61,6 +61,7 @@ class NodeSewagePump : public NodeActuator {
     bool m_pump_on;
     bool m_pump_switched_off;
     bool m_input_power;
+    bool m_alert_distance;
     int m_pump_current;
     int m_distance;
     FilterMedian<int, 5> m_distance_filter;

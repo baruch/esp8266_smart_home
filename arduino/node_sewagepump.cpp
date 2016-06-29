@@ -64,7 +64,11 @@ unsigned NodeSewagePump::loop(void)
     return 0;
   m_last_sample_time = now;
 
-  if (measure_current() || measure_distance() || measure_input_power()) {
+  bool update = false;
+  update |= measure_current();
+  update |= measure_distance();
+  update |= measure_input_power();
+  if (update) {
     // data updated, send an mqtt update on all variables
     mqtt_connected_event();
   }

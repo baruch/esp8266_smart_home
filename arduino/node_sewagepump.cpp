@@ -44,8 +44,8 @@ void NodeSewagePump::setup(void)
 
   m_pump_on = false;
   m_pump_switched_off = false;
-  m_input_power = false;
   m_alert_distance = false;
+  m_alert_power = false;
   m_pump_current = 0;
   m_distance_filter.reset();
   m_distance = 0;
@@ -82,7 +82,7 @@ void NodeSewagePump::mqtt_connected_event(void)
   mqtt_publish_int("i2c_state", 0);
   mqtt_publish_bool("pump_on", m_pump_on);
   mqtt_publish_bool("pump_switched_off", m_pump_switched_off);
-  mqtt_publish_bool("input_power", m_input_power);
+  mqtt_publish_bool("alert_power", m_alert_power);
   mqtt_publish_bool("alert_distance", m_alert_distance);
   mqtt_publish_int("pump_current", m_pump_current);
   mqtt_publish_int("distance", m_distance);
@@ -161,9 +161,10 @@ bool NodeSewagePump::measure_input_power(void)
 
   float input_power_raw = m_adc.read_sample_float();
   bool input_power = input_power_raw > 2.0;
-  if (input_power != m_input_power) {
     debug.log("Input power changed from ", m_input_power, " to ", input_power, " raw ", input_power_raw);
-    m_input_power = input_power;
+
+  if (input_power == m_alert_power) {
+    m_alert_power = !input_power;
     return true;
   }
 

@@ -54,17 +54,21 @@ class NodeSewagePump : public NodeActuator {
 
     // Inputs
     int m_pump_on_trigger_time;
-    int m_pump_off_time;
+    int m_pump_forced_off_max_time;
     int m_pump_on_min_current;
 
     // Outputs
+    int m_pump_on_time;
+    int m_pump_forced_off_time;
     bool m_pump_on;
     bool m_pump_switched_off;
     bool m_alert_distance;
     bool m_alert_power;
+    bool m_alert_pump;
     int m_pump_current;
     int m_distance;
     FilterMedian<int, 5> m_distance_filter;
+    unsigned long m_last_measure_time;  // keep timestamp
 
     // Misc
     ADS1115 m_adc;

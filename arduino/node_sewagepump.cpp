@@ -11,6 +11,7 @@
 #define DISTANCE_DATA_PIN 13
 #define BUTTON_PIN 4
 #define RELAY_PIN 5
+#define LED_PIN 4
 #define ON_TIME 15  // minutes
 #define OFF_TIME 30  // minutes
 
@@ -41,17 +42,24 @@ void NodeSewagePump::setup(void)
   m_adc.begin();
 
   m_pump_on_trigger_time = ON_TIME * 60 * 1000; // minutes => millis
-  m_pump_off_time = OFF_TIME * 60 * 1000; // minutes => millis
+  m_pump_forced_off_max_time = OFF_TIME * 60 * 1000; // minutes => millis
   m_pump_on_min_current = 500; // 500mA
 
+  m_pump_forced_off_time = 0;
+  m_pump_on_time = 0;
   m_pump_on = false;
   m_pump_switched_off = false;
   m_alert_distance = false;
   m_alert_power = false;
+  m_alert_pump = false;
   m_pump_current = 0;
   m_distance_filter.reset();
   m_distance = 0;
   m_last_i2c_state = -1;
+  m_last_measure_time = millis();
+
+  // TODO: Add threshold init for ADS to react on pump (higher probability than power off)
+  // (or maybe better to set threshold for power detection)
 
   mqtt_subscribe("pump_on_trigger_time", std::bind(&NodeSewagePump::mqtt_pump_on_trigger_time, this, std::placeholders::_1));
   mqtt_subscribe("pump_off_time", std::bind(&NodeSewagePump::mqtt_pump_off_time, this, std::placeholders::_1));
@@ -76,6 +84,19 @@ unsigned NodeSewagePump::loop(void)
     // data updated, send an mqtt update on all variables
     mqtt_connected_event();
   }
+
+  // TODO: Add long button press detection and action here. Or make it common.
+
+  if (m_alert_pump && digitalRead(LED_PIN) == LOW) {
+    // Turn on led
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+  } else {
+    // Turn off led
+    digitalWrite(LED_PIN, HIGH);
+    pinMode(LED_PIN, INPUT_PULLUP);
+  }
+
   return 0;
 }
 
@@ -86,6 +107,7 @@ void NodeSewagePump::mqtt_connected_event(void)
   mqtt_publish_bool("pump_switched_off", m_pump_switched_off);
   mqtt_publish_bool("alert_power", m_alert_power);
   mqtt_publish_bool("alert_distance", m_alert_distance);
+  mqtt_publish_bool("alert_pump", m_alert_pump);
   mqtt_publish_int("pump_current", m_pump_current);
   mqtt_publish_int("distance", m_distance);
 }
@@ -98,8 +120,8 @@ void NodeSewagePump::mqtt_pump_on_trigger_time(char *data)
 
 void NodeSewagePump::mqtt_pump_off_time(char *data)
 {
-  if (str2int(data, m_pump_off_time))
-    debug.log("Pump OFF time is now ", m_pump_off_time);
+  if (str2int(data, m_pump_forced_off_max_time))
+    debug.log("Pump OFF time is now ", m_pump_forced_off_max_time);
 }
 
 void NodeSewagePump::mqtt_pump_on_min_current(char *data)
@@ -110,11 +132,10 @@ void NodeSewagePump::mqtt_pump_on_min_current(char *data)
 
 bool NodeSewagePump::measure_current(void)
 {
-  /*
   // Set ADS to read current from coil
   m_adc.set_mux(ADS1115_MUX_DIFF_AIN0_AIN1);
-  m_adc.set_pga(ADS1115_PGA_EIGHT);
-  m_adc.set_data_rate(ADS1115_DATA_RATE_250_SPS);
+  m_adc.set_pga(ADS1115_PGA_TWO);
+  m_adc.set_data_rate(ADS1115_DATA_RATE_860_SPS);
   m_adc.set_mode(ADS1115_MODE_CONTINUOUS);
 
   uint8_t i2c_state = m_adc.trigger_sample();
@@ -126,19 +147,56 @@ bool NodeSewagePump::measure_current(void)
     return false;
 
   float sum = 0.0;
-  delay(5);
-  #define NUM_CURRENT_SAMPLES 50
+  delay(1);
+  #define NUM_CURRENT_SAMPLES 100
   for (int i = 0; i < NUM_CURRENT_SAMPLES; i++) {
     float val = m_adc.read_sample_float();
-    sum += val * val;
+	  sum += val * val;
+    delay(1);
   }
-  float current_rms = sqrt(sum / NUM_CURRENT_SAMPLES);
-  debug.log("current ", current_rms);
+  float current_rms = sqrt(sum / NUM_CURRENT_SAMPLES) * 5.0;
 
   // Turn off the continuous sampling
   m_adc.set_mode(ADS1115_MODE_SINGLE_SHOT);
   m_adc.trigger_sample();
-  */
+
+  unsigned prev_pump_current = m_pump_current;
+  m_pump_current = int(current_rms*1000);  // mA
+
+  // Prepare report about pump state
+  m_pump_on = m_pump_current > m_pump_on_min_current;
+
+  // Update pump function/block time
+  if (m_pump_on) {
+	  m_pump_on_time += (millis() - m_last_measure_time);
+    m_pump_forced_off_time = 0;
+  } else if (m_alert_pump) {
+	  // Pump is off due to alert
+	  m_pump_forced_off_time += (millis() - m_last_measure_time);
+    m_pump_on_time = 0;
+  }
+
+  m_last_measure_time = millis();
+
+  // Prepare pump alert status
+  bool old_status = m_alert_pump;
+  m_alert_pump = m_pump_on_time >= m_pump_on_trigger_time || m_pump_forced_off_time < m_pump_forced_off_max_time;
+
+  // Reset counters if alert stopped or not_alert and not_pump_on.
+  if (!m_alert_pump) {
+    m_pump_forced_off_time = 0;
+    m_pump_on_time = 0;
+  }
+
+  if (old_status != m_alert_pump) {
+    digitalWrite(RELAY_PIN, m_alert_pump ? LOW : HIGH);
+  }
+
+  // Return current if changed significantly
+  if (old_status != m_alert_pump || abs(m_pump_current - prev_pump_current) > 100) {
+	  return true;
+  }
+
   return false;
 }
 

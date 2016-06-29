@@ -25,6 +25,7 @@ void WiFiAsyncManager::begin(const IPAddress& ip, const IPAddress& gw, const IPA
         m_config_test_end_time = 0;
         m_is_config_changed = false;
 
+        WiFi.enableAP(false);
         config_wifi(NULL, NULL, ip, gw, nm, dns);
 }
 

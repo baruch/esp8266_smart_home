@@ -84,6 +84,7 @@ public:
 
 	void begin();
 	uint8_t trigger_sample();
+	uint8_t reset();
 	bool is_sample_in_progress();
 	int16_t read_sample();
 	float sample_to_float(int16_t val);

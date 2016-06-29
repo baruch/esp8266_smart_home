@@ -65,6 +65,13 @@ uint8_t ADS1115::trigger_sample()
         return write_register(ADS1115_REGISTER_CONFIG, m_config | SAMPLE_BIT);
 }
 
+uint8_t ADS1115::reset()
+{
+	Wire.beginTransmission(0);
+	Wire.write(0x6);
+	return Wire.endTransmission();
+}
+
 bool ADS1115::is_sample_in_progress()
 {
         return (read_register(ADS1115_REGISTER_CONFIG) & SAMPLE_BIT) == 0;

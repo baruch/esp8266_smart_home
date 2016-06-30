@@ -205,7 +205,7 @@ bool NodeSewagePump::measure_input_power(void)
   m_adc.set_mux(ADS1115_MUX_GND_AIN2);
   m_adc.set_pga(ADS1115_PGA_ONE);
   m_adc.set_mode(ADS1115_MODE_SINGLE_SHOT);
-  m_adc.set_data_rate(ADS1115_DATA_RATE_250_SPS);
+  m_adc.set_data_rate(ADS1115_DATA_RATE_860_SPS);
 
   // Trigger the measure
   uint8_t i2c_state = m_adc.trigger_sample();

@@ -216,7 +216,7 @@ bool NodeSewagePump::measure_input_power(void)
   if (i2c_state != 0)
     return false;
 
-  while (!m_adc.is_sample_in_progress())
+  while (m_adc.is_sample_in_progress())
     delay(1);
 
   float input_power_raw = m_adc.read_sample_float();

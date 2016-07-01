@@ -5,11 +5,20 @@ import socket
 HOST = '0.0.0.0'
 PORT = 24320
 
+def tohex(s):
+    o = ''
+    for c in s:
+        o += '%02X' % ord(c)
+    return o
+
 def parse_message_part(data):
     if len(data) < 1: return (None, '')
     part_len = ord(data[0])
     if len(data) < part_len + 1: return (None, '')
-    return (data[1:part_len+1], data[part_len+1:])
+    val = data[1:part_len+1]
+    rest = data[part_len+1:]
+    print 'part', part_len, tohex(val), tohex(rest)
+    return (val, rest)
 
 def translate_node_type(node_type):
     try:
@@ -19,12 +28,15 @@ def translate_node_type(node_type):
 
 def translate_ip(raw):
     if raw is None or len(raw) != 4:
+        print 'translate ip ', raw, ' zeroed out'
         return '0.0.0.0'
 
-    return '%d.%d.%d.%d' % (ord(raw[0]), ord(raw[1]), ord(raw[2]), ord(raw[3]))
+    val = '%d.%d.%d.%d' % (ord(raw[0]), ord(raw[1]), ord(raw[2]), ord(raw[3]))
+    print 'translate ip raw=', raw, ' out=', val
+    return val
 
 def parse_message(data):
-    print 'message', data
+    print 'message', tohex(data)
     if data[0] != 'S': return (None, None, None, None, None, None, None, None)
     data = data[1:] # Remove the leading S
 

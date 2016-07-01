@@ -99,6 +99,7 @@ unsigned NodeSewagePump::loop(void)
   update |= measure_current();
   update |= measure_distance();
   update |= measure_input_power();
+  update |= control_pump();
   if (update) {
     // data updated, send an mqtt update on all variables
     mqtt_connected_event();
@@ -180,8 +181,15 @@ bool NodeSewagePump::measure_current(void)
   m_pump_current = int(current_rms*1000);  // mA
 
   // Prepare report about pump state
+  bool prev_pump_on = m_pump_on;
   m_pump_on = m_pump_current > m_pump_on_min_current;
 
+  // Update if pump switched on or off and if pump current changed by more than 100ma
+  return (abs(m_pump_current - prev_pump_current) > 100) || m_pump_on != prev_pump_on;
+}
+
+bool NodeSewagePump::control_pump(void)
+{
   // Update pump function/block time
   if (m_pump_on) {
 	  m_pump_on_time += (millis() - m_last_measure_time);
@@ -210,12 +218,8 @@ bool NodeSewagePump::measure_current(void)
       turn_led_off();
   }
 
-  // Return current if changed significantly
-  if (old_status != m_alert_pump || abs(m_pump_current - prev_pump_current) > 100) {
-	  return true;
-  }
-
-  return false;
+  // Update data if pump alert state changed
+  return old_status != m_alert_pump;
 }
 
 bool NodeSewagePump::measure_input_power(void)

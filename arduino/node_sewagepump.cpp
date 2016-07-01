@@ -251,18 +251,22 @@ bool NodeSewagePump::measure_input_power(void)
 
 bool NodeSewagePump::measure_distance(void)
 {
+  // Initiate trigger pulse for 10msec
   digitalWrite(DISTANCE_TRIGGER_PIN, HIGH);
   delay(10);
 
   long duration;
   {
     InterruptLock lock;
+
+    // Finishes trigger pulse, start to measure time from now
     digitalWrite(DISTANCE_TRIGGER_PIN, LOW);
 
+    // Blocks for at most 10msec with no interrupts
     duration = pulseIn(DISTANCE_DATA_PIN, HIGH, 10000);
   }
 
-  float distance = duration / 2.0  / 29.1;
+  float distance = duration / 2.0 / 29.1;
   m_distance_filter.input((int)distance);
 
   if (abs(m_distance - m_distance_filter.output()) >= 2) {

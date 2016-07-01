@@ -99,7 +99,7 @@ unsigned NodeSewagePump::loop(void)
   update |= measure_current();
   update |= measure_distance();
   update |= measure_input_power();
-  update |= control_pump();
+  update |= control_pump(now);
   if (update) {
     // data updated, send an mqtt update on all variables
     mqtt_connected_event();
@@ -188,35 +188,34 @@ bool NodeSewagePump::measure_current(void)
   return (abs(m_pump_current - prev_pump_current) > 100) || m_pump_on != prev_pump_on;
 }
 
-bool NodeSewagePump::control_pump(void)
+bool NodeSewagePump::control_pump(unsigned long now)
 {
+  // Save pump alert status
+  bool old_status = m_alert_pump;
+
   // Update pump function/block time
   if (m_pump_on) {
-	  m_pump_on_time += (millis() - m_last_measure_time);
-    m_pump_forced_off_time = 0;
+	  m_pump_on_time += (now - m_last_measure_time);
+    if (m_pump_on_time >= m_pump_on_trigger_time) {
+      // Pump on for too long, turn it off
+      m_alert_pump = true;
+      digitalWrite(RELAY_PIN, LOW);
+    }
   } else if (m_alert_pump) {
 	  // Pump is off due to alert
-	  m_pump_forced_off_time += (millis() - m_last_measure_time);
-    m_pump_on_time = 0;
-  }
-
-  m_last_measure_time = millis();
-
-  // Prepare pump alert status
-  bool old_status = m_alert_pump;
-  m_alert_pump = m_pump_on_time >= m_pump_on_trigger_time || m_pump_forced_off_time < m_pump_forced_off_max_time;
-
-  // Reset counters if alert stopped or not_alert and not_pump_on.
-  if (!m_alert_pump) {
-    m_pump_forced_off_time = 0;
-    m_pump_on_time = 0;
-  }
-
-  if (old_status != m_alert_pump) {
-    digitalWrite(RELAY_PIN, m_alert_pump ? LOW : HIGH);
-    if (m_alert_pump == false)
+	  m_pump_forced_off_time += (now - m_last_measure_time);
+    if (m_pump_forced_off_time >= m_pump_forced_off_max_time) {
+      m_alert_pump = false;
+      digitalWrite(RELAY_PIN, HIGH);
       turn_led_off();
+    }
+  } else {
+    // Reset all timers
+    m_pump_on_time = 0;
+    m_pump_forced_off_time = 0;
   }
+
+  m_last_measure_time = now;
 
   // Update data if pump alert state changed
   return old_status != m_alert_pump;

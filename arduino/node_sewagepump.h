@@ -51,7 +51,7 @@ class NodeSewagePump : public NodeActuator {
     bool measure_current(void);
     bool measure_distance(void);
     bool measure_input_power(void);
-    bool control_pump(void);
+    bool control_pump(unsigned long now);
 
     // Inputs
     int m_pump_on_trigger_time;

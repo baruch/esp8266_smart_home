@@ -27,6 +27,25 @@ static bool str2int(const char *data, int& value)
   return false;
 }
 
+static inline bool is_led_on(void)
+{
+  return digitalRead(LED_PIN) == LOW;
+}
+
+static void turn_led_on(void)
+{
+  // Turn on led
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+}
+
+static void turn_led_off(void)
+{
+  // Turn off led
+  digitalWrite(LED_PIN, HIGH);
+  pinMode(LED_PIN, INPUT_PULLUP);
+}
+
 void NodeSewagePump::setup(void)
 {
   WiFi.setOutputPower(20);
@@ -87,14 +106,11 @@ unsigned NodeSewagePump::loop(void)
 
   // TODO: Add long button press detection and action here. Or make it common.
 
-  if (m_alert_pump && digitalRead(LED_PIN) == LOW) {
-    // Turn on led
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
-  } else {
-    // Turn off led
-    digitalWrite(LED_PIN, HIGH);
-    pinMode(LED_PIN, INPUT_PULLUP);
+  if (m_alert_pump) {
+    if (is_led_on())
+      turn_led_off();
+    else
+      turn_led_on();
   }
 
   return 0;
@@ -190,6 +206,8 @@ bool NodeSewagePump::measure_current(void)
 
   if (old_status != m_alert_pump) {
     digitalWrite(RELAY_PIN, m_alert_pump ? LOW : HIGH);
+    if (m_alert_pump == false)
+      turn_led_off();
   }
 
   // Return current if changed significantly

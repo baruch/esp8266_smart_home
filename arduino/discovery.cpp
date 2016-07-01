@@ -32,6 +32,16 @@ int discover_set_int(char *buf, int start, int val)
   return discover_set_str(buf, start, out);
 }
 
+int discover_set_ip(char *buf, int start, IPAddress &ip)
+{
+  uint8_t data[4];
+  data[0] = ip[0];
+  data[1] = ip[1];
+  data[2] = ip[2];
+  data[3] = ip[3];
+  return discover_set_buf(buf, start, data, 4);
+}
+
 static int extract_ip(const char *buf, int buf_len, int start, IPAddress &ip_out)
 {
   if (buf_len < start)
@@ -88,6 +98,10 @@ static bool discover_send_pkt()
   pktlen = discover_set_int(buf, pktlen, node_type);
   pktlen = discover_set_str(buf, pktlen, node_desc);
   pktlen = discover_set_str(buf, pktlen, VERSION);
+  pktlen = discover_set_ip(buf, pktlen, static_ip);
+  pktlen = discover_set_ip(buf, pktlen, static_nm);
+  pktlen = discover_set_ip(buf, pktlen, static_gw);
+  pktlen = discover_set_ip(buf, pktlen, dns);
 
   udp.write(buf, pktlen);
 

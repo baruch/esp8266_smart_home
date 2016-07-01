@@ -27,6 +27,8 @@ void node_setup(void)
     if (!node->is_battery_powered()) {
       sleep_lock();
     }
+  } else {
+    sleep_lock();
   }
 }
 

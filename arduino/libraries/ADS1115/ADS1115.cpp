@@ -75,7 +75,7 @@ uint8_t ADS1115::reset()
 bool ADS1115::is_sample_in_progress()
 {
 	uint16_t val = read_register(ADS1115_REGISTER_CONFIG);
-	return (val & SAMPLE_BIT) != 0;
+	return (val & SAMPLE_BIT) == 0;
 }
 
 int16_t ADS1115::read_sample()

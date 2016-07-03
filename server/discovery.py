@@ -4,7 +4,7 @@ import socket
 
 HOST = '0.0.0.0'
 PORT = 24320
-sntp_server = '192.168.2.1'
+sntp_server = '0.0.0.0'
 
 def tohex(s):
     o = ''
@@ -100,7 +100,10 @@ class DiscoveryServer(SocketServer.UDPServer):
         self.node_list = node_list
 
 
-def start(server_ip, port, node_list):
+def start(server_ip, port, node_list, sntp_ip):
+    global sntp_server
+    sntp_server = sntp_ip
+
     server = DiscoveryServer((HOST, PORT), DiscoveryUDPHandler)
     server.set_server_ip(server_ip, port)
     server.set_node_list(node_list)

@@ -13,30 +13,16 @@ import os
 import md5
 import paho.mqtt.client as mqtt
 import pickle
+from ConfigParser import ConfigParser
 
-def choose_ip_addr(iface_addrs):
-    for iface_addr in iface_addrs:
-        if iface_addr[1] == 'eth0': return iface_addr[0]
-    return iface_addrs[0][1]
-
-try:
-    import netifaces
-    def get_server_ip():
-        PROTO = netifaces.AF_INET
-        ifaces = netifaces.interfaces()
-        if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
-        if_inet_addrs = [(tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]]
-        iface_addrs = [(s['addr'], tup[1]) for tup in if_inet_addrs for s in tup[0] if 'addr' in s]
-        print 'interface ips', iface_addrs
-        ip = choose_ip_addr(iface_addrs)
-        print 'ip', ip
-        return ip
-except ImportError:
-    import socket
-
-    def get_server_ip():
-        import socket
-        return socket.gethostbyname(socket.gethostname())
+cfg = ConfigParser()
+cfg.add_section('ota')
+cfg.set('ota', 'filename', '../arduino/.pioenvs/nodemcuv2/firmware.bin')
+cfg.add_section('sntp')
+cfg.set('sntp', 'ip', '0.0.0.0')
+cfg.add_section('mqtt')
+cfg.set('mqtt', 'port', '1833')
+cfg.set('mqtt', 'ip', '0.0.0.0')
 
 def mqtt_connected(client, userdata, flags, rc):
     print('MQTT connected')
@@ -201,7 +187,9 @@ def main():
     if len(sys.argv) != 2:
         usage()
 
-    otaname = sys.argv[1]
+    cfg.read(sys.argv[1])
+
+    otaname = cfg.get('ota', 'filename')
     if not os.path.isfile(otaname):
         print 'ERROR: Path "%s" doesn\'t exist or is not a file\n' % otaname
         usage()
@@ -210,10 +198,11 @@ def main():
     node_list = NodeList()
     otafile = OTAFile(otaname)
 
-    server_ip = get_server_ip()
-    print 'Server IP is', server_ip
+    server_ip = cfg.get('mqtt', 'ip')
+    print 'Server IP is %s:%d' % (server_ip, cfg.getint('mqtt', 'port'))
+    print 'SNTP server is', cfg.get('sntp', 'ip')
     mqtt_run()
-    discovery.start(server_ip, 1883, node_list)
+    discovery.start(server_ip, cfg.getint('mqtt', 'port'), node_list, cfg.get('sntp', 'ip'))
     ota.start(node_list, otafile)
     log_server.start(node_list)
     while 1:

@@ -3,6 +3,7 @@
 #include "node_relaywbutton.h"
 #include <Arduino.h>
 #include <Wire.h>
+#include <time.h>
 
 #define ADS_ALERT_PIN 5
 #define BUTTON_PIN 12 // GPIO12
@@ -69,6 +70,8 @@ void NodeRelayWithButton::setup(void)
   debounce_count = DEBOUNCE_COUNT_MAX;
   last_sample_millis = millis();
   mqtt_subscribe("relay_config", std::bind(&NodeRelayWithButton::mqtt_relay_config, this, std::placeholders::_1));
+
+  config_time(); // We will need wall time to do the logic
 
 #ifdef TRACE_IP
   m_trace.begin(IPAddress(TRACE_IP), 9999);
@@ -148,8 +151,13 @@ unsigned NodeRelayWithButton::loop(void)
   check_current(now);
   check_relay_state();
   // Update if requested or once per 15 minutes
-  if (m_last_update == 0 || now - m_last_update > 15*60*1000)
+  if (m_last_update == 0 || now - m_last_update > 15*60*1000) {
     state_update();
+
+    time_t t = time(NULL);
+    char* result = ctime(&t);
+    debug.log("Time ", t, " is ", result);
+  }
   return 0;
 }
 

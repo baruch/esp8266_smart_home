@@ -125,6 +125,7 @@ static bool parse_packet(const char *reply, int reply_len)
   IPAddress new_mqtt_server;
   IPAddress new_log_server_ip;
   int new_mqtt_port;
+  IPAddress new_sntp_server_ip;
 
   if (reply[0] != 'R') {
     debug.log("Invalid reply header, got ", (int)reply[0]);
@@ -200,6 +201,12 @@ static bool parse_packet(const char *reply, int reply_len)
   }
   cur_pos += ret;
 
+  ret = extract_ip(reply, reply_len, cur_pos, new_sntp_server_ip);
+  if (ret < 0) {
+    debug.log("No sntp server IP");
+  }
+  cur_pos += ret;
+
   debug.log("New config done");
 
   if (new_log_server_ip) {
@@ -209,6 +216,10 @@ static bool parse_packet(const char *reply, int reply_len)
   }
 
   mqtt_update_server(new_mqtt_server, new_mqtt_port);
+
+  debug.log("SNTP server IP ", new_sntp_server_ip);
+  if (cache.set_sntp_server(new_sntp_server_ip))
+    config_time();
 
   if (strcmp(new_desc, node_desc) != 0 ||
       new_ip != static_ip ||
@@ -281,6 +292,7 @@ void discover_poll(void)
         udp.stop();
       }
     } else if (TIME_PASSED(next_discovery)) {
+      config_time();
       if (discover_send_pkt()) {
         debug.log("Packet sent");
         next_reply = millis() + 250;

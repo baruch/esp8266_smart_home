@@ -25,6 +25,7 @@ bool node_is_powered(void);
 void restart();
 void deep_sleep(unsigned seconds);
 void battery_check(float bat);
+void config_time(void);
 
 /* Sleeping logic */
 typedef enum {

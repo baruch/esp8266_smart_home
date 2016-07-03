@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "node_mqtt.h"
 #include "rtc_store.h"
+#include "cached_vars.h"
 #include <ESP8266WiFi.h>
 
 static void print_hexdump_line(const char *buf, size_t buf_len)
@@ -77,4 +78,12 @@ void battery_check(float battery)
 {
   if (battery > 0.5 && battery < 3.7)
     deep_sleep(15*60);
+}
+
+void config_time(void)
+{
+  debug.log("Reconfiguring time");
+  IPAddress ip_val = cache.get_sntp_server();
+  String ip = ip_val.toString();
+  configTime(0, 0, ip.c_str(), NULL, NULL);
 }

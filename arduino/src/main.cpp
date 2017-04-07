@@ -1,7 +1,8 @@
 #include <Arduino.h>
 
 #include <FS.h> //this needs to be first, or it all crashes and burns...
-#include "libraries/WiFiAsyncManager/WiFiAsyncManager.h"
+#include <DNSServer.h>
+#include <WiFiAsyncManager.h>
 #include <Esp.h>
 #include "config.h"
 #include "common.h"

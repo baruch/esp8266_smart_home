@@ -1,6 +1,6 @@
 #include "cached_vars.h"
 #include "config.h"
-#include "libraries/DebugPrint/DebugPrint.h"
+#include <DebugPrint.h>
 
 #define CACHE_FILENAME "cache.cfg"
 

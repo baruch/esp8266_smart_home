@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "node_mqtt.h"
-#include "libraries/PubSubClient/PubSubClient.h"
+#include "PubSubClient.h"
 #include "WiFiClient.h"
 #include <ESP8266WiFi.h>
 #include <WString.h>

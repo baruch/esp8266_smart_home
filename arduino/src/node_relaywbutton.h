@@ -2,7 +2,7 @@
 #define NODE_POWERBUTTON_H
 
 #include "common.h"
-#include "libraries/ADS1115/ADS1115.h"
+#include "ADS1115.h"
 
 /*
    This class represents a module with a button and a relay, when the button is pressed it toggles the relay state.

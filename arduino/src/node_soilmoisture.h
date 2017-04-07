@@ -2,8 +2,8 @@
 #define NODE_SOIL_MOISTURE_H
 
 #include "common.h"
-#include "libraries/ADS1115/ADS1115.h"
-#include "libraries/CooperativeThread/CooperativeThread.h"
+#include "ADS1115.h"
+#include "CooperativeThread.h"
 
 class NodeSoilMoisture : public NodeSensor, CoopThread {
   public:

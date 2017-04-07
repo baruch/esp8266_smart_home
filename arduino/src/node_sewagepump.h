@@ -2,7 +2,7 @@
 #define NODE_SEWAGEPUMP_H
 
 #include "common.h"
-#include "libraries/ADS1115/ADS1115.h"
+#include "ADS1115.h"
 #include "filters.h"
 
 /*

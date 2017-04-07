@@ -1,5 +1,5 @@
 #include "config.h"
-#include "libraries/DebugPrint/DebugPrint.h"
+#include "DebugPrint.h"
 #include <FS.h>
 
 Config::Config(const char *filename)

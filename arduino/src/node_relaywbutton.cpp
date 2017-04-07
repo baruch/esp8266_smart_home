@@ -13,7 +13,7 @@
 
 //#define TRACE_IP 192,168,2,226
 #ifdef TRACE_IP
-#include "libraries/UdpTrace/UdpTrace.h"
+#include "UdpTrace.h"
 static UdpTrace m_trace;
 #endif
 

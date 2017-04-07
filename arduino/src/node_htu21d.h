@@ -2,8 +2,8 @@
 #define NODE_HTU21D_H
 
 #include "common.h"
-#include "libraries/HTU21D/SparkFunHTU21D.h"
-#include "libraries/CooperativeThread/CooperativeThread.h"
+#include "SparkFunHTU21D.h"
+#include "CooperativeThread.h"
 
 class NodeHTU21D : public NodeSensor, CoopThread {
   public:

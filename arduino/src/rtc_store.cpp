@@ -1,5 +1,5 @@
 #include "rtc_store.h"
-#include "libraries/DebugPrint/DebugPrint.h"
+#include "DebugPrint.h"
 #include <string.h>
 #include <ESP8266WiFi.h>
 

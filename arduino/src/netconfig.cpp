@@ -2,7 +2,7 @@
 #include "globals.h"
 #include "config.h"
 
-#include "libraries/WiFiAsyncManager/WiFiAsyncManager.h"
+#include "WiFiAsyncManager.h"
 #include <WiFiUdp.h>
 
 void config_load() {
